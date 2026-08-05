@@ -1,0 +1,121 @@
+.manager {
+  display: grid;
+  gap: 1.5rem;
+}
+.panel {
+  min-width: 0;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-canvas);
+}
+.toolbar,
+.actions,
+.schedule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+}
+.workspaceLinks,
+.filters,
+.audit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.workspaceLinks {
+  margin-block: 1rem;
+}
+.workspaceLinks a {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--border-subtle);
+}
+.permission,
+.warning {
+  padding: 0.75rem;
+  border-inline-start: 0.3rem solid var(--accent-primary);
+  background: var(--surface-muted, var(--surface-canvas));
+}
+.warning {
+  border-inline-start-color: var(--feedback-warning, var(--accent-primary));
+}
+.filters {
+  display: grid;
+  margin-block: 1rem;
+}
+.audit {
+  margin-block: 1rem;
+}
+.audit div {
+  min-width: 8rem;
+}
+.audit dt {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.audit dd {
+  margin: 0.2rem 0 0;
+}
+.list {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+.item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border-subtle);
+}
+.item span,
+.help,
+.status {
+  display: block;
+  color: var(--text-muted);
+}
+.form,
+.fields {
+  display: grid;
+  gap: 1rem;
+}
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem;
+  color: inherit;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-canvas);
+}
+.field textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+.message {
+  padding: 0.75rem;
+  border-inline-start: 0.3rem solid var(--accent-primary);
+}
+.error {
+  color: var(--feedback-danger);
+}
+.preview {
+  white-space: pre-wrap;
+  padding: 1rem;
+  border: 1px dashed var(--border-subtle);
+}
+@media (min-width: 70rem) {
+  .manager {
+    grid-template-columns: minmax(18rem, 0.75fr) minmax(32rem, 1.25fr);
+    align-items: start;
+  }
+  .filters {
+    grid-template-columns: 1.5fr 1fr 1fr;
+  }
+}

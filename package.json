@@ -1,0 +1,35 @@
+{
+  "name": "joe-kuntani-platform",
+  "private": true,
+  "packageManager": "pnpm@11.11.0",
+  "engines": {
+    "node": ">=26.0.0",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "build": "pnpm build:web && pnpm build:api",
+    "build:api": "mkdir -p bin && cd apps/api && go build -o ../../bin/joe-api ./cmd/api",
+    "build:web": "pnpm --filter @joe-kuntani/web build",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm contracts:check && pnpm test && pnpm build",
+    "contracts:check": "pnpm contracts:lint && ./scripts/check-openapi-generated.sh",
+    "contracts:generate": "openapi-typescript contracts/openapi/openapi.yaml -o apps/web/lib/api/schema.d.ts",
+    "contracts:lint": "redocly lint contracts/openapi/openapi.yaml",
+    "dev": "pnpm --parallel --filter @joe-kuntani/web dev",
+    "format:check": "prettier --check .",
+    "format:write": "prettier --write .",
+    "lint": "pnpm lint:web && pnpm lint:api",
+    "lint:api": "cd apps/api && test -z \"$(gofmt -l .)\" && go vet ./... && go run honnef.co/go/tools/cmd/staticcheck@v0.7.0 ./...",
+    "lint:web": "pnpm --filter @joe-kuntani/web lint",
+    "test": "pnpm test:web && pnpm test:api",
+    "test:api": "cd apps/api && go test -race ./...",
+    "test:api:integration": "cd apps/api && test -n \"${MONGODB_INTEGRATION_URI:-}\" && go test -race -count=1 ./internal/platform/mongo/...",
+    "test:web": "pnpm --filter @joe-kuntani/web test",
+    "typecheck": "pnpm --filter @joe-kuntani/web typecheck"
+  },
+  "devDependencies": {
+    "@redocly/cli": "2.44.1",
+    "openapi-typescript": "7.13.0",
+    "prettier": "3.6.2",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,106 @@
+.shell,
+.confirmation {
+  width: min(760px, calc(100% - 2rem));
+  margin: clamp(3rem, 9vw, 8rem) auto;
+  padding: clamp(1.25rem, 4vw, 3rem);
+  background: #fff;
+  border: 1px solid #dedbd2;
+}
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+}
+.steps {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  padding: 0;
+  list-style: none;
+  margin: 2rem 0;
+}
+.steps li {
+  border-top: 2px solid #ccc;
+  padding-top: 0.5rem;
+  font-size: 0.8rem;
+}
+.steps li[aria-current="step"] {
+  border-color: #171714;
+  font-weight: 700;
+}
+.shell fieldset {
+  border: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+.shell legend {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+.shell label {
+  display: grid;
+  gap: 0.4rem;
+}
+.shell input,
+.shell textarea,
+.shell select {
+  font: inherit;
+  padding: 0.8rem;
+  border: 1px solid #777;
+  background: #fff;
+}
+.shell textarea {
+  min-height: 9rem;
+}
+.choice,
+.consent {
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  border: 1px solid #bbb;
+  padding: 1rem;
+}
+.choice small {
+  grid-column: 2;
+}
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.actions button {
+  padding: 0.8rem 1.2rem;
+}
+.error {
+  color: #9d1b1b;
+}
+.summary {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  gap: 0.75rem;
+}
+.summary dt {
+  font-weight: 700;
+}
+.summary dd {
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .steps {
+    grid-template-columns: 1fr;
+  }
+  .steps li {
+    display: none;
+  }
+  .steps li[aria-current="step"] {
+    display: block;
+  }
+  .summary {
+    grid-template-columns: 1fr;
+  }
+  .summary dd {
+    margin-bottom: 0.75rem;
+  }
+}

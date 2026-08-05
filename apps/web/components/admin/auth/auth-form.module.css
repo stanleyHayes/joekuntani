@@ -1,0 +1,89 @@
+.shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background: #f4f0e8;
+  color: #171713;
+}
+.panel {
+  width: min(100%, 28rem);
+  border: 1px solid #bdb4a5;
+  background: #fffdf8;
+  padding: clamp(1.5rem, 5vw, 3rem);
+}
+.eyebrow {
+  margin: 0 0 1rem;
+  color: #6e2d21;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.title {
+  margin: 0;
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+.intro {
+  margin: 1rem 0 2rem;
+  color: #514d45;
+  line-height: 1.6;
+}
+.form {
+  display: grid;
+  gap: 1rem;
+}
+.label {
+  display: grid;
+  gap: 0.45rem;
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+.input {
+  width: 100%;
+  min-height: 3rem;
+  border: 1px solid #8d867b;
+  border-radius: 0;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  padding: 0.75rem;
+}
+.input:focus-visible,
+.button:focus-visible,
+.link:focus-visible {
+  outline: 3px solid #b5533e;
+  outline-offset: 3px;
+}
+.button {
+  min-height: 3rem;
+  border: 1px solid #171713;
+  background: #171713;
+  color: #fffdf8;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+}
+.button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.error {
+  border-left: 3px solid #a72c20;
+  margin: 0;
+  padding: 0.65rem 0.8rem;
+  color: #7d2119;
+  background: #fbeae6;
+}
+.help {
+  color: #625d54;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.link {
+  color: inherit;
+  text-underline-offset: 0.2em;
+}

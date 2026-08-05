@@ -1,0 +1,62 @@
+.workspace,
+.form,
+.calendar,
+.list,
+.day,
+.toolbar {
+  display: grid;
+  gap: 1rem;
+}
+.toolbar {
+  grid-template-columns: repeat(auto-fit, minmax(8rem, max-content));
+  align-items: end;
+}
+.form {
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  padding: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.form h3 {
+  grid-column: 1/-1;
+}
+.calendar {
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+.list {
+  grid-template-columns: 1fr;
+}
+.day {
+  align-content: start;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.day article {
+  padding: 0.75rem;
+  border-block-start: 1px solid var(--border);
+}
+.warning {
+  padding: 1rem;
+  border: 2px solid #a86500;
+  background: #fff7df;
+  color: #573600;
+}
+.tentative {
+  color: #8a5200;
+}
+.confirmed {
+  color: #12653a;
+}
+.cancelled {
+  color: #8b2323;
+}
+@media (max-width: 40rem) {
+  .form,
+  .calendar {
+    grid-template-columns: 1fr;
+  }
+  .toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+}

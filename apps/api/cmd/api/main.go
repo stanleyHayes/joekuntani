@@ -1,0 +1,445 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"strconv"
+	"strings"
+	"syscall"
+	"time"
+
+	"github.com/getsentry/sentry-go"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/auth"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/bookings"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/campaigns"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/content"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/crm"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/crmworkflow"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/enquiries"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/events"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/httpapi"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/issuance"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/media"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/payments"
+	mongoplatform "github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/platform/mongo"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/platform/observability"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/services"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/settings"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/ticketing"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+)
+
+func main() {
+	logger := slog.New(observability.NewJSONHandler(os.Stdout, nil))
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn:              os.Getenv("SENTRY_DSN"),
+		Environment:      envOrDefault("APP_ENV", "development"),
+		Release:          os.Getenv("RELEASE_VERSION"),
+		SendDefaultPII:   false,
+		AttachStacktrace: true,
+	}); err != nil {
+		logger.Error("sentry initialization failed", "error", err)
+	}
+	defer sentry.Flush(2 * time.Second)
+	appEnvironment := envOrDefault("APP_ENV", "development")
+	mongoClient, err := mongoplatform.Connect(context.Background(), mongoplatform.Config{URI: os.Getenv("MONGODB_URI"), Database: os.Getenv("MONGODB_DATABASE"), Environment: appEnvironment})
+	if err != nil {
+		logger.Error("database initialization failed", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		if err := mongoClient.Close(context.Background()); err != nil {
+			logger.Error("database shutdown failed", "error", err)
+		}
+	}()
+	secretBox, err := auth.NewSecretBox(os.Getenv("MFA_ENCRYPTION_KEY"))
+	if err != nil {
+		logger.Error("authentication initialization failed", "error", err)
+		os.Exit(1)
+	}
+	authStore := auth.NewMongoStore(mongoClient.Database(), secretBox)
+	authService := auth.NewService(authStore, nil, 12*time.Hour)
+	secureCookies := appEnvironment != "local" && appEnvironment != "development" && appEnvironment != "test"
+	authHandler, err := auth.NewHTTPHandler(authService, auth.HTTPConfig{SecureCookies: secureCookies, Production: appEnvironment == "production", AllowedOrigin: os.Getenv("PUBLIC_WEB_URL"), TrustedProxyCIDRs: splitNonempty(os.Getenv("AUTH_TRUSTED_PROXY_CIDRS"))})
+	if err != nil {
+		logger.Error("authentication HTTP configuration failed", "error", err)
+		os.Exit(1)
+	}
+	settingsHandler := settings.NewHTTPHandler(settings.NewService(settings.NewMongoStore(mongoClient.Database()), nil), authHandler)
+	mediaConfig, err := media.LoadRuntimeConfig(appEnvironment, os.Getenv)
+	if err != nil {
+		logger.Error("media configuration failed", "error", err)
+		os.Exit(1)
+	}
+	var mediaProvider media.Provider = media.UnavailableProvider{}
+	if mediaConfig.Configured {
+		mediaProvider, err = media.NewCloudinary(mediaConfig.Cloudinary, nil, nil)
+		if err != nil {
+			logger.Error("media provider initialization failed", "error", err)
+			os.Exit(1)
+		}
+	}
+	mediaService, err := media.NewService(mustMediaRepository(mongoClient.Database()), mediaProvider, mediaConfig.Policy, nil)
+	if err != nil {
+		logger.Error("media service initialization failed", "error", err)
+		os.Exit(1)
+	}
+	mediaHandler, err := media.NewHTTPHandler(mediaService, func(request *http.Request) (media.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return media.Actor{}, auth.ErrUnauthorized
+		}
+		return media.Actor{ID: principal.InternalUserID, CanEditContent: principal.Role.Allows(auth.PermissionContentEdit)}, nil
+	})
+	if err != nil {
+		logger.Error("media HTTP initialization failed", "error", err)
+		os.Exit(1)
+	}
+	servicesDomain := services.NewDomain(services.NewMongoStore(mongoClient.Database()), nil, nil)
+	servicesHandler := services.NewHTTPHandler(servicesDomain, func(request *http.Request) (services.Actor, bool) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return services.Actor{}, false
+		}
+		return services.Actor{InternalID: principal.InternalUserID, PublicID: principal.UserID, CanEdit: principal.Role.Allows(auth.PermissionContentEdit)}, true
+	}, nil)
+	contentDomain := content.NewDomain(content.NewMongoRepository(mongoClient.Database()), nil, nil)
+	contentHandler := content.NewHTTPHandler(contentDomain, func(request *http.Request) (content.Actor, bool) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return content.Actor{}, false
+		}
+		return content.Actor{InternalID: principal.InternalUserID, PublicID: principal.UserID, CanEdit: principal.Role.Allows(auth.PermissionContentEdit), CanApprove: principal.Role == auth.RoleAdministrator}, true
+	})
+	eventsStore := events.NewMongoStore(mongoClient.Database())
+	eventsHandler := events.NewHandler(events.NewService(eventsStore, nil, nil), func(request *http.Request) (events.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return events.Actor{}, auth.ErrUnauthorized
+		}
+		return events.Actor{InternalID: principal.InternalUserID, CanManage: principal.Role.Allows(auth.PermissionBookingsManage)}, nil
+	})
+	publicEventsHandler := events.NewPublicHandler(events.NewPublicService(eventsStore))
+	enquiryIPKey := []byte(os.Getenv("ENQUIRY_IP_HMAC_KEY"))
+	if len(enquiryIPKey) < 32 {
+		logger.Error("enquiry configuration failed", "error", "ENQUIRY_IP_HMAC_KEY must contain at least 32 bytes")
+		os.Exit(1)
+	}
+	trustedEnquiryProxies, err := enquiries.TrustedProxyPredicate(splitNonempty(os.Getenv("ENQUIRY_TRUSTED_PROXY_CIDRS")))
+	if err != nil {
+		logger.Error("enquiry proxy configuration failed", "error", err)
+		os.Exit(1)
+	}
+	rateLimit, err := strconv.Atoi(envOrDefault("ENQUIRY_RATE_LIMIT", "5"))
+	if err != nil || rateLimit < 1 {
+		logger.Error("enquiry rate configuration failed")
+		os.Exit(1)
+	}
+	rateWindow, err := time.ParseDuration(envOrDefault("ENQUIRY_RATE_WINDOW", "1m"))
+	if err != nil || rateWindow <= 0 {
+		logger.Error("enquiry rate configuration failed")
+		os.Exit(1)
+	}
+	maxRateEntries, err := strconv.Atoi(envOrDefault("ENQUIRY_RATE_MAX_ENTRIES", "10000"))
+	if err != nil || maxRateEntries < 1 {
+		logger.Error("enquiry rate configuration failed")
+		os.Exit(1)
+	}
+	var captcha enquiries.Captcha
+	captchaProvider, captchaSiteKey := os.Getenv("BOT_CHALLENGE_PROVIDER"), os.Getenv("BOT_CHALLENGE_SITE_KEY")
+	captchaEnabled := captchaProvider != "" || captchaSiteKey != "" || os.Getenv("BOT_CHALLENGE_VERIFY_URL") != "" || os.Getenv("BOT_CHALLENGE_SECRET_KEY") != ""
+	if captchaEnabled {
+		if (captchaProvider != "turnstile" && captchaProvider != "recaptcha") || captchaSiteKey == "" {
+			logger.Error("enquiry CAPTCHA public configuration failed")
+			os.Exit(1)
+		}
+		captcha, err = enquiries.NewRemoteCaptcha(os.Getenv("BOT_CHALLENGE_VERIFY_URL"), os.Getenv("BOT_CHALLENGE_SECRET_KEY"), &http.Client{Timeout: 5 * time.Second})
+		if err != nil {
+			logger.Error("enquiry CAPTCHA configuration failed", "error", err)
+			os.Exit(1)
+		}
+	}
+	enquiryStore := enquiries.NewMongoStore(mongoClient.Database())
+	enquiryDomain := enquiries.NewDomain(enquiryStore, services.NewMongoStore(mongoClient.Database()), captcha, enquiries.NewWindowLimiter(rateLimit, rateWindow, maxRateEntries), enquiries.ConfiguredRiskAssessor{CaptchaEnabled: captchaEnabled}, nil, enquiryIPKey)
+	enquiryHandler := enquiries.NewHTTPHandler(enquiryDomain, trustedEnquiryProxies)
+	ticketHoldDuration, err := time.ParseDuration(envOrDefault("TICKET_HOLD_DURATION", "10m"))
+	if err != nil {
+		logger.Error("ticket hold configuration failed", "error", err)
+		os.Exit(1)
+	}
+	ticketOrderService, err := ticketing.NewService(ticketing.NewMongoStore(mongoClient.Database()), ticketHoldDuration, nil)
+	if err != nil {
+		logger.Error("ticket order configuration failed", "error", err)
+		os.Exit(1)
+	}
+	ticketOrderHandler := ticketing.NewHTTPHandler(ticketOrderService)
+	ticketTokenKey := []byte(os.Getenv("TICKET_TOKEN_HMAC_KEY"))
+	ticketIssuer, err := issuance.NewMongoIssuer(mongoClient.Database(), ticketTokenKey)
+	if err != nil {
+		logger.Error("ticket issuance configuration failed", "error", "TICKET_TOKEN_HMAC_KEY must contain at least 32 bytes")
+		os.Exit(1)
+	}
+	paymentProvider := payments.UnavailableProvider{}
+	paymentReturnURL := envOrDefault("PAYMENT_RETURN_URL", "https://unconfigured.invalid")
+	paymentStore := payments.NewMongoStore(mongoClient.Database())
+	paymentStore.SetIssuer(ticketIssuer)
+	paymentService, err := payments.NewService(paymentStore, paymentProvider, paymentReturnURL, nil)
+	if err != nil {
+		logger.Error("payment configuration failed", "error", err)
+		os.Exit(1)
+	}
+	paymentHandler := payments.NewHandler(paymentService)
+	ticketHandler := issuance.NewHandler(ticketIssuer)
+	ticketAdminHandler := issuance.NewAdminHandler(mongoClient.Database(), authStore)
+	var ticketSender issuance.Sender = issuance.UnavailableSender{}
+	if resendKey := os.Getenv("RESEND_API_KEY"); resendKey != "" {
+		ticketSender, err = issuance.NewResendSender(&http.Client{Timeout: 10 * time.Second}, envOrDefault("RESEND_API_URL", "https://api.resend.com/emails"), resendKey, os.Getenv("RESEND_FROM_EMAIL"))
+		if err != nil {
+			logger.Error("ticket email configuration failed", "error", err)
+			os.Exit(1)
+		}
+	}
+	ticketDeliveryWorker, err := issuance.NewDeliveryWorker(mongoClient.Database(), ticketIssuer, ticketSender, os.Getenv("PUBLIC_WEB_URL"))
+	if err != nil {
+		logger.Error("ticket delivery configuration failed", "error", err)
+		os.Exit(1)
+	}
+	crmHandler := crm.NewHandler(crm.NewService(crm.NewMongoStore(mongoClient.Database()), nil, nil), func(request *http.Request) (crm.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return crm.Actor{}, auth.ErrUnauthorized
+		}
+		permissions := map[crm.Permission]bool{}
+		if principal.Role.Allows(auth.PermissionEnquiriesManage) {
+			permissions[crm.PermissionRead] = true
+			permissions[crm.PermissionWrite] = true
+			permissions[crm.PermissionAssign] = true
+			permissions[crm.PermissionPrivacyExport] = true
+		}
+		if principal.Role == auth.RoleAdministrator {
+			permissions[crm.PermissionPrivacyDelete] = true
+		}
+		return crm.Actor{InternalID: principal.InternalUserID, Permissions: permissions}, nil
+	})
+	workflowActor := func(request *http.Request) (crmworkflow.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return crmworkflow.Actor{}, auth.ErrUnauthorized
+		}
+		permissions := map[crmworkflow.Permission]bool{}
+		if principal.Role.Allows(auth.PermissionEnquiriesManage) {
+			permissions[crmworkflow.PermissionRead], permissions[crmworkflow.PermissionWrite] = true, true
+		}
+		if principal.Role == auth.RoleAdministrator {
+			permissions[crmworkflow.PermissionRetry] = true
+		}
+		return crmworkflow.Actor{InternalID: principal.InternalUserID, Permissions: permissions}, nil
+	}
+	workflowSigner, err := crmworkflow.NewAssetSigner(mongoClient.Database(), []byte(os.Getenv("CRM_ATTACHMENT_HMAC_KEY")), os.Getenv("PUBLIC_WEB_URL"), nil)
+	if err != nil {
+		logger.Error("CRM attachment configuration failed", "error", "CRM_ATTACHMENT_HMAC_KEY must contain at least 32 bytes and PUBLIC_WEB_URL must be HTTPS")
+		os.Exit(1)
+	}
+	workflowService := crmworkflow.New(crmworkflow.NewMongoStore(mongoClient.Database()), workflowSigner, crmworkflow.SlogTelemetry{Logger: logger}, nil, crm.UUID)
+	workflowHandler := crmworkflow.NewHandler(workflowService, workflowActor)
+	workflowDownload := crmworkflow.NewDownloadHandler(workflowSigner, workflowActor)
+	var workflowSender crmworkflow.Sender = crmworkflow.UnavailableSender{}
+	if resendKey := os.Getenv("RESEND_API_KEY"); resendKey != "" {
+		workflowSender, err = crmworkflow.NewResendSender(mongoClient.Database(), &http.Client{Timeout: 10 * time.Second}, envOrDefault("RESEND_API_URL", "https://api.resend.com/emails"), resendKey, os.Getenv("RESEND_FROM_EMAIL"), os.Getenv("PUBLIC_WEB_URL"))
+		if err != nil {
+			logger.Error("CRM notification configuration failed", "error", err)
+			os.Exit(1)
+		}
+	}
+	workflowWorker := crmworkflow.NewReminderWorker(mongoClient.Database(), workflowSender, nil, crm.UUID)
+	crmProtectedRead := authHandler.Protect(auth.PermissionEnquiriesManage, false, crmHandler)
+	crmProtectedWrite := authHandler.Protect(auth.PermissionEnquiriesManage, true, crmHandler)
+	workflowProtectedRead := authHandler.Protect(auth.PermissionEnquiriesManage, false, workflowHandler)
+	workflowProtectedWrite := authHandler.Protect(auth.PermissionEnquiriesManage, true, workflowHandler)
+	workflowDownloadRead := authHandler.Protect(auth.PermissionEnquiriesManage, false, workflowDownload)
+	workflowRoutes := http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet {
+			workflowProtectedRead.ServeHTTP(response, request)
+		} else {
+			workflowProtectedWrite.ServeHTTP(response, request)
+		}
+	})
+	crmRoutes := http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet {
+			crmProtectedRead.ServeHTTP(response, request)
+			return
+		}
+		crmProtectedWrite.ServeHTTP(response, request)
+	})
+	bookingHandler := bookings.NewHandler(bookings.NewService(bookings.NewMongoStore(mongoClient.Database()), nil), func(request *http.Request) (bookings.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return bookings.Actor{}, auth.ErrUnauthorized
+		}
+		permissions := map[bookings.Permission]bool{}
+		if principal.Role.Allows(auth.PermissionBookingsManage) {
+			permissions[bookings.Read], permissions[bookings.Write] = true, true
+		}
+		return bookings.Actor{InternalID: principal.InternalUserID, Permissions: permissions}, nil
+	})
+	bookingRead := authHandler.Protect(auth.PermissionBookingsManage, false, bookingHandler.Routes())
+	bookingWrite := authHandler.Protect(auth.PermissionBookingsManage, true, bookingHandler.Routes())
+	bookingRoutes := http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet {
+			bookingRead.ServeHTTP(response, request)
+			return
+		}
+		bookingWrite.ServeHTTP(response, request)
+	})
+	campaignStore := campaigns.NewMongoStore(mongoClient.Database())
+	campaignHandler := campaigns.NewHandler(campaigns.NewService(campaignStore, campaignStore, nil), func(request *http.Request) (campaigns.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return campaigns.Actor{}, auth.ErrUnauthorized
+		}
+		return campaigns.Actor{ID: principal.InternalUserID, Role: string(principal.Role)}, nil
+	})
+	campaignRead := authHandler.Protect(auth.PermissionAdminAccess, false, campaignHandler)
+	campaignWrite := authHandler.Protect(auth.PermissionAdminAccess, true, campaignHandler)
+	campaignRoutes := http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet {
+			campaignRead.ServeHTTP(response, request)
+			return
+		}
+		campaignWrite.ServeHTTP(response, request)
+	})
+	server := &http.Server{
+		Addr: envOrDefault("API_ADDR", ":8080"),
+		Handler: httpapi.NewHandler(httpapi.Options{
+			Logger:                   logger,
+			CapturePanic:             func(err error) { sentry.CaptureException(err) },
+			AdminAuth:                authHandler.Routes(),
+			PublicSettings:           settingsHandler.Public(),
+			AdminSettingsRead:        settingsHandler.AdminRead(),
+			AdminSettingsUpdate:      settingsHandler.AdminUpdate(),
+			AdminSettingsPublish:     settingsHandler.AdminPublish(),
+			AdminMediaList:           authHandler.Protect(auth.PermissionContentEdit, false, mediaHandler.ListHandler()),
+			AdminMediaUpload:         authHandler.Protect(auth.PermissionContentEdit, true, mediaHandler.RequestUploadHandler()),
+			AdminMediaRetry:          authHandler.Protect(auth.PermissionContentEdit, true, mediaHandler.RetryUploadHandler()),
+			AdminMediaUpdate:         authHandler.Protect(auth.PermissionContentEdit, true, mediaHandler.UpdateHandler()),
+			AdminMediaDelete:         authHandler.Protect(auth.PermissionContentEdit, true, mediaHandler.DeleteHandler()),
+			MediaCallback:            mediaHandler.CallbackHandler(),
+			PublicServicesList:       servicesHandler.PublicListHandler(),
+			PublicServicesDetail:     servicesHandler.PublicDetailHandler(),
+			PublicEnquirySubmit:      enquiryHandler.SubmitHandler(),
+			PublicEnquiryChallenge:   enquiries.ChallengeHandler(captchaProvider, captchaSiteKey, captchaEnabled),
+			PublicTicketOrderCreate:  ticketOrderHandler.CreateHandler(),
+			PublicTicketCheckout:     http.HandlerFunc(paymentHandler.Checkout),
+			PublicTicketConfirmation: http.HandlerFunc(ticketHandler.Confirmation),
+			PaymentWebhook:           http.HandlerFunc(paymentHandler.Webhook),
+			PublicEvents:             publicEventsHandler,
+			AdminServicesList:        authHandler.Protect(auth.PermissionContentEdit, false, servicesHandler.AdminListHandler()),
+			AdminServicesCreate:      authHandler.Protect(auth.PermissionContentEdit, true, servicesHandler.AdminCreateHandler()),
+			AdminServicesOrder:       authHandler.Protect(auth.PermissionContentEdit, true, servicesHandler.AdminOrderHandler()),
+			AdminServicesUpdate:      authHandler.Protect(auth.PermissionContentEdit, true, servicesHandler.AdminUpdateHandler()),
+			AdminServicesActive:      authHandler.Protect(auth.PermissionContentEdit, true, servicesHandler.AdminActiveHandler()),
+			AdminServicesRetire:      authHandler.Protect(auth.PermissionContentEdit, true, servicesHandler.AdminRetireHandler()),
+			PublicContentList:        contentHandler.PublicListHandler(),
+			PublicContentDetail:      contentHandler.PublicDetailHandler(),
+			AdminContentList:         authHandler.Protect(auth.PermissionContentEdit, false, contentHandler.AdminListHandler()),
+			AdminContentCreate:       authHandler.Protect(auth.PermissionContentEdit, true, contentHandler.AdminCreateHandler()),
+			AdminContentPreview:      authHandler.Protect(auth.PermissionContentEdit, false, contentHandler.AdminPreviewHandler()),
+			AdminContentUpdate:       authHandler.Protect(auth.PermissionContentEdit, true, contentHandler.AdminUpdateHandler()),
+			AdminContentDelete:       authHandler.Protect(auth.PermissionContentEdit, true, contentHandler.AdminDeleteHandler()),
+			AdminContentApproval:     authHandler.Protect(auth.PermissionContentEdit, true, contentHandler.AdminApprovalHandler()),
+			AdminContentPublish:      authHandler.Protect(auth.PermissionContentEdit, true, contentHandler.AdminPublicationHandler()),
+			AdminEventsRead:          authHandler.Protect(auth.PermissionBookingsManage, false, eventsHandler),
+			AdminEventsWrite:         authHandler.Protect(auth.PermissionBookingsManage, true, eventsHandler),
+			AdminCRM:                 crmRoutes,
+			AdminCRMWorkflow:         workflowRoutes,
+			AdminCRMProposalDownload: workflowDownloadRead,
+			AdminTicketDeadLetters:   authHandler.Protect(auth.PermissionUsersManage, false, http.HandlerFunc(ticketAdminHandler.DeadLetters)),
+			AdminBookings:            bookingRoutes,
+			AdminCampaigns:           campaignRoutes,
+			ReadinessChecks: []httpapi.ReadinessCheck{func(ctx context.Context) error {
+				return mongoClient.Database().RunCommand(ctx, bson.D{{Key: "ping", Value: 1}}).Err()
+			}},
+		}),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	shutdownContext, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	go func() {
+		if workerErr := ticketing.NewExpiryWorker(ticketOrderService, 30*time.Second).Run(shutdownContext); workerErr != nil && !errors.Is(workerErr, context.Canceled) {
+			logger.Error("ticket hold expiry worker stopped", "error", workerErr)
+			stop()
+		}
+	}()
+	go func() {
+		if workerErr := ticketDeliveryWorker.Run(shutdownContext, 30*time.Second); workerErr != nil && !errors.Is(workerErr, context.Canceled) {
+			logger.Error("ticket delivery worker stopped", "error", workerErr)
+			stop()
+		}
+	}()
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			if workerErr := workflowWorker.QueueOverdue(shutdownContext, 100); workerErr != nil {
+				logger.Error("CRM overdue reminder queue failed", "error", workerErr)
+			}
+			if workerErr := workflowWorker.RunOnce(shutdownContext, 100); workerErr != nil && !errors.Is(workerErr, context.Canceled) {
+				logger.Error("CRM notification worker failed", "error", workerErr)
+			}
+			select {
+			case <-shutdownContext.Done():
+				return
+			case <-ticker.C:
+			}
+		}
+	}()
+
+	go func() {
+		<-shutdownContext.Done()
+		deadline, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := server.Shutdown(deadline); err != nil {
+			logger.Error("server shutdown failed", "error", err)
+		}
+	}()
+
+	logger.Info("api listening", "listen_address", server.Addr)
+	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		logger.Error("api stopped unexpectedly", "error", err)
+		os.Exit(1)
+	}
+}
+
+func mustMediaRepository(database *mongo.Database) *media.MongoRepository {
+	repository, err := media.NewMongoRepository(database)
+	if err != nil {
+		panic(err)
+	}
+	return repository
+}
+
+func splitNonempty(value string) []string {
+	var result []string
+	for _, item := range strings.Split(value, ",") {
+		if item = strings.TrimSpace(item); item != "" {
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
+func envOrDefault(name, fallback string) string {
+	if value := os.Getenv(name); value != "" {
+		return value
+	}
+	return fallback
+}

@@ -1,0 +1,60 @@
+.workspace,
+.toolbar,
+.grid,
+.panel,
+.actions {
+  display: grid;
+  gap: 1rem;
+}
+.toolbar {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  align-items: end;
+}
+.grid {
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+}
+.panel {
+  border: 1px solid var(--border);
+  padding: 1rem;
+  background: var(--surface);
+}
+.actions {
+  grid-template-columns: repeat(auto-fit, minmax(8rem, max-content));
+  align-items: end;
+}
+.muted {
+  color: var(--muted);
+}
+.danger {
+  color: var(--danger, #9f2525);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th,
+.table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 44rem) {
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+  }
+  .table thead {
+    position: absolute;
+    clip: rect(0 0 0 0);
+  }
+  .table td {
+    border: 0;
+  }
+  .table tr {
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 0;
+  }
+}

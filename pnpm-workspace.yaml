@@ -1,0 +1,10 @@
+packages:
+  - apps/web
+  - packages/*
+
+allowBuilds:
+  "@sentry/cli": false
+  unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - "@redocly/cli@2.44.1"

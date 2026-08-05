@@ -1,0 +1,53 @@
+import type { PublicEvent } from "./types";
+
+export const event = (extra: Partial<PublicEvent> = {}): PublicEvent => ({
+  id: crypto.randomUUID(),
+  slug: "approved-event",
+  title: "Approved event",
+  summary: "Approved summary",
+  description: "Approved description",
+  starts_at: "2026-08-10T18:00:00Z",
+  ends_at: "2026-08-10T21:00:00Z",
+  timezone: "Africa/Accra",
+  banner_asset_id: "",
+  venue: {
+    name: "Approved venue",
+    address: "Approved address",
+    city: "Accra",
+    country_code: "GH",
+    map_url: "https://maps.example.test/venue",
+    accessibility: "Approved access details",
+  },
+  policies: {
+    refunds: "Approved refund policy",
+    entry: "Approved entry policy",
+    age_limit: 18,
+    age_guidance: "Approved age guidance",
+    accessibility: "Approved accessibility policy",
+  },
+  banner: {
+    featured: true,
+    starts_at: "2026-08-01T00:00:00Z",
+    ends_at: "2026-08-09T00:00:00Z",
+  },
+  availability: "on_sale",
+  tickets: [
+    {
+      id: crypto.randomUUID(),
+      name: "Approved ticket",
+      description: "Approved ticket details",
+      price: "100.00",
+      currency: "GHS",
+      capacity: 100,
+      sold: 20,
+      reserved: 5,
+      min_per_order: 1,
+      max_per_order: 4,
+      sales_start: "2026-08-01T00:00:00Z",
+      sales_end: "2026-08-10T17:00:00Z",
+      availability: "on_sale",
+      checkout_href: "/tickets/checkout?event=approved-event",
+    },
+  ],
+  ...extra,
+});

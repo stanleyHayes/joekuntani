@@ -1,0 +1,135 @@
+.manager {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(17rem, 0.75fr) minmax(20rem, 1.25fr);
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  padding: clamp(1rem, 3vw, 1.75rem);
+}
+
+.panel h2 {
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
+.list {
+  display: grid;
+  margin: 0;
+  gap: 0.65rem;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 0.8rem;
+}
+
+.item strong,
+.item span {
+  display: block;
+}
+
+.item span {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.form,
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.form {
+  gap: 1rem;
+}
+
+.field span,
+.checkbox {
+  font-weight: 700;
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: 0.7rem;
+}
+
+.field textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.field small {
+  color: var(--ink-soft);
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.actions button,
+.itemActions button {
+  min-height: 2.5rem;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  padding: 0.5rem 0.8rem;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.actions button[type="submit"] {
+  background: var(--accent-strong);
+  color: var(--accent-contrast);
+}
+
+.actions button:disabled,
+.itemActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.status,
+.error,
+.empty {
+  color: var(--ink-soft);
+}
+
+.error {
+  color: var(--warning);
+}
+
+@media (max-width: 60rem) {
+  .manager {
+    grid-template-columns: 1fr;
+  }
+}

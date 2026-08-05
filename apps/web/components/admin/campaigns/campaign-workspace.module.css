@@ -1,0 +1,40 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.grid > div,
+.grid > form {
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  padding: 1rem;
+}
+.list {
+  list-style: none;
+  padding: 0;
+}
+.list button {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.75rem;
+  text-align: left;
+}
+.grid form {
+  display: grid;
+  gap: 0.75rem;
+}
+.grid label {
+  display: grid;
+  gap: 0.25rem;
+  text-transform: capitalize;
+}
+.grid input,
+.grid select {
+  min-height: 2.75rem;
+  padding: 0.5rem;
+}
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,115 @@
+.form {
+  display: grid;
+  gap: 1.5rem;
+}
+.form section {
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  padding: clamp(1rem, 3vw, 1.75rem);
+}
+.form h2 {
+  font-size: 1.15rem;
+  margin: 0 0 1rem;
+}
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+.form label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 650;
+}
+.form input,
+.form textarea {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  color: inherit;
+  font: inherit;
+  padding: 0.75rem;
+}
+.form textarea {
+  min-height: 9rem;
+  resize: vertical;
+}
+.json {
+  margin-top: 1rem;
+}
+.json small,
+.help {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+.toolbar {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 1rem;
+  position: sticky;
+  top: 0.75rem;
+  z-index: 2;
+}
+.toolbar strong,
+.toolbar span {
+  display: block;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.actions button {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.65rem 1rem;
+}
+.publish {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.incomplete,
+.error {
+  color: var(--warning);
+}
+.complete,
+.notice {
+  color: var(--focus);
+}
+.state {
+  padding: 2rem;
+}
+.statusList {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+.statusList div {
+  border-top: 1px solid var(--line);
+  padding-top: 0.5rem;
+}
+.statusList dt {
+  text-transform: capitalize;
+}
+.statusList dd {
+  margin: 0.2rem 0 0;
+}
+.checkbox {
+  align-items: start;
+  display: flex !important;
+  font-weight: 700 !important;
+  grid-template-columns: auto 1fr;
+}
+.checkbox input {
+  margin-top: 0.1rem;
+}

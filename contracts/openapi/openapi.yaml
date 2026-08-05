@@ -1,0 +1,4038 @@
+openapi: 3.1.0
+info:
+  title: Joe Kuntani Platform API
+  version: 0.1.0
+  description: Versioned contract for the standalone Joe Kuntani platform.
+  license:
+    name: Proprietary - all rights reserved
+    identifier: LicenseRef-Proprietary
+servers:
+  - url: /
+    description: Relative API base; clients configure the environment origin.
+security: []
+tags:
+  - name: Health
+    description: Process and dependency health checks for deployment orchestration.
+  - name: Authentication
+    description: Staff session, MFA, and identity endpoints.
+  - name: Settings
+    description: Published public configuration and audited staff-managed drafts.
+  - name: Media
+    description: Audited media drafts, signed provider uploads, metadata and callbacks.
+  - name: Content
+    description: Approved public content and audited editorial lifecycle controls.
+  - name: Services
+    description: Ordered public services and audited content-editor management.
+  - name: Events
+    description: Audited staff event and ticket-type lifecycle management.
+  - name: Enquiries
+    description: Privacy-safe, idempotent public enquiry intake.
+  - name: Ticketing
+    description: First-party ticket inventory reservation and order lifecycle.
+  - name: CRM
+    description: Audited booking-manager CRM, enquiry pipeline and privacy operations.
+paths:
+  /api/admin/crm/organizations:
+    post:
+      operationId: createCRMOrganization
+      summary: Create an audited CRM organization
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                {
+                  schema: { $ref: "#/components/schemas/CRMOrganizationInput" },
+                },
+            },
+        }
+      responses:
+        {
+          "201":
+            {
+              description: CRM organization created,
+              content:
+                {
+                  application/json:
+                    {
+                      schema: { $ref: "#/components/schemas/CRMOrganization" },
+                    },
+                },
+            },
+          "403": { $ref: "#/components/responses/Problem" },
+          "422": { $ref: "#/components/responses/Problem" },
+        }
+  /api/admin/crm/organizations/{id}:
+    delete:
+      operationId: softDeleteCRMOrganization
+      summary: Soft-delete an audited CRM organization
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        [
+          {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          },
+        ]
+      responses:
+        {
+          "204": { description: CRM organization soft-deleted },
+          "403": { $ref: "#/components/responses/Problem" },
+          "404": { $ref: "#/components/responses/Problem" },
+        }
+  /api/admin/crm/organizations/lookup:
+    get:
+      operationId: lookupCRMOrganization
+      summary: Find an active organization by canonicalized name
+      tags: [CRM]
+      security: [{ staffSession: [] }]
+      parameters:
+        - {
+            name: name,
+            in: query,
+            required: true,
+            schema: { type: string, minLength: 2, maxLength: 160 },
+          }
+      responses:
+        "200":
+          {
+            description: Canonical organization match,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/CRMOrganization" } },
+              },
+          }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/crm/contacts:
+    post:
+      operationId: createCRMContact
+      summary: Create an audited CRM contact with normalized lookup fields
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: "#/components/schemas/CRMContactInput" } },
+            },
+        }
+      responses:
+        {
+          "201":
+            {
+              description: CRM contact created,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: "#/components/schemas/CRMContact" } },
+                },
+            },
+          "403": { $ref: "#/components/responses/Problem" },
+          "409": { $ref: "#/components/responses/Problem" },
+          "422": { $ref: "#/components/responses/Problem" },
+        }
+  /api/admin/crm/contacts/lookup:
+    get:
+      operationId: lookupCRMContact
+      summary: Find a contact by normalized email or phone
+      tags: [CRM]
+      security: [{ staffSession: [] }]
+      parameters:
+        - {
+            name: email,
+            in: query,
+            schema: { type: string, format: email, maxLength: 254 },
+          }
+        - { name: phone, in: query, schema: { type: string, maxLength: 40 } }
+      responses:
+        {
+          "200":
+            {
+              description: Matching active contact,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: "#/components/schemas/CRMContact" } },
+                },
+            },
+          "403": { $ref: "#/components/responses/Problem" },
+          "404": { $ref: "#/components/responses/Problem" },
+          "422": { $ref: "#/components/responses/Problem" },
+        }
+  /api/admin/crm/contacts/{id}:
+    delete:
+      operationId: softDeleteCRMContact
+      summary: Soft-delete an audited CRM contact
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        [
+          {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          },
+        ]
+      responses:
+        {
+          "204": { description: CRM contact soft-deleted },
+          "403": { $ref: "#/components/responses/Problem" },
+          "404": { $ref: "#/components/responses/Problem" },
+        }
+  /api/admin/crm/enquiries:
+    get:
+      operationId: listCRMEnquiries
+      summary: List and filter authorized CRM enquiries
+      tags: [CRM]
+      security: [{ staffSession: [] }]
+      parameters:
+        - {
+            name: stage,
+            in: query,
+            schema:
+              { type: array, items: { $ref: "#/components/schemas/CRMStage" } },
+          }
+        - { name: owner_id, in: query, schema: { type: string, format: uuid } }
+        - {
+            name: source,
+            in: query,
+            schema: { type: array, items: { type: string } },
+          }
+        - {
+            name: service_id,
+            in: query,
+            schema: { type: string, format: uuid },
+          }
+        - {
+            name: organization_id,
+            in: query,
+            schema: { type: string, format: uuid },
+          }
+        - { name: q, in: query, schema: { type: string, maxLength: 200 } }
+      responses:
+        "200":
+          {
+            description: Authorized CRM enquiries,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/CRMEnquiryList" } },
+              },
+          }
+        "403": { $ref: "#/components/responses/Problem" }
+    post:
+      operationId: createCRMEnquiry
+      summary: Link a public enquiry into the audited CRM
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: "#/components/schemas/CRMEnquiryInput" } },
+            },
+        }
+      responses:
+        "201":
+          {
+            description: CRM enquiry created,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/CRMEnquiry" } },
+              },
+          }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/crm/enquiries/{id}:
+    delete:
+      operationId: softDeleteCRMEnquiry
+      summary: Soft-delete a CRM enquiry while preserving audit history
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        [
+          {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          },
+        ]
+      responses:
+        {
+          "200":
+            {
+              description: Soft-deleted enquiry,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: "#/components/schemas/CRMEnquiry" } },
+                },
+            },
+          "403": { $ref: "#/components/responses/Problem" },
+          "404": { $ref: "#/components/responses/Problem" },
+        }
+  /api/admin/crm/enquiries/{id}/stage:
+    patch:
+      operationId: updateCRMEnquiryStage
+      summary: Advance an enquiry through the controlled stage pipeline
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        [
+          {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          },
+        ]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                {
+                  schema:
+                    {
+                      type: object,
+                      additionalProperties: false,
+                      required: [stage],
+                      properties:
+                        { stage: { $ref: "#/components/schemas/CRMStage" } },
+                    },
+                },
+            },
+        }
+      responses:
+        {
+          "200":
+            {
+              description: Updated enquiry,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: "#/components/schemas/CRMEnquiry" } },
+                },
+            },
+          "409": { $ref: "#/components/responses/Problem" },
+          "422": { $ref: "#/components/responses/Problem" },
+        }
+  /api/admin/crm/enquiries/{id}/owner:
+    patch:
+      operationId: assignCRMEnquiry
+      summary: Assign an enquiry to an authorized owner
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        [
+          {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          },
+        ]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                {
+                  schema:
+                    {
+                      type: object,
+                      additionalProperties: false,
+                      required: [owner_id],
+                      properties: { owner_id: { type: string, format: uuid } },
+                    },
+                },
+            },
+        }
+      responses:
+        {
+          "200":
+            {
+              description: Assigned enquiry,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: "#/components/schemas/CRMEnquiry" } },
+                },
+            },
+          "403": { $ref: "#/components/responses/Problem" },
+          "422": { $ref: "#/components/responses/Problem" },
+        }
+  /api/admin/crm/views:
+    get:
+      operationId: listCRMSavedViews
+      summary: List the current staff member's saved enquiry views
+      tags: [CRM]
+      security: [{ staffSession: [] }]
+      responses:
+        {
+          "200":
+            {
+              description: Current staff saved views,
+              content:
+                {
+                  application/json:
+                    {
+                      schema:
+                        {
+                          type: object,
+                          additionalProperties: false,
+                          required: [items],
+                          properties:
+                            {
+                              items:
+                                {
+                                  type: array,
+                                  items:
+                                    {
+                                      $ref: "#/components/schemas/CRMSavedView",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+          "403": { $ref: "#/components/responses/Problem" },
+        }
+    post:
+      operationId: createCRMSavedView
+      summary: Save the current enquiry filters for the signed-in staff member
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                {
+                  schema:
+                    {
+                      type: object,
+                      required: [name, filter],
+                      properties:
+                        {
+                          name: { type: string, minLength: 1, maxLength: 120 },
+                          filter: { type: object, additionalProperties: true },
+                        },
+                    },
+                },
+            },
+        }
+      responses:
+        {
+          "201":
+            {
+              description: Saved view,
+              content:
+                {
+                  application/json:
+                    { schema: { $ref: "#/components/schemas/CRMSavedView" } },
+                },
+            },
+          "422": { $ref: "#/components/responses/Problem" },
+        }
+  /api/admin/crm/contacts/{id}/export:
+    get:
+      operationId: exportCRMContactPrivacyData
+      summary: Export one contact's personal data with an audit record
+      tags: [CRM]
+      security: [{ staffSession: [] }]
+      parameters:
+        [
+          {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          },
+        ]
+      responses:
+        {
+          "200":
+            {
+              description: Audited privacy export,
+              content: { application/json: { schema: { type: object } } },
+            },
+          "403": { $ref: "#/components/responses/Problem" },
+        }
+  /api/admin/crm/contacts/{id}/privacy-delete:
+    post:
+      operationId: deleteCRMContactPrivacyData
+      summary: Anonymize one contact and related CRM personal data
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        [
+          {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          },
+        ]
+      responses:
+        {
+          "200":
+            {
+              description: Anonymization counts,
+              content: { application/json: { schema: { type: object } } },
+            },
+          "403": { $ref: "#/components/responses/Problem" },
+        }
+  /api/admin/crm/enquiries/{id}/workflow:
+    get:
+      operationId: getCRMEnquiryWorkflow
+      summary: Read internal notes, tasks, immutable stage history and proposal attachments
+      tags: [CRM]
+      security: [{ staffSession: [] }]
+      parameters:
+        [
+          {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          },
+        ]
+      responses:
+        "200":
+          {
+            description: Private CRM workflow,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/CRMWorkflow" } },
+              },
+          }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/crm/enquiries/{id}/notes:
+    post:
+      operationId: addCRMEnquiryNote
+      summary: Add an audited internal enquiry note
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        [
+          {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          },
+        ]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: "#/components/schemas/CRMNoteInput" } },
+            },
+        }
+      responses:
+        "201":
+          {
+            description: Note created,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/CRMNote" } },
+              },
+          }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/crm/enquiries/{id}/tasks:
+    post:
+      operationId: addCRMEnquiryTask
+      summary: Add an assigned prioritized follow-up task and queue an internal notification
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        [
+          {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          },
+        ]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: "#/components/schemas/CRMTaskInput" } },
+            },
+        }
+      responses:
+        "201":
+          {
+            description: Task created,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/CRMTask" } },
+              },
+          }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/crm/enquiries/{id}/tasks/{taskID}/complete:
+    post:
+      operationId: completeCRMEnquiryTask
+      summary: Complete an open follow-up task exactly once
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+        - {
+            name: taskID,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+      responses:
+        "200":
+          {
+            description: Completed task,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/CRMTask" } },
+              },
+          }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/crm/enquiries/{id}/attachments:
+    post:
+      operationId: addCRMProposalAttachment
+      summary: Reference a protected ready proposal document
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        [
+          {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          },
+        ]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: "#/components/schemas/CRMAttachmentInput" } },
+            },
+        }
+      responses:
+        "201":
+          {
+            description: Protected attachment reference created,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/CRMAttachment" } },
+              },
+          }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/crm/enquiries/{id}/attachments/{attachmentID}/access:
+    post:
+      operationId: accessCRMProposalAttachment
+      summary: Audit and issue a five-minute private proposal download URL
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+        - {
+            name: attachmentID,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+      responses:
+        "200":
+          {
+            description: Expiring private access,
+            content:
+              {
+                application/json:
+                  {
+                    schema:
+                      { $ref: "#/components/schemas/CRMAttachmentAccess" },
+                  },
+              },
+          }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/crm/enquiries/{id}/deliveries:
+    get:
+      operationId: listCRMNotificationDeliveries
+      summary: Read privacy-safe internal notification delivery status
+      tags: [CRM]
+      security: [{ staffSession: [] }]
+      parameters:
+        [
+          {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          },
+        ]
+      responses:
+        "200":
+          {
+            description: Delivery status,
+            content:
+              {
+                application/json:
+                  {
+                    schema:
+                      {
+                        type: object,
+                        additionalProperties: false,
+                        required: [items],
+                        properties:
+                          {
+                            items:
+                              {
+                                type: array,
+                                items:
+                                  {
+                                    $ref: "#/components/schemas/CRMNotificationDelivery",
+                                  },
+                              },
+                          },
+                      },
+                  },
+              },
+          }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/crm/enquiries/{id}/deliveries/{deliveryID}/retry:
+    post:
+      operationId: retryCRMNotificationDelivery
+      summary: Administrator-only audited retry of a dead-letter notification
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+        - {
+            name: deliveryID,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+      responses:
+        "204": { description: Delivery requeued }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/crm/proposal-download:
+    get:
+      operationId: downloadCRMProposalAttachment
+      summary: Resolve an authenticated short-lived proposal attachment URL
+      tags: [CRM]
+      security: [{ staffSession: [] }]
+      parameters:
+        - {
+            name: asset,
+            in: query,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+        - {
+            name: expires,
+            in: query,
+            required: true,
+            schema: { type: integer, format: int64 },
+          }
+        - {
+            name: signature,
+            in: query,
+            required: true,
+            schema: { type: string, minLength: 43, maxLength: 64 },
+          }
+      responses:
+        "200":
+          {
+            description: Proxied private proposal document,
+            content:
+              {
+                application/pdf: { schema: { type: string, format: binary } },
+                application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+                  { schema: { type: string, format: binary } },
+              },
+          }
+        "403": { $ref: "#/components/responses/Problem" }
+  /api/public/ticket-orders:
+    post:
+      operationId: createPublicTicketOrder
+      summary: Create an idempotent pending order with a short atomic inventory hold
+      tags: [Ticketing]
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, minLength: 16, maxLength: 128 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateTicketOrderRequest" }
+      responses:
+        "201":
+          description: Pending order and inventory hold created, or the original receipt replayed
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketOrderReceipt" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "415": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/public/ticket-orders/{reference}/checkout:
+    post:
+      operationId: createTicketCheckout
+      summary: Create or replay a provider-neutral checkout session for an active held order
+      tags: [Ticketing]
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          schema: { type: string, pattern: "^JKT-[0-9]{4}-[A-Z0-9]{8}$" }
+        - name: Order-Access-Key
+          in: header
+          required: true
+          schema: { type: string, minLength: 16, maxLength: 128 }
+      responses:
+        "200":
+          description: Credential-free HTTPS payment session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CheckoutSession" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/public/ticket-orders/{reference}:
+    get:
+      operationId: getSecureTicketConfirmation
+      summary: Read paid tickets using a possession-bound expiring access token
+      tags: [Ticketing]
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          schema: { type: string, pattern: "^JKT-[0-9]{4}-[A-Z0-9]{8}$" }
+        - name: Order-Access-Key
+          in: header
+          required: true
+          schema: { type: string, minLength: 16, maxLength: 512 }
+      responses:
+        "200":
+          description: Masked order and one signed bearer per paid admission
+          headers:
+            Cache-Control:
+              schema: { type: string, const: "private, no-store" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketConfirmation" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/webhooks/payments/{provider}:
+    post:
+      operationId: receivePaymentWebhook
+      summary: Verify and idempotently apply a raw provider-signed payment event
+      tags: [Ticketing]
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 100 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "204": { description: Verified event processed or already processed }
+        "401": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/public/enquiries:
+    post:
+      operationId: submitPublicEnquiry
+      summary: Submit an enquiry and atomically queue acknowledgement and internal alert
+      tags: [Enquiries]
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, minLength: 16, maxLength: 128 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EnquirySubmission" }
+      responses:
+        "201":
+          description: Stored once; replaying the idempotency key returns the same reference
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EnquiryReceipt" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "415": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/public/enquiries/challenge:
+    get:
+      operationId: getPublicEnquiryChallenge
+      summary: Read the browser CAPTCHA configuration for public enquiries
+      tags: [Enquiries]
+      responses:
+        "200":
+          description: CAPTCHA challenge configuration; the site key is public
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EnquiryChallenge" }
+        "405": { $ref: "#/components/responses/Problem" }
+  /api/public/services:
+    get:
+      operationId: listPublicServices
+      summary: List active approved services in display order
+      tags: [Services]
+      responses:
+        "200":
+          description: Active services ordered by display position
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServiceList" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/public/services/{slug}:
+    get:
+      operationId: getPublicService
+      summary: Read one active approved service by immutable slug
+      tags: [Services]
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            {
+              type: string,
+              pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              maxLength: 120,
+            }
+      responses:
+        "200":
+          description: Active service
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Service" }
+        "404": { $ref: "#/components/responses/Problem" }
+  /api/admin/services:
+    get:
+      operationId: listAdminServices
+      summary: List active and inactive services for content management
+      tags: [Services]
+      security: [{ staffSession: [] }]
+      responses:
+        "200":
+          description: All services ordered by display position
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServiceList" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+    post:
+      operationId: createService
+      summary: Create and audit a service with immutable external identifiers
+      tags: [Services]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServiceInput" }
+      responses:
+        "201":
+          description: Created service
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Service" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/services/order:
+    put:
+      operationId: reorderServices
+      summary: Atomically replace and audit the complete service display order
+      tags: [Services]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [items]
+              properties:
+                items:
+                  {
+                    type: array,
+                    minItems: 1,
+                    maxItems: 100,
+                    items:
+                      {
+                        type: object,
+                        additionalProperties: false,
+                        required: [id, version],
+                        properties:
+                          {
+                            id: { type: string, format: uuid },
+                            version:
+                              { type: integer, format: int64, minimum: 1 },
+                          },
+                      },
+                  }
+      responses:
+        "204": { description: Complete display order replaced }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/services/{serviceID}:
+    parameters:
+      - name: serviceID
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      operationId: updateService
+      summary: Update audited service content without changing its UUID or slug
+      tags: [Services]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServiceUpdateInput" }
+      responses:
+        "200":
+          description: Updated service
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Service" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+    delete:
+      operationId: retireService
+      summary: Idempotently retire a service while preserving referenced history
+      tags: [Services]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - name: If-Match
+          in: header
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "200":
+          description: Retired service, or the existing retirement on a safe retry
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Service" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/services/{serviceID}/active:
+    patch:
+      operationId: setServiceActive
+      summary: Publish or unpublish a service and audit the lifecycle transition
+      tags: [Services]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - name: serviceID
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [active, version]
+              properties:
+                active: { type: boolean }
+                version: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Service lifecycle state updated }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+  /api/public/settings:
+    get:
+      operationId: getPublicSettings
+      summary: Read the latest approved, published and public-safe global settings
+      tags: [Settings]
+      responses:
+        "200":
+          description: Published settings; integration and team fields are structurally excluded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicSettings" }
+        "404": { $ref: "#/components/responses/Problem" }
+  /api/admin/settings:
+    get:
+      operationId: getSettingsDraft
+      summary: Read the settings draft permitted for the current staff role
+      tags: [Settings]
+      security: [{ staffSession: [] }]
+      responses:
+        "200":
+          description: Settings draft. Secret values are never returned.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminSettings" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+    put:
+      operationId: updateSettingsDraft
+      summary: Optimistically update and audit a settings draft
+      tags: [Settings]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateSettingsRequest" }
+      responses:
+        "200":
+          description: Updated draft
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SettingsDocument" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/settings/publish:
+    post:
+      operationId: publishSettings
+      summary: Publish an approved complete draft (Administrator only)
+      tags: [Settings]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [version]
+              properties:
+                version: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "200":
+          description: Published settings document
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SettingsDocument" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/auth/login:
+    post:
+      operationId: loginStaff
+      summary: Start a staff session with password verification
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Password accepted; complete MFA when indicated
+          headers:
+            Set-Cookie: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+  /api/admin/auth/mfa/verify:
+    post:
+      operationId: verifyStaffMFA
+      summary: Verify TOTP and rotate the staff session token
+      tags: [Authentication]
+      security: [{ staffSession: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MFAVerificationRequest" }
+      responses:
+        "200":
+          description: MFA verified and session rotated
+          headers:
+            Set-Cookie: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthenticatedResponse" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+  /api/admin/auth/me:
+    get:
+      operationId: getStaffSession
+      summary: Read the authenticated staff principal
+      tags: [Authentication]
+      security: [{ staffSession: [] }]
+      responses:
+        "200":
+          description: Authenticated principal
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StaffPrincipal" }
+        "401": { $ref: "#/components/responses/Problem" }
+  /api/admin/auth/logout:
+    post:
+      operationId: logoutStaff
+      summary: Revoke the current staff session
+      tags: [Authentication]
+      security: [{ staffSession: [], csrfToken: [] }]
+      responses:
+        "204": { description: Session revoked and cookies expired }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+  /api/admin/auth/users/{userID}/disable:
+    post:
+      operationId: disableStaffUser
+      summary: Disable a staff user and atomically revoke every active session
+      description: Requires the server-side users:manage permission (Administrator only).
+      tags: [Authentication]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - name: userID
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: User disabled and sessions revoked }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+  /api/admin/media:
+    get:
+      operationId: listMediaAssets
+      summary: List safe media metadata and usage counts
+      tags: [Media]
+      security: [{ staffSession: [] }]
+      responses:
+        "200":
+          description: Media assets visible to content editors
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [assets]
+                properties:
+                  assets:
+                    {
+                      type: array,
+                      items: { $ref: "#/components/schemas/MediaAsset" },
+                    }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+  /api/admin/media/uploads:
+    post:
+      operationId: requestMediaUpload
+      summary: Save a media draft and request provider-safe signed upload parameters
+      tags: [Media]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MediaUploadRequest" }
+      responses:
+        "201":
+          description: Draft saved and signed upload available
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaUploadResponse" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "503":
+          description: Provider unavailable; audited draft preserved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaDraftResponse" }
+  /api/admin/media/{assetID}:
+    parameters:
+      - name: assetID
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      operationId: updateMediaMetadata
+      summary: Update audited descriptive metadata and approved transformations
+      tags: [Media]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MediaMetadataRequest" }
+      responses:
+        "200":
+          description: Updated safe asset
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaAsset" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    delete:
+      operationId: deleteMediaAsset
+      summary: Delete an unreferenced provider asset and audit the action
+      tags: [Media]
+      security: [{ staffSession: [], csrfToken: [] }]
+      responses:
+        "204": { description: Unreferenced asset deleted }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/admin/media/{assetID}/upload:
+    post:
+      operationId: retryMediaUpload
+      summary: Retry signing a preserved media draft
+      tags: [Media]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - name: assetID
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Retry signed upload available
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaUploadResponse" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "503":
+          description: Provider unavailable; existing draft preserved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MediaDraftResponse" }
+  /api/media/callbacks/cloudinary:
+    post:
+      operationId: completeCloudinaryUpload
+      summary: Verify and atomically apply a Cloudinary completion notification
+      tags: [Media]
+      parameters:
+        - {
+            name: X-Cld-Signature,
+            in: header,
+            required: true,
+            schema: { type: string },
+          }
+        - {
+            name: X-Cld-Timestamp,
+            in: header,
+            required: true,
+            schema: { type: string, pattern: "^[0-9]+$" },
+          }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CloudinaryNotification" }
+      responses:
+        "204": { description: Verified completion applied exactly once }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+  /api/public/content/{kind}:
+    get:
+      operationId: listPublishedContent
+      summary: List content whose approved publication window is active
+      tags: [Content]
+      parameters:
+        - $ref: "#/components/parameters/ContentKind"
+        - { name: category, in: query, schema: { type: string, maxLength: 80 } }
+        - { name: tag, in: query, schema: { type: string, maxLength: 120 } }
+        - { name: featured, in: query, schema: { type: boolean } }
+      responses:
+        "200":
+          description: Approved public content only
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContentList" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/public/content/{kind}/{slug}:
+    get:
+      operationId: getPublishedContentBySlug
+      summary: Read an approved published page or portfolio item by immutable slug
+      tags: [Content]
+      parameters:
+        - $ref: "#/components/parameters/ContentKind"
+        - name: slug
+          in: path
+          required: true
+          schema:
+            {
+              type: string,
+              pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              maxLength: 120,
+            }
+      responses:
+        "200":
+          description: Published item
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContentItem" }
+        "404": { $ref: "#/components/responses/Problem" }
+  /api/admin/content/{kind}:
+    parameters:
+      - $ref: "#/components/parameters/ContentKind"
+    get:
+      operationId: listAdminContent
+      summary: List drafts and publication state for one content kind
+      tags: [Content]
+      security: [{ staffSession: [] }]
+      responses:
+        "200":
+          description: Editorial records
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContentList" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+    post:
+      operationId: createContentDraft
+      summary: Create an audited content draft with immutable identity
+      tags: [Content]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContentInput" }
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContentItem" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/content/{kind}/{contentID}:
+    parameters:
+      - $ref: "#/components/parameters/ContentKind"
+      - $ref: "#/components/parameters/ContentID"
+    put:
+      operationId: updateContentDraft
+      summary: Update editorial fields while preserving immutable UUID and slug
+      tags: [Content]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContentUpdateInput" }
+      responses:
+        "200":
+          description: Draft updated and approval revoked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContentItem" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+    delete:
+      operationId: deleteContentDraft
+      summary: Delete an unpublished draft with an atomic audit record
+      tags: [Content]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - name: revision
+          in: query
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Draft deleted }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+  /api/admin/content/{kind}/{contentID}/preview:
+    get:
+      operationId: previewContent
+      summary: Read a private no-store editorial preview
+      tags: [Content]
+      security: [{ staffSession: [] }]
+      parameters:
+        - $ref: "#/components/parameters/ContentKind"
+        - $ref: "#/components/parameters/ContentID"
+      responses:
+        "200":
+          description: Private preview
+          headers:
+            Cache-Control:
+              { schema: { type: string, const: "private, no-store" } }
+            X-Robots-Tag:
+              { schema: { type: string, const: "noindex, nofollow" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContentItem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+  /api/admin/content/{kind}/{contentID}/approval:
+    patch:
+      operationId: setContentApproval
+      summary: Set content approval state (administrator only)
+      tags: [Content]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - $ref: "#/components/parameters/ContentKind"
+        - $ref: "#/components/parameters/ContentID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContentApprovalRequest" }
+      responses:
+        "200":
+          description: Approval state updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContentItem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+  /api/admin/content/{kind}/{contentID}/publication:
+    patch:
+      operationId: setContentPublication
+      summary: Publish, schedule, or unpublish approved content (administrator only)
+      tags: [Content]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - $ref: "#/components/parameters/ContentKind"
+        - $ref: "#/components/parameters/ContentID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContentPublicationRequest" }
+      responses:
+        "200":
+          description: Publication state updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContentItem" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/events:
+    get:
+      operationId: listAdminEvents
+      summary: List event drafts and lifecycle state
+      tags: [Events]
+      security: [{ staffSession: [] }]
+      responses:
+        "200":
+          description: Events ordered by start time
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventList" }
+        "4XX": { $ref: "#/components/responses/Problem" }
+    post:
+      operationId: createAdminEvent
+      summary: Create an audited private event draft
+      tags: [Events]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EventInput" }
+      responses:
+        "201":
+          description: Event draft created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/public/events:
+    get:
+      operationId: listPublicEvents
+      summary: List published events with live ticket availability
+      tags: [Events]
+      responses:
+        "200":
+          description: Published events ordered by start time
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicEventList" }
+        "4XX": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/public/events/{slug}:
+    get:
+      operationId: getPublicEvent
+      summary: Read one published event and its live ticket availability
+      tags: [Events]
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            {
+              type: string,
+              pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              maxLength: 160,
+            }
+      responses:
+        "200":
+          description: Published event
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicEvent" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/admin/events/{eventID}:
+    put:
+      operationId: updateAdminEvent
+      summary: Update event content without changing identity or lifecycle state
+      tags: [Events]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters: [{ $ref: "#/components/parameters/EventID" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EventInput" }
+      responses:
+        "200":
+          description: Event updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/events/{eventID}/preview:
+    get:
+      operationId: previewAdminEvent
+      summary: Preview one event and its ticket types without caching
+      tags: [Events]
+      security: [{ staffSession: [] }]
+      parameters: [{ $ref: "#/components/parameters/EventID" }]
+      responses:
+        "200":
+          description: Protected event preview
+          headers:
+            Cache-Control:
+              schema: { type: string, const: "private, no-store" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventPreview" }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/events/{eventID}/publish:
+    post:
+      operationId: publishAdminEvent
+      summary: Publish a valid future event with ticket inventory
+      tags: [Events]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters: [{ $ref: "#/components/parameters/EventID" }]
+      responses:
+        "200":
+          description: Event published
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/events/{eventID}/cancel:
+    post:
+      operationId: cancelAdminEvent
+      summary: Cancel a published event with an audit record
+      tags: [Events]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters: [{ $ref: "#/components/parameters/EventID" }]
+      responses:
+        "200":
+          description: Event cancelled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Event" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/events/{eventID}/tickets:
+    post:
+      operationId: createAdminTicketType
+      summary: Add a ticket type within event capacity
+      tags: [Events]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters: [{ $ref: "#/components/parameters/EventID" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TicketTypeInput" }
+      responses:
+        "201":
+          description: Ticket type created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketType" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/events/{eventID}/tickets/{ticketTypeID}:
+    put:
+      operationId: updateAdminTicketType
+      summary: Update a ticket type without changing server-owned quantities
+      tags: [Events]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/EventID" }
+        - { $ref: "#/components/parameters/TicketTypeID" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TicketTypeInput" }
+      responses:
+        "200":
+          description: Ticket type updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketType" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/events/{eventID}/tickets/{ticketTypeID}/{saleAction}:
+    post:
+      operationId: setAdminTicketTypeSaleState
+      summary: Pause or resume sales for a published event ticket type
+      tags: [Events]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/EventID" }
+        - { $ref: "#/components/parameters/TicketTypeID" }
+        - name: saleAction
+          in: path
+          required: true
+          schema: { type: string, enum: [pause, resume] }
+      responses:
+        "200":
+          description: Ticket sale state updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketType" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /health/live:
+    get:
+      operationId: getLiveness
+      summary: Confirm that the API process is alive
+      tags: [Health]
+      responses:
+        "200":
+          description: API process is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "4XX":
+          description: Client request could not be processed
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /health/ready:
+    get:
+      operationId: getReadiness
+      summary: Confirm that the API can accept traffic
+      tags: [Health]
+      responses:
+        "200":
+          description: API is ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: A required dependency is unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "4XX":
+          description: Client request could not be processed
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /api/admin/bookings:
+    get:
+      operationId: listAdminBookings
+      summary: List bookings intersecting a UTC range in the configured business timezone
+      tags: [CRM]
+      security: [{ staffSession: [] }]
+      parameters:
+        - {
+            name: from,
+            in: query,
+            required: true,
+            schema: { type: string, format: date-time },
+          }
+        - {
+            name: to,
+            in: query,
+            required: true,
+            schema: { type: string, format: date-time },
+          }
+        - {
+            name: status,
+            in: query,
+            schema: { $ref: "#/components/schemas/BookingStatus" },
+          }
+      responses:
+        "200":
+          {
+            description: Booking calendar,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/BookingCalendar" } },
+              },
+          }
+        "4XX": { $ref: "#/components/responses/Problem" }
+    post:
+      operationId: createAdminBooking
+      summary: Create an audited booking and return overlap warnings
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: "#/components/schemas/BookingCreate" } },
+            },
+        }
+      responses:
+        "201":
+          {
+            description: Booking created,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/BookingResult" } },
+              },
+          }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/bookings/{bookingID}:
+    patch:
+      operationId: updateAdminBooking
+      summary: Update lifecycle or schedule with optimistic concurrency and overlap warnings
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        [
+          {
+            name: bookingID,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          },
+        ]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: "#/components/schemas/BookingUpdate" } },
+            },
+        }
+      responses:
+        "200":
+          {
+            description: Booking updated,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/BookingResult" } },
+              },
+          }
+        "4XX": { $ref: "#/components/responses/Problem" }
+    delete:
+      operationId: deleteAdminBooking
+      summary: Soft-delete a cancelled booking
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - {
+            name: bookingID,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+        - {
+            name: version,
+            in: query,
+            required: true,
+            schema: { type: integer, format: int64, minimum: 1 },
+          }
+      responses:
+        "204": { description: Booking soft-deleted }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/bookings/calendar.ics:
+    get:
+      operationId: exportAdminBookingsICal
+      summary: Export non-cancelled bookings as a private iCalendar
+      tags: [CRM]
+      security: [{ staffSession: [] }]
+      parameters:
+        - {
+            name: from,
+            in: query,
+            required: true,
+            schema: { type: string, format: date-time },
+          }
+        - {
+            name: to,
+            in: query,
+            required: true,
+            schema: { type: string, format: date-time },
+          }
+      responses:
+        "200":
+          {
+            description: iCalendar export,
+            content: { text/calendar: { schema: { type: string } } },
+          }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/campaigns:
+    get:
+      operationId: listAdminCampaigns
+      summary: List role-authorized campaigns and financial records
+      tags: [CRM]
+      security: [{ staffSession: [] }]
+      parameters:
+        - {
+            name: status,
+            in: query,
+            schema: { $ref: "#/components/schemas/CampaignStatus" },
+          }
+        - {
+            name: organization_id,
+            in: query,
+            schema: { type: string, format: uuid },
+          }
+        - { name: platform, in: query, schema: { type: string, maxLength: 80 } }
+        - { name: include_deleted, in: query, schema: { type: boolean } }
+      responses:
+        "200":
+          description: Campaign list
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CampaignList" }
+        "4XX": { $ref: "#/components/responses/Problem" }
+    post:
+      operationId: createAdminCampaign
+      summary: Create an audited campaign linked to CRM
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CampaignInput" }
+      responses:
+        "201":
+          description: Campaign created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Campaign" }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/campaigns/{campaignID}:
+    parameters:
+      - {
+          name: campaignID,
+          in: path,
+          required: true,
+          schema: { type: string, format: uuid },
+        }
+    get:
+      operationId: getAdminCampaign
+      summary: Get a campaign with its deliverables
+      tags: [CRM]
+      security: [{ staffSession: [] }]
+      responses:
+        "200":
+          description: Campaign and its deliverables
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CampaignDetail" }
+        "4XX": { $ref: "#/components/responses/Problem" }
+    patch:
+      operationId: updateAdminCampaign
+      summary: Update campaign lifecycle, finances, results, and assets
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CampaignInput" }
+      responses:
+        "200":
+          description: Campaign updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Campaign" }
+        "4XX": { $ref: "#/components/responses/Problem" }
+    delete:
+      operationId: deleteAdminCampaign
+      summary: Soft-delete an audited campaign
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      responses:
+        "204": { description: Campaign soft-deleted }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/campaigns/{campaignID}/deliverables:
+    parameters:
+      - {
+          name: campaignID,
+          in: path,
+          required: true,
+          schema: { type: string, format: uuid },
+        }
+    get:
+      operationId: listAdminCampaignDeliverables
+      summary: List the campaign deliverables checklist
+      tags: [CRM]
+      security: [{ staffSession: [] }]
+      responses:
+        "200":
+          description: Campaign deliverables
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CampaignDeliverableList" }
+        "4XX": { $ref: "#/components/responses/Problem" }
+    post:
+      operationId: createAdminCampaignDeliverable
+      summary: Add an audited campaign deliverable
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CampaignDeliverableInput" }
+      responses:
+        "201":
+          description: Deliverable created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CampaignDeliverable" }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/campaigns/{campaignID}/deliverables/{deliverableID}:
+    patch:
+      operationId: updateAdminCampaignDeliverable
+      summary: Update deliverable workflow, approval, assets, or publication
+      tags: [CRM]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - {
+            name: campaignID,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+        - {
+            name: deliverableID,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CampaignDeliverableInput" }
+      responses:
+        "200":
+          description: Deliverable updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CampaignDeliverable" }
+        "4XX": { $ref: "#/components/responses/Problem" }
+  /api/admin/ticket-deliveries/dead-letters:
+    get:
+      operationId: listTicketDeliveryDeadLetters
+      summary: List privacy-safe failed ticket deliveries for operators
+      tags: [Ticketing]
+      security: [{ staffSession: [] }]
+      responses:
+        "200":
+          description: Most recent dead-letter deliveries, without buyer PII
+          content:
+            application/json:
+              schema:
+                { $ref: "#/components/schemas/TicketDeliveryDeadLetterList" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+components:
+  securitySchemes:
+    staffSession:
+      type: apiKey
+      in: cookie
+      name: jk_admin_session
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+  responses:
+    Problem:
+      description: Request rejected
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+  parameters:
+    ContentKind:
+      name: kind
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [page, portfolio, video, press, testimonial]
+    ContentID:
+      name: contentID
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    EventID:
+      name: eventID
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    TicketTypeID:
+      name: ticketTypeID
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    CRMOrganizationInput:
+      type: object
+      additionalProperties: false
+      required: [name, website, country_code]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 160 }
+        website: { type: string, pattern: "^$|^https://", maxLength: 2048 }
+        country_code: { type: string, pattern: "^$|^[A-Z]{2}$" }
+    CRMOrganization:
+      allOf:
+        - { $ref: "#/components/schemas/CRMOrganizationInput" }
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string, format: uuid }
+            deleted_at: { type: string, format: date-time }
+    CRMContactInput:
+      type: object
+      additionalProperties: false
+      required: [organization_id, name, email, phone, role, country_code]
+      properties:
+        organization_id:
+          {
+            type: string,
+            pattern: "^$|^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          }
+        name: { type: string, minLength: 2, maxLength: 120 }
+        email: { type: string, maxLength: 254 }
+        phone: { type: string, maxLength: 20 }
+        role: { type: string, maxLength: 120 }
+        country_code: { type: string, pattern: "^$|^[A-Z]{2}$" }
+    CRMContact:
+      allOf:
+        - { $ref: "#/components/schemas/CRMContactInput" }
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string, format: uuid }
+            deleted_at: { type: string, format: date-time }
+    CRMStage:
+      type: string
+      enum:
+        [
+          new,
+          reviewing,
+          qualified,
+          call_scheduled,
+          proposal_sent,
+          negotiation,
+          won,
+          lost,
+          archived,
+        ]
+    CRMEnquiryInput:
+      type: object
+      additionalProperties: false
+      required:
+        [source_enquiry_id, contact_id, organization_id, owner_id, summary]
+      properties:
+        source_enquiry_id: { type: string, format: uuid }
+        contact_id: { type: string, format: uuid }
+        organization_id: { type: string, pattern: "^$|^[0-9a-f-]{36}$" }
+        owner_id: { type: string, pattern: "^$|^[0-9a-f-]{36}$" }
+        summary: { type: string, maxLength: 2000 }
+    CRMEnquiry:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          source_enquiry_id,
+          reference,
+          contact_id,
+          organization_id,
+          service_id,
+          owner_id,
+          stage,
+          source,
+          enquiry_type,
+          summary,
+          created_at,
+          updated_at,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        source_enquiry_id: { type: string, format: uuid }
+        reference: { type: string, minLength: 1, maxLength: 40 }
+        contact_id: { type: string }
+        organization_id: { type: string }
+        service_id: { type: string, format: uuid }
+        owner_id: { type: string }
+        stage: { $ref: "#/components/schemas/CRMStage" }
+        source: { type: string, minLength: 1, maxLength: 80 }
+        enquiry_type: { type: string, minLength: 1, maxLength: 80 }
+        summary: { type: string, maxLength: 2000 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        deleted_at: { type: string, format: date-time }
+    CRMEnquiryList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          { type: array, items: { $ref: "#/components/schemas/CRMEnquiry" } }
+    CRMSavedView:
+      type: object
+      additionalProperties: false
+      required: [id, owner_id, name, filter]
+      properties:
+        id: { type: string, format: uuid }
+        owner_id: { type: string, pattern: "^[0-9a-f]{24}$" }
+        name: { type: string, minLength: 1, maxLength: 120 }
+        filter: { type: object, additionalProperties: true }
+    CRMNoteInput:
+      type: object
+      additionalProperties: false
+      required: [body]
+      properties: { body: { type: string, minLength: 1, maxLength: 4000 } }
+    CRMNote:
+      type: object
+      additionalProperties: false
+      required: [id, enquiry_id, author_id, body, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        enquiry_id: { type: string, format: uuid }
+        author_id: { type: string, pattern: "^[0-9a-f]{24}$" }
+        body: { type: string, minLength: 1, maxLength: 4000 }
+        created_at: { type: string, format: date-time }
+    CRMTaskInput:
+      type: object
+      additionalProperties: false
+      required: [title, assignee_id, priority, due_at]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        assignee_id: { type: string, pattern: "^[0-9a-f]{24}$" }
+        priority: { type: string, enum: [low, normal, high, urgent] }
+        due_at: { type: string, format: date-time }
+    CRMTask:
+      allOf:
+        - { $ref: "#/components/schemas/CRMTaskInput" }
+        - type: object
+          additionalProperties: false
+          required: [id, enquiry_id, status, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            enquiry_id: { type: string, format: uuid }
+            status: { type: string, enum: [open, done] }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    CRMStageHistory:
+      type: object
+      additionalProperties: false
+      required: [id, enquiry_id, actor_id, from, to, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        enquiry_id: { type: string, format: uuid }
+        actor_id: { type: string, pattern: "^[0-9a-f]{24}$" }
+        from:
+          {
+            type: string,
+            enum:
+              [
+                "",
+                new,
+                reviewing,
+                qualified,
+                call_scheduled,
+                proposal_sent,
+                negotiation,
+                won,
+                lost,
+                archived,
+              ],
+          }
+        to: { $ref: "#/components/schemas/CRMStage" }
+        created_at: { type: string, format: date-time }
+    CRMAttachmentInput:
+      type: object
+      additionalProperties: false
+      required: [asset_id, label]
+      properties:
+        asset_id: { type: string, format: uuid }
+        label: { type: string, minLength: 1, maxLength: 200 }
+    CRMAttachment:
+      allOf:
+        - { $ref: "#/components/schemas/CRMAttachmentInput" }
+        - type: object
+          additionalProperties: false
+          required: [id, enquiry_id, added_by, created_at]
+          properties:
+            id: { type: string, format: uuid }
+            enquiry_id: { type: string, format: uuid }
+            added_by: { type: string, pattern: "^[0-9a-f]{24}$" }
+            created_at: { type: string, format: date-time }
+    CRMAttachmentAccess:
+      type: object
+      additionalProperties: false
+      required: [attachment, url, expires_at]
+      properties:
+        attachment: { $ref: "#/components/schemas/CRMAttachment" }
+        url: { type: string, format: uri, pattern: "^https://" }
+        expires_at: { type: string, format: date-time }
+    CRMNotificationDelivery:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          enquiry_id,
+          kind,
+          status,
+          attempts,
+          next_attempt_at,
+          created_at,
+          updated_at,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        enquiry_id: { type: string, format: uuid }
+        kind:
+          {
+            type: string,
+            enum: [task.assigned, task.overdue, enquiry.stage_changed],
+          }
+        status:
+          {
+            type: string,
+            enum: [pending, processing, sent, cancelled, failed, dead_letter],
+          }
+        attempts: { type: integer, minimum: 0, maximum: 8 }
+        next_attempt_at: { type: string, format: date-time }
+        last_error_code: { type: string, maxLength: 80 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    CRMWorkflow:
+      type: object
+      additionalProperties: false
+      required: [notes, tasks, stage_history, attachments]
+      properties:
+        notes: { type: array, items: { $ref: "#/components/schemas/CRMNote" } }
+        tasks: { type: array, items: { $ref: "#/components/schemas/CRMTask" } }
+        stage_history:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CRMStageHistory" },
+          }
+        attachments:
+          { type: array, items: { $ref: "#/components/schemas/CRMAttachment" } }
+    TicketOrderSelection:
+      type: object
+      additionalProperties: false
+      required: [ticket_type_id, quantity]
+      properties:
+        ticket_type_id: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1, maximum: 1000 }
+    CreateTicketOrderRequest:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          event_id,
+          buyer_name,
+          buyer_email,
+          buyer_phone,
+          terms_accepted,
+          terms_version,
+          items,
+        ]
+      properties:
+        event_id: { type: string, format: uuid }
+        buyer_name: { type: string, minLength: 2, maxLength: 160 }
+        buyer_email: { type: string, format: email, maxLength: 254 }
+        buyer_phone: { type: string, maxLength: 40 }
+        terms_accepted: { type: boolean, const: true }
+        terms_version: { type: string, const: "2026-08-05" }
+        items:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items: { $ref: "#/components/schemas/TicketOrderSelection" }
+    TicketOrderReceipt:
+      type: object
+      additionalProperties: false
+      required: [reference, status, currency, total, hold_expires_at]
+      properties:
+        reference: { type: string, pattern: "^JKT-[0-9]{4}-[A-Z0-9]{8}$" }
+        status:
+          type: string
+          enum:
+            [
+              pending,
+              awaiting_payment,
+              paid,
+              payment_failed,
+              expired,
+              cancelled,
+              reconciliation_required,
+            ]
+        currency: { type: string, enum: [GHS, USD, EUR, GBP] }
+        total: { type: string, pattern: "^(0|[1-9][0-9]{0,14})\\.[0-9]{2}$" }
+        hold_expires_at: { type: string, format: date-time }
+    CheckoutSession:
+      type: object
+      additionalProperties: false
+      required: [checkout_url, expires_at]
+      properties:
+        checkout_url: { type: string, format: uri, pattern: "^https://" }
+        expires_at: { type: string, format: date-time }
+    IssuedTicket:
+      type: object
+      additionalProperties: false
+      required: [id, ticket_type_id, status, qr_bearer]
+      properties:
+        id: { type: string, format: uuid }
+        ticket_type_id: { type: string, pattern: "^[0-9a-f]{24}$" }
+        status: { type: string, enum: [valid, checked_in, void] }
+        qr_bearer:
+          type: string
+          minLength: 80
+          maxLength: 256
+          description: PII-free signed bearer; clients must not log it.
+    TicketConfirmation:
+      type: object
+      additionalProperties: false
+      required:
+        [reference, status, buyer_email_masked, access_expires_at, tickets]
+      properties:
+        reference: { type: string, pattern: "^JKT-[0-9]{4}-[A-Z0-9]{8}$" }
+        status: { type: string, const: paid }
+        buyer_email_masked: { type: string, maxLength: 254 }
+        access_expires_at: { type: string, format: date-time }
+        tickets:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items: { $ref: "#/components/schemas/IssuedTicket" }
+    TicketDeliveryDeadLetter:
+      type: object
+      additionalProperties: false
+      required:
+        [id, order_reference, kind, attempts, error_code, dead_lettered_at]
+      properties:
+        id: { type: string, format: uuid }
+        order_reference: { type: string, pattern: "^JKT-[0-9]{4}-[A-Z0-9]{8}$" }
+        kind: { type: string, const: ticket.purchase_confirmation }
+        attempts: { type: integer, minimum: 8, maximum: 8 }
+        error_code: { type: string, maxLength: 100 }
+        dead_lettered_at: { type: string, format: date-time }
+    BookingStatus:
+      type: string
+      enum: [tentative, confirmed, cancelled]
+    BookingCreate:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          enquiry_id,
+          title,
+          service_id,
+          start_at,
+          end_at,
+          venue,
+          city,
+          country,
+          status,
+          fee,
+          currency,
+          requirements,
+        ]
+      properties:
+        enquiry_id: { type: string, format: uuid }
+        title: { type: string, minLength: 2, maxLength: 160 }
+        service_id: { type: string, format: uuid }
+        start_at: { type: string, format: date-time }
+        end_at: { type: string, format: date-time }
+        venue: { type: string, maxLength: 200 }
+        city: { type: string, maxLength: 100 }
+        country: { type: string, pattern: "^[A-Z]{2}$" }
+        status: { $ref: "#/components/schemas/BookingStatus" }
+        fee: { type: string, pattern: '^(0|[1-9][0-9]{0,14})\.[0-9]{2}$' }
+        currency: { type: string, enum: [GHS, USD, EUR, GBP] }
+        requirements:
+          {
+            type: object,
+            maxProperties: 30,
+            additionalProperties: { type: string, maxLength: 500 },
+          }
+        version: { type: integer, format: int64, const: 0, default: 0 }
+    BookingUpdate:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          enquiry_id,
+          title,
+          service_id,
+          start_at,
+          end_at,
+          venue,
+          city,
+          country,
+          status,
+          fee,
+          currency,
+          requirements,
+          version,
+        ]
+      properties:
+        enquiry_id: { type: string, format: uuid }
+        title: { type: string, minLength: 2, maxLength: 160 }
+        service_id: { type: string, format: uuid }
+        start_at: { type: string, format: date-time }
+        end_at: { type: string, format: date-time }
+        venue: { type: string, maxLength: 200 }
+        city: { type: string, maxLength: 100 }
+        country: { type: string, pattern: "^[A-Z]{2}$" }
+        status: { $ref: "#/components/schemas/BookingStatus" }
+        fee: { type: string, pattern: '^(0|[1-9][0-9]{0,14})\.[0-9]{2}$' }
+        currency: { type: string, enum: [GHS, USD, EUR, GBP] }
+        requirements:
+          {
+            type: object,
+            maxProperties: 30,
+            additionalProperties: { type: string, maxLength: 500 },
+          }
+        version: { type: integer, format: int64, minimum: 1 }
+    Booking:
+      allOf:
+        - { $ref: "#/components/schemas/BookingUpdate" }
+        - type: object
+          required: [id, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    BookingWarning:
+      type: object
+      additionalProperties: false
+      required: [booking_id, title, status, start_at, end_at]
+      properties:
+        booking_id: { type: string, format: uuid }
+        title: { type: string }
+        status: { $ref: "#/components/schemas/BookingStatus" }
+        start_at: { type: string, format: date-time }
+        end_at: { type: string, format: date-time }
+    BookingResult:
+      type: object
+      additionalProperties: false
+      required: [booking, warnings]
+      properties:
+        booking: { $ref: "#/components/schemas/Booking" }
+        warnings:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/BookingWarning" },
+          }
+    BookingCalendar:
+      type: object
+      additionalProperties: false
+      required: [items, timezone]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Booking" } }
+        timezone: { type: string, minLength: 1, maxLength: 100 }
+    CampaignStatus:
+      type: string
+      enum: [draft, active, paused, completed, cancelled]
+    CampaignMoney:
+      type: object
+      additionalProperties: false
+      required: [amount, currency]
+      properties:
+        amount:
+          { type: string, pattern: "^(0|[1-9][0-9]{0,14})(\\.[0-9]{1,34})?$" }
+        currency: { type: string, enum: [GHS, USD, EUR, GBP] }
+    CampaignResult:
+      type: object
+      additionalProperties: false
+      required: [label, value]
+      properties:
+        label: { type: string, minLength: 1, maxLength: 120 }
+        value: { type: string, minLength: 1, maxLength: 240 }
+    CampaignInput:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          enquiry_id,
+          organization_id,
+          title,
+          objective,
+          platforms,
+          starts_on,
+          ends_on,
+          status,
+          fee,
+          expenses,
+          results,
+          asset_ids,
+        ]
+      properties:
+        enquiry_id: { type: string, format: uuid }
+        organization_id: { type: string, format: uuid }
+        title: { type: string, minLength: 2, maxLength: 160 }
+        objective: { type: string, minLength: 2, maxLength: 2000 }
+        platforms:
+          {
+            type: array,
+            minItems: 1,
+            maxItems: 20,
+            uniqueItems: true,
+            items: { type: string, minLength: 1, maxLength: 80 },
+          }
+        starts_on: { type: string, format: date }
+        ends_on: { type: string, format: date }
+        status: { $ref: "#/components/schemas/CampaignStatus" }
+        fee: { $ref: "#/components/schemas/CampaignMoney" }
+        expenses: { $ref: "#/components/schemas/CampaignMoney" }
+        results:
+          {
+            type: array,
+            maxItems: 50,
+            items: { $ref: "#/components/schemas/CampaignResult" },
+          }
+        asset_ids:
+          {
+            type: array,
+            maxItems: 100,
+            uniqueItems: true,
+            items: { type: string, format: uuid },
+          }
+    Campaign:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          enquiry_id,
+          organization_id,
+          title,
+          objective,
+          platforms,
+          starts_on,
+          ends_on,
+          status,
+          fee,
+          expenses,
+          results,
+          asset_ids,
+          created_at,
+          updated_at,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        enquiry_id: { type: string, format: uuid }
+        organization_id: { type: string, format: uuid }
+        title: { type: string }
+        objective: { type: string }
+        platforms: { type: array, items: { type: string } }
+        starts_on: { type: string, format: date-time }
+        ends_on: { type: string, format: date-time }
+        status: { $ref: "#/components/schemas/CampaignStatus" }
+        fee: { $ref: "#/components/schemas/CampaignMoney" }
+        expenses: { $ref: "#/components/schemas/CampaignMoney" }
+        results:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CampaignResult" },
+          }
+        asset_ids: { type: array, items: { type: string, format: uuid } }
+        deleted_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    CampaignList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Campaign" } }
+    CampaignDeliverableStatus:
+      type: string
+      enum: [pending, in_progress, submitted, approved, published]
+    CampaignApprovalStatus:
+      type: string
+      enum: [pending, approved, rejected]
+    CampaignDeliverableInput:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          title,
+          platform,
+          format,
+          due_at,
+          status,
+          published_url,
+          approval_status,
+          asset_ids,
+        ]
+      properties:
+        title: { type: string, minLength: 2, maxLength: 160 }
+        platform: { type: string, minLength: 1, maxLength: 80 }
+        format: { type: string, minLength: 1, maxLength: 80 }
+        due_at: { type: string, format: date-time }
+        status: { $ref: "#/components/schemas/CampaignDeliverableStatus" }
+        published_url:
+          { type: string, maxLength: 2048, pattern: "^$|^https://" }
+        approval_status: { $ref: "#/components/schemas/CampaignApprovalStatus" }
+        asset_ids:
+          {
+            type: array,
+            maxItems: 50,
+            uniqueItems: true,
+            items: { type: string, format: uuid },
+          }
+    CampaignDeliverable:
+      allOf:
+        - { $ref: "#/components/schemas/CampaignDeliverableInput" }
+        - type: object
+          required: [id, campaign_id, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            campaign_id: { type: string, format: uuid }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    CampaignDetail:
+      type: object
+      additionalProperties: false
+      required: [campaign, deliverables]
+      properties:
+        campaign: { $ref: "#/components/schemas/Campaign" }
+        deliverables:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CampaignDeliverable" },
+          }
+    CampaignDeliverableList:
+      type: object
+      additionalProperties: false
+      required: [campaign, items]
+      properties:
+        campaign: { $ref: "#/components/schemas/Campaign" }
+        items:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CampaignDeliverable" },
+          }
+    TicketDeliveryDeadLetterList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items: { $ref: "#/components/schemas/TicketDeliveryDeadLetter" }
+    EnquiryContact:
+      type: object
+      additionalProperties: false
+      required: [name, email, phone, organization, role, country]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        email: { type: string, format: email, maxLength: 254 }
+        phone: { type: string, maxLength: 40 }
+        organization: { type: string, maxLength: 160 }
+        role: { type: string, minLength: 2, maxLength: 120 }
+        country: { type: string, pattern: "^[A-Z]{2}$" }
+    EnquiryDetails:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          event_type,
+          event_at,
+          venue,
+          city,
+          country,
+          audience_size,
+          performance_duration,
+          production_needs,
+          campaign_objective,
+          target_audience,
+          channels,
+          requested_deliverables,
+          usage_rights,
+          exclusivity,
+          launch_dates,
+        ]
+      properties:
+        event_type: { type: string, maxLength: 120 }
+        event_at: { type: string }
+        venue: { type: string, maxLength: 300 }
+        city: { type: string, maxLength: 120 }
+        country: { type: string, maxLength: 2 }
+        audience_size: { type: integer, minimum: 0, maximum: 1000000 }
+        performance_duration: { type: string, maxLength: 120 }
+        production_needs: { type: string, maxLength: 4000 }
+        campaign_objective: { type: string, maxLength: 1000 }
+        target_audience: { type: string, maxLength: 1000 }
+        channels:
+          type: array
+          maxItems: 20
+          items: { type: string }
+        requested_deliverables: { type: string, maxLength: 2000 }
+        usage_rights: { type: string, maxLength: 1000 }
+        exclusivity: { type: string, maxLength: 1000 }
+        launch_dates: { type: string, maxLength: 500 }
+    EnquirySubmission:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          service_id,
+          enquiry_type,
+          source,
+          contact,
+          details,
+          answers,
+          project_brief,
+          budget,
+          timeline,
+          currency,
+          decision_deadline,
+          additional_notes,
+          marketing_consent,
+          consent,
+          consent_text,
+          consent_version,
+          website,
+          captcha_token,
+        ]
+      properties:
+        service_id: { type: string, format: uuid }
+        enquiry_type: { type: string, enum: [event, brand] }
+        source: { type: string, enum: [search, social, referral, press, other] }
+        contact: { $ref: "#/components/schemas/EnquiryContact" }
+        details: { $ref: "#/components/schemas/EnquiryDetails" }
+        answers: { type: object, additionalProperties: true }
+        project_brief: { type: string, maxLength: 8000 }
+        budget: { type: string, minLength: 1, maxLength: 120 }
+        timeline: { type: string, maxLength: 120 }
+        currency: { type: string, enum: [GHS, USD, EUR, GBP] }
+        decision_deadline: { type: string, format: date }
+        additional_notes: { type: string, maxLength: 8000 }
+        marketing_consent: { type: boolean }
+        consent: { type: boolean, const: true }
+        consent_text:
+          {
+            type: string,
+            const: "I consent to the processing of this enquiry under the privacy notice.",
+          }
+        consent_version: { type: string, const: "2026-08-05" }
+        website:
+          {
+            type: string,
+            maxLength: 0,
+            description: Honeypot; must remain empty.,
+          }
+        captcha_token:
+          {
+            type: string,
+            description: Required only when the configured risk policy requests a challenge.,
+          }
+    EnquiryReceipt:
+      type: object
+      additionalProperties: false
+      required: [reference]
+      properties:
+        reference: { type: string, pattern: "^JK-[0-9]{4}-[A-Z0-9]{6}$" }
+    EnquiryChallenge:
+      type: object
+      additionalProperties: false
+      required: [enabled, provider, site_key]
+      properties:
+        enabled: { type: boolean }
+        provider: { type: string, enum: ["", turnstile, recaptcha] }
+        site_key: { type: string }
+    EventVenue:
+      type: object
+      additionalProperties: false
+      required: [name, address, city, country_code]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 200 }
+        address: { type: string, minLength: 1, maxLength: 500 }
+        city: { type: string, minLength: 1, maxLength: 120 }
+        country_code: { type: string, pattern: "^[A-Z]{2}$" }
+        map_url: { type: string, pattern: "^https://", maxLength: 2048 }
+        accessibility: { type: string, maxLength: 2000 }
+    EventPolicies:
+      type: object
+      additionalProperties: false
+      required: [refunds, entry, age_limit]
+      properties:
+        refunds: { type: string, minLength: 1, maxLength: 5000 }
+        entry: { type: string, minLength: 1, maxLength: 5000 }
+        age_limit: { type: integer, minimum: 0, maximum: 100 }
+        age_guidance: { type: string, maxLength: 1000 }
+        accessibility: { type: string, maxLength: 2000 }
+    EventBanner:
+      type: object
+      additionalProperties: false
+      required: [featured]
+      properties:
+        featured: { type: boolean }
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time }
+    EventInput:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          title,
+          summary,
+          description,
+          timezone,
+          banner_asset_id,
+          venue,
+          policies,
+          starts_at,
+          ends_at,
+          capacity,
+          banner,
+        ]
+      properties:
+        title: { type: string, minLength: 2, maxLength: 160 }
+        summary: { type: string, maxLength: 320 }
+        description: { type: string, maxLength: 20000 }
+        timezone: { type: string, minLength: 1, maxLength: 120 }
+        banner_asset_id:
+          {
+            type: string,
+            pattern: "^$|^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          }
+        venue: { $ref: "#/components/schemas/EventVenue" }
+        policies: { $ref: "#/components/schemas/EventPolicies" }
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time }
+        capacity: { type: integer, minimum: 1, maximum: 1000000 }
+        banner: { $ref: "#/components/schemas/EventBanner" }
+      allOf:
+        - if:
+            properties:
+              banner:
+                properties:
+                  featured: { const: true }
+          then:
+            properties:
+              banner_asset_id: { type: string, format: uuid }
+              banner:
+                required: [starts_at, ends_at]
+                properties:
+                  starts_at: { type: string, format: date-time }
+                  ends_at: { type: string, format: date-time }
+          else:
+            properties:
+              banner_asset_id: { const: "" }
+    Event:
+      allOf:
+        - { $ref: "#/components/schemas/EventInput" }
+        - type: object
+          required: [id, slug, status, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            slug: { type: string, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+            status: { type: string, enum: [draft, published, cancelled] }
+            published_at: { type: string, format: date-time }
+            cancelled_at: { type: string, format: date-time }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    EventList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Event" } }
+    PublicTicketType:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          name,
+          description,
+          price,
+          currency,
+          capacity,
+          sold,
+          reserved,
+          min_per_order,
+          max_per_order,
+          sales_start,
+          sales_end,
+          availability,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, minLength: 2, maxLength: 120 }
+        description: { type: string, maxLength: 2000 }
+        price:
+          { type: string, pattern: "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,2})?$" }
+        currency: { type: string, enum: [GHS, USD, EUR, GBP] }
+        capacity: { type: integer, minimum: 1 }
+        sold: { type: integer, minimum: 0 }
+        reserved: { type: integer, minimum: 0 }
+        min_per_order: { type: integer, minimum: 1 }
+        max_per_order: { type: integer, minimum: 1 }
+        sales_start: { type: string, format: date-time }
+        sales_end: { type: string, format: date-time }
+        availability:
+          {
+            type: string,
+            enum: [scheduled, on_sale, paused, sold_out, sale_ended],
+          }
+        checkout_href:
+          {
+            type: string,
+            pattern: "^/tickets/checkout\\?event=[0-9a-f-]+&ticket=[0-9a-f-]+$",
+          }
+    PublicEvent:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          slug,
+          title,
+          summary,
+          description,
+          venue,
+          policies,
+          starts_at,
+          ends_at,
+          timezone,
+          banner_asset_id,
+          banner,
+          tickets,
+          availability,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+        title: { type: string, minLength: 2, maxLength: 160 }
+        summary: { type: string, minLength: 1, maxLength: 320 }
+        description: { type: string, minLength: 1, maxLength: 20000 }
+        venue: { $ref: "#/components/schemas/EventVenue" }
+        policies: { $ref: "#/components/schemas/EventPolicies" }
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time }
+        timezone: { type: string, minLength: 1, maxLength: 120 }
+        banner_asset_id:
+          {
+            type: string,
+            pattern: "^$|^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          }
+        banner: { $ref: "#/components/schemas/EventBanner" }
+        tickets:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/PublicTicketType" },
+          }
+        availability:
+          {
+            type: string,
+            enum: [scheduled, on_sale, paused, sold_out, sale_ended],
+          }
+    PublicEventList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          { type: array, items: { $ref: "#/components/schemas/PublicEvent" } }
+    TicketTypeInput:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          name,
+          description,
+          price,
+          currency,
+          capacity,
+          min_per_order,
+          max_per_order,
+          sales_start,
+          sales_end,
+          sort_order,
+        ]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        description: { type: string, maxLength: 2000 }
+        price:
+          { type: string, pattern: "^(0|[1-9][0-9]{0,8})(\\.[0-9]{1,2})?$" }
+        currency: { type: string, enum: [GHS, USD, EUR, GBP] }
+        capacity: { type: integer, minimum: 1, maximum: 1000000 }
+        min_per_order: { type: integer, minimum: 1 }
+        max_per_order: { type: integer, minimum: 1 }
+        sales_start: { type: string, format: date-time }
+        sales_end: { type: string, format: date-time }
+        sort_order: { type: integer, minimum: 0, maximum: 10000 }
+    TicketType:
+      allOf:
+        - { $ref: "#/components/schemas/TicketTypeInput" }
+        - type: object
+          required:
+            [
+              id,
+              event_id,
+              sold,
+              reserved,
+              paused,
+              status,
+              created_at,
+              updated_at,
+            ]
+          properties:
+            id: { type: string, format: uuid }
+            event_id: { type: string, format: uuid }
+            sold: { type: integer, minimum: 0 }
+            reserved: { type: integer, minimum: 0 }
+            paused: { type: boolean }
+            status:
+              {
+                type: string,
+                enum: [draft, scheduled, on_sale, paused, sold_out, sale_ended],
+              }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    EventPreview:
+      type: object
+      additionalProperties: false
+      required: [event, tickets]
+      properties:
+        event: { $ref: "#/components/schemas/Event" }
+        tickets:
+          { type: array, items: { $ref: "#/components/schemas/TicketType" } }
+    ContentSEO:
+      type: object
+      additionalProperties: false
+      required: [title, description, canonical_url, social_image_asset_id]
+      properties:
+        title: { type: string, maxLength: 70 }
+        description: { type: string, maxLength: 180 }
+        canonical_url:
+          { type: string, maxLength: 2048, pattern: "^$|^https://" }
+        social_image_asset_id:
+          {
+            type: string,
+            pattern: "^$|^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          }
+    ContentResult:
+      type: object
+      additionalProperties: false
+      required: [label, value]
+      properties:
+        label: { type: string, minLength: 1, maxLength: 80 }
+        value: { type: string, minLength: 1, maxLength: 160 }
+    ContentInput:
+      type: object
+      additionalProperties: false
+      required: [title, tags, featured, gallery_asset_ids, results, seo]
+      properties:
+        slug: { type: string, maxLength: 120 }
+        title: { type: string, minLength: 1, maxLength: 160 }
+        summary: { type: string, maxLength: 500 }
+        body: { type: string, maxLength: 30000 }
+        category: { type: string, maxLength: 80 }
+        tags:
+          {
+            type: array,
+            maxItems: 20,
+            items: { type: string, minLength: 1, maxLength: 120 },
+          }
+        featured: { type: boolean }
+        gallery_asset_ids:
+          { type: array, maxItems: 30, items: { type: string, format: uuid } }
+        results:
+          {
+            type: array,
+            maxItems: 20,
+            items: { $ref: "#/components/schemas/ContentResult" },
+          }
+        external_url: { type: string, maxLength: 2048, pattern: "^https://" }
+        embed_url: { type: string, maxLength: 2048, pattern: "^https://" }
+        outlet: { type: string, maxLength: 120 }
+        person_name: { type: string, maxLength: 120 }
+        person_title: { type: string, maxLength: 120 }
+        organization: { type: string, maxLength: 160 }
+        seo: { $ref: "#/components/schemas/ContentSEO" }
+    ContentUpdateInput:
+      type: object
+      additionalProperties: false
+      required:
+        [revision, title, tags, featured, gallery_asset_ids, results, seo]
+      properties:
+        revision: { type: integer, format: int64, minimum: 1 }
+        slug: { type: string, maxLength: 120 }
+        title: { type: string, minLength: 1, maxLength: 160 }
+        summary: { type: string, maxLength: 500 }
+        body: { type: string, maxLength: 30000 }
+        category: { type: string, maxLength: 80 }
+        tags:
+          {
+            type: array,
+            maxItems: 20,
+            items: { type: string, minLength: 1, maxLength: 120 },
+          }
+        featured: { type: boolean }
+        gallery_asset_ids:
+          { type: array, maxItems: 30, items: { type: string, format: uuid } }
+        results:
+          {
+            type: array,
+            maxItems: 20,
+            items: { $ref: "#/components/schemas/ContentResult" },
+          }
+        external_url: { type: string, maxLength: 2048, pattern: "^https://" }
+        embed_url: { type: string, maxLength: 2048, pattern: "^https://" }
+        outlet: { type: string, maxLength: 120 }
+        person_name: { type: string, maxLength: 120 }
+        person_title: { type: string, maxLength: 120 }
+        organization: { type: string, maxLength: 160 }
+        seo: { $ref: "#/components/schemas/ContentSEO" }
+    ContentItem:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          revision,
+          kind,
+          title,
+          tags,
+          featured,
+          gallery_asset_ids,
+          results,
+          seo,
+          status,
+          approved,
+          created_at,
+          updated_at,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        revision: { type: integer, format: int64, minimum: 1 }
+        kind:
+          type: string
+          enum: [page, portfolio, video, press, testimonial]
+        slug: { type: string, maxLength: 120 }
+        title: { type: string, minLength: 1, maxLength: 160 }
+        summary: { type: string, maxLength: 500 }
+        body: { type: string, maxLength: 30000 }
+        category: { type: string, maxLength: 80 }
+        tags:
+          {
+            type: array,
+            maxItems: 20,
+            items: { type: string, minLength: 1, maxLength: 120 },
+          }
+        featured: { type: boolean }
+        gallery_asset_ids:
+          { type: array, maxItems: 30, items: { type: string, format: uuid } }
+        results:
+          {
+            type: array,
+            maxItems: 20,
+            items: { $ref: "#/components/schemas/ContentResult" },
+          }
+        external_url: { type: string, maxLength: 2048 }
+        embed_url: { type: string, maxLength: 2048 }
+        outlet: { type: string, maxLength: 120 }
+        person_name: { type: string, maxLength: 120 }
+        person_title: { type: string, maxLength: 120 }
+        organization: { type: string, maxLength: 160 }
+        seo: { $ref: "#/components/schemas/ContentSEO" }
+        status:
+          type: string
+          enum: [draft, scheduled, published, unpublished]
+        approved: { type: boolean }
+        publish_at: { type: string, format: date-time }
+        unpublish_at: { type: string, format: date-time }
+        published_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ContentList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          { type: array, items: { $ref: "#/components/schemas/ContentItem" } }
+    ContentApprovalRequest:
+      type: object
+      additionalProperties: false
+      required: [approved, revision]
+      properties:
+        approved: { type: boolean }
+        revision: { type: integer, format: int64, minimum: 1 }
+    ContentPublicationRequest:
+      type: object
+      additionalProperties: false
+      required: [action, publish_at, unpublish_at, revision]
+      properties:
+        action: { type: string, enum: [publish, schedule, unpublish] }
+        revision: { type: integer, format: int64, minimum: 1 }
+        publish_at:
+          anyOf:
+            - { type: string, const: "" }
+            - { type: string, format: date-time }
+        unpublish_at:
+          anyOf:
+            - { type: string, const: "" }
+            - { type: string, format: date-time }
+    ServiceQuestion:
+      type: object
+      additionalProperties: false
+      required: [key, label, type, required]
+      properties:
+        key: { type: string, pattern: "^[a-z][a-z0-9_]{0,63}$" }
+        label: { type: string, minLength: 2, maxLength: 160 }
+        help_text: { type: string, maxLength: 400 }
+        placeholder: { type: string, maxLength: 160 }
+        type:
+          {
+            type: string,
+            enum:
+              [text, textarea, select, multi_select, date, number, checkbox],
+          }
+        required: { type: boolean }
+        options:
+          {
+            type: array,
+            maxItems: 20,
+            uniqueItems: true,
+            items: { type: string, minLength: 1, maxLength: 100 },
+          }
+    ServiceFormSchema:
+      type: object
+      additionalProperties: false
+      required: [version, questions]
+      properties:
+        version: { type: integer, const: 1 }
+        questions:
+          {
+            type: array,
+            maxItems: 30,
+            items: { $ref: "#/components/schemas/ServiceQuestion" },
+          }
+    ServiceCTA:
+      type: object
+      additionalProperties: false
+      required: [label, href]
+      properties:
+        label: { type: string, minLength: 2, maxLength: 80 }
+        href: { type: string, const: /book }
+    ServiceInput:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          name,
+          summary,
+          description,
+          category,
+          active,
+          sort_order,
+          form_schema,
+          cta,
+        ]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        summary: { type: string, maxLength: 280 }
+        description: { type: string, maxLength: 8000 }
+        category: { type: string, maxLength: 80 }
+        active: { type: boolean }
+        sort_order: { type: integer, minimum: 0, maximum: 10000 }
+        form_schema: { $ref: "#/components/schemas/ServiceFormSchema" }
+        cta: { $ref: "#/components/schemas/ServiceCTA" }
+    ServiceUpdateInput:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          name,
+          summary,
+          description,
+          category,
+          active,
+          version,
+          sort_order,
+          form_schema,
+          cta,
+        ]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        summary: { type: string, maxLength: 280 }
+        description: { type: string, maxLength: 8000 }
+        category: { type: string, maxLength: 80 }
+        active: { type: boolean }
+        version: { type: integer, format: int64, minimum: 1 }
+        sort_order: { type: integer, minimum: 0, maximum: 10000 }
+        form_schema: { $ref: "#/components/schemas/ServiceFormSchema" }
+        cta: { $ref: "#/components/schemas/ServiceCTA" }
+    Service:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          name,
+          slug,
+          summary,
+          description,
+          category,
+          active,
+          state,
+          version,
+          sort_order,
+          form_schema,
+          cta,
+          created_at,
+          updated_at,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, minLength: 2, maxLength: 120 }
+        slug:
+          {
+            type: string,
+            pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            maxLength: 120,
+          }
+        summary: { type: string, maxLength: 280 }
+        description: { type: string, maxLength: 8000 }
+        category: { type: string, maxLength: 80 }
+        active: { type: boolean }
+        state: { type: string, enum: [active, inactive, retired] }
+        version: { type: integer, format: int64, minimum: 1 }
+        retired_at: { type: string, format: date-time }
+        sort_order: { type: integer, minimum: 0, maximum: 10000 }
+        form_schema: { $ref: "#/components/schemas/ServiceFormSchema" }
+        cta: { $ref: "#/components/schemas/ServiceCTA" }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ServiceList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Service" } }
+    MediaAsset:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          filename,
+          mime_type,
+          public_url,
+          folder,
+          alt_text,
+          tags,
+          transformations,
+          status,
+          bytes,
+          width,
+          height,
+          reference_count,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        filename: { type: string, minLength: 1, maxLength: 255 }
+        mime_type:
+          {
+            type: string,
+            enum: [image/jpeg, image/png, image/webp, application/pdf],
+          }
+        public_url: { type: string, maxLength: 2048 }
+        folder: { type: string, minLength: 1, maxLength: 255 }
+        alt_text: { type: string, minLength: 8, maxLength: 500 }
+        tags:
+          { type: array, maxItems: 50, items: { type: string, maxLength: 80 } }
+        transformations:
+          {
+            type: array,
+            maxItems: 10,
+            items: { type: string, enum: [hero, card, thumbnail, social] },
+          }
+        status:
+          { type: string, enum: [draft, uploading, ready, failed, deleting] }
+        bytes: { type: integer, format: int64, minimum: 1 }
+        width: { type: integer, minimum: 0 }
+        height: { type: integer, minimum: 0 }
+        reference_count: { type: integer, minimum: 0 }
+    MediaUploadRequest:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          filename,
+          mime_type,
+          folder,
+          alt_text,
+          tags,
+          transformations,
+          bytes,
+          width,
+          height,
+        ]
+      properties:
+        filename: { type: string, minLength: 1, maxLength: 255 }
+        mime_type:
+          {
+            type: string,
+            enum: [image/jpeg, image/png, image/webp, application/pdf],
+          }
+        folder: { type: string, enum: [content, press, documents] }
+        alt_text: { type: string, minLength: 8, maxLength: 500 }
+        tags:
+          { type: array, maxItems: 50, items: { type: string, maxLength: 80 } }
+        transformations:
+          {
+            type: array,
+            maxItems: 10,
+            items: { type: string, enum: [hero, card, thumbnail, social] },
+          }
+        bytes: { type: integer, format: int64, minimum: 1, maximum: 10485760 }
+        width: { type: integer, minimum: 0, maximum: 6000 }
+        height: { type: integer, minimum: 0, maximum: 6000 }
+    MediaMetadataRequest:
+      type: object
+      additionalProperties: false
+      required: [alt_text, tags, transformations]
+      properties:
+        alt_text: { type: string, minLength: 8, maxLength: 500 }
+        tags:
+          { type: array, maxItems: 50, items: { type: string, maxLength: 80 } }
+        transformations:
+          {
+            type: array,
+            maxItems: 10,
+            items: { type: string, enum: [hero, card, thumbnail, social] },
+          }
+    SignedMediaUpload:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          asset_id,
+          provider,
+          upload_url,
+          api_key,
+          folder,
+          public_id,
+          signature,
+          timestamp,
+        ]
+      properties:
+        asset_id: { type: string, format: uuid }
+        provider: { type: string, const: cloudinary }
+        upload_url:
+          {
+            type: string,
+            format: uri,
+            pattern: "^https://api\\.cloudinary\\.com/",
+          }
+        api_key: { type: string }
+        folder: { type: string }
+        public_id: { type: string }
+        signature: { type: string, pattern: "^[a-f0-9]{64}$" }
+        timestamp: { type: integer, format: int64 }
+    MediaUploadResponse:
+      type: object
+      additionalProperties: false
+      required: [asset, upload]
+      properties:
+        asset: { $ref: "#/components/schemas/MediaAsset" }
+        upload: { $ref: "#/components/schemas/SignedMediaUpload" }
+    MediaDraftResponse:
+      type: object
+      additionalProperties: false
+      required: [asset, retryable]
+      properties:
+        asset: { $ref: "#/components/schemas/MediaAsset" }
+        retryable: { type: boolean, const: true }
+    CloudinaryNotification:
+      type: object
+      additionalProperties: true
+      required: [public_id, secure_url, resource_type, format, bytes, version]
+      properties:
+        public_id: { type: string }
+        secure_url: { type: string, format: uri, pattern: "^https://" }
+        resource_type: { type: string }
+        format: { type: string }
+        bytes: { type: integer, format: int64, minimum: 1 }
+        width: { type: integer, minimum: 0 }
+        height: { type: integer, minimum: 0 }
+        version: { type: integer, format: int64 }
+    SettingsLink:
+      type: object
+      additionalProperties: false
+      required: [label, href]
+      properties:
+        label: { type: string, minLength: 1, maxLength: 80 }
+        href:
+          {
+            type: string,
+            minLength: 1,
+            maxLength: 2048,
+            pattern: "^(/[^/]|/$|https://)",
+          }
+    SettingsCTA:
+      type: object
+      additionalProperties: false
+      required: [key, title, description, label, href]
+      properties:
+        key: { type: string, pattern: "^[a-z][a-z0-9_-]{1,47}$" }
+        title: { type: string, maxLength: 120 }
+        description: { type: string, maxLength: 300 }
+        label: { type: string, minLength: 1, maxLength: 80 }
+        href:
+          {
+            type: string,
+            minLength: 1,
+            maxLength: 2048,
+            pattern: "^(/[^/]|/$|https://)",
+          }
+    ContactSettings:
+      type: object
+      additionalProperties: false
+      required: [public_email, phone, location]
+      properties:
+        public_email:
+          anyOf:
+            - { type: string, const: "" }
+            - { type: string, format: email, maxLength: 254 }
+        phone: { type: string, maxLength: 40 }
+        location: { type: string, maxLength: 120 }
+    SocialLink:
+      type: object
+      additionalProperties: false
+      required: [platform, url]
+      properties:
+        platform: { type: string, minLength: 1, maxLength: 50 }
+        url:
+          { type: string, format: uri, pattern: "^https://", maxLength: 2048 }
+    BrandSettings:
+      type: object
+      additionalProperties: false
+      required: [name, tagline, logo_asset_id, favicon_asset_id]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        tagline: { type: string, maxLength: 200 }
+        logo_asset_id:
+          {
+            type: string,
+            pattern: "^$|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+          }
+        favicon_asset_id:
+          {
+            type: string,
+            pattern: "^$|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+          }
+    SEOSettings:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          title_template,
+          default_title,
+          description,
+          canonical_base,
+          social_image_asset_id,
+        ]
+      properties:
+        title_template: { type: string, maxLength: 100 }
+        default_title: { type: string, maxLength: 70 }
+        description: { type: string, maxLength: 180 }
+        canonical_base:
+          { type: string, maxLength: 2048, pattern: "^$|^https://" }
+        social_image_asset_id:
+          {
+            type: string,
+            pattern: "^$|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+          }
+    ConsentSettings:
+      type: object
+      additionalProperties: false
+      required: [version, privacy_label, marketing_label, privacy_url]
+      properties:
+        version: { type: string, minLength: 1, maxLength: 80 }
+        privacy_label: { type: string, minLength: 1, maxLength: 500 }
+        marketing_label: { type: string, maxLength: 500 }
+        privacy_url:
+          {
+            type: string,
+            minLength: 1,
+            maxLength: 2048,
+            pattern: "^(/[^/]|/$|https://)",
+          }
+    PublicSettings:
+      type: object
+      additionalProperties: false
+      required: [navigation, footer, ctas, contact, social, brand, seo, consent]
+      properties:
+        navigation:
+          {
+            type: array,
+            maxItems: 12,
+            items: { $ref: "#/components/schemas/SettingsLink" },
+          }
+        footer:
+          {
+            type: array,
+            maxItems: 12,
+            items: { $ref: "#/components/schemas/SettingsLink" },
+          }
+        ctas:
+          {
+            type: array,
+            maxItems: 20,
+            items: { $ref: "#/components/schemas/SettingsCTA" },
+          }
+        contact: { $ref: "#/components/schemas/ContactSettings" }
+        social:
+          {
+            type: array,
+            maxItems: 12,
+            items: { $ref: "#/components/schemas/SocialLink" },
+          }
+        brand: { $ref: "#/components/schemas/BrandSettings" }
+        seo: { $ref: "#/components/schemas/SEOSettings" }
+        consent: { $ref: "#/components/schemas/ConsentSettings" }
+    IntegrationSettings:
+      type: object
+      additionalProperties: false
+      required:
+        [email_provider, media_provider, analytics_provider, payment_provider]
+      properties:
+        email_provider:
+          { type: string, maxLength: 50, pattern: "^$|^[a-z][a-z0-9_-]{1,47}$" }
+        media_provider:
+          { type: string, maxLength: 50, pattern: "^$|^[a-z][a-z0-9_-]{1,47}$" }
+        analytics_provider:
+          { type: string, maxLength: 50, pattern: "^$|^[a-z][a-z0-9_-]{1,47}$" }
+        payment_provider:
+          { type: string, maxLength: 50, pattern: "^$|^[a-z][a-z0-9_-]{1,47}$" }
+    TeamSettings:
+      type: object
+      additionalProperties: false
+      required: [notification_recipients, business_timezone]
+      properties:
+        notification_recipients:
+          { type: array, maxItems: 20, items: { type: string, format: email } }
+        business_timezone: { type: string, minLength: 1, maxLength: 100 }
+    SettingsValues:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          navigation,
+          footer,
+          ctas,
+          contact,
+          social,
+          brand,
+          seo,
+          consent,
+          integrations,
+          team,
+        ]
+      properties:
+        navigation:
+          {
+            type: array,
+            maxItems: 12,
+            items: { $ref: "#/components/schemas/SettingsLink" },
+          }
+        footer:
+          {
+            type: array,
+            maxItems: 12,
+            items: { $ref: "#/components/schemas/SettingsLink" },
+          }
+        ctas:
+          {
+            type: array,
+            maxItems: 20,
+            items: { $ref: "#/components/schemas/SettingsCTA" },
+          }
+        contact: { $ref: "#/components/schemas/ContactSettings" }
+        social:
+          {
+            type: array,
+            maxItems: 12,
+            items: { $ref: "#/components/schemas/SocialLink" },
+          }
+        brand: { $ref: "#/components/schemas/BrandSettings" }
+        seo: { $ref: "#/components/schemas/SEOSettings" }
+        consent: { $ref: "#/components/schemas/ConsentSettings" }
+        integrations: { $ref: "#/components/schemas/IntegrationSettings" }
+        team: { $ref: "#/components/schemas/TeamSettings" }
+    SettingsDocument:
+      type: object
+      additionalProperties: false
+      required: [key, version, draft, content_complete, updated_by, updated_at]
+      properties:
+        key: { type: string, const: global }
+        version: { type: integer, format: int64, minimum: 1 }
+        draft: { $ref: "#/components/schemas/SettingsValues" }
+        published: { $ref: "#/components/schemas/SettingsValues" }
+        content_complete: { type: boolean }
+        updated_by: { type: string }
+        updated_at: { type: string, format: date-time }
+        published_at: { type: string, format: date-time }
+    SecretStatus:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          email_configured,
+          media_configured,
+          analytics_configured,
+          payment_configured,
+        ]
+      properties:
+        email_configured: { type: boolean }
+        media_configured: { type: boolean }
+        analytics_configured: { type: boolean }
+        payment_configured: { type: boolean }
+    AdminSettings:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          key,
+          version,
+          draft,
+          content_complete,
+          updated_by,
+          updated_at,
+          secret_status,
+          can_manage,
+        ]
+      properties:
+        key: { type: string, const: global }
+        version: { type: integer, format: int64, minimum: 0 }
+        draft: { $ref: "#/components/schemas/SettingsValues" }
+        published: { $ref: "#/components/schemas/SettingsValues" }
+        content_complete: { type: boolean }
+        updated_by: { type: string }
+        updated_at: { type: string, format: date-time }
+        published_at: { type: string, format: date-time }
+        secret_status: { $ref: "#/components/schemas/SecretStatus" }
+        can_manage: { type: boolean }
+    UpdateSettingsRequest:
+      type: object
+      additionalProperties: false
+      required: [version, values, content_complete]
+      properties:
+        version: { type: integer, format: int64, minimum: 0 }
+        values: { $ref: "#/components/schemas/SettingsValues" }
+        content_complete: { type: boolean }
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, minLength: 12, maxLength: 1024 }
+    LoginResponse:
+      type: object
+      additionalProperties: false
+      required: [mfa_required]
+      properties:
+        mfa_required: { type: boolean }
+    MFAVerificationRequest:
+      type: object
+      additionalProperties: false
+      required: [code]
+      properties:
+        code: { type: string, pattern: "^[0-9]{6}$" }
+    AuthenticatedResponse:
+      type: object
+      additionalProperties: false
+      required: [authenticated]
+      properties:
+        authenticated: { type: boolean, const: true }
+    StaffPrincipal:
+      type: object
+      additionalProperties: false
+      required: [id, name, role, mfa_verified]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        role:
+          type: string
+          enum: [administrator, booking_manager, content_editor, analyst]
+        mfa_verified: { type: boolean }
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [live, ready]
+    Problem:
+      type: object
+      additionalProperties: true
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference

@@ -1,0 +1,7 @@
+.next
+coverage
+node_modules
+tmp
+apps/web/lib/api/schema.d.ts
+pnpm-lock.yaml
+Joe_Kuntani_Digital_Brand_Platform_AI_Build_Specification_Ticketing_Updated.pdf

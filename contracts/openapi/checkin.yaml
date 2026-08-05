@@ -1,0 +1,49 @@
+openapi: 3.0.3
+info:
+  title: Check-in API (JK-025)
+  version: "0.1.0"
+paths:
+  /api/checkin:
+    post:
+      summary: Public scanner endpoint to redeem a ticket token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Minimal masked response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+  /api/admin/checkin/scan:
+    post:
+      summary: Admin scanner API (requires admin session/CSRF)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Admin masked response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string

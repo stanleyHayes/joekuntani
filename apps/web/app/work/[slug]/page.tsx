@@ -1,0 +1,70 @@
+import { notFound } from "next/navigation";
+import { getPublicContentBySlug } from "../../../components/content/data";
+import { contentFooterCta } from "../../../components/content/public-content";
+import styles from "../../../components/content/content.module.css";
+import { PublicShell } from "../../../components/layout/public-shell";
+import { canonicalURL, contentMetadata, jsonLd } from "../../../lib/seo";
+import { getPublicSettings } from "../../../lib/settings";
+
+export const dynamic = "force-dynamic";
+type Props = { params: Promise<{ slug: string }> };
+export async function generateMetadata({ params }: Props) {
+  const { slug } = await params;
+  const item = await getPublicContentBySlug("portfolio", slug);
+  return contentMetadata(item, {
+    title: "Work not found",
+    description: "The requested published work is unavailable.",
+    path: `/work/${slug}`,
+  });
+}
+export default async function WorkDetailPage({ params }: Props) {
+  const { slug } = await params;
+  const [item, settings] = await Promise.all([
+    getPublicContentBySlug("portfolio", slug),
+    getPublicSettings(),
+  ]);
+  if (!item) notFound();
+  const url = canonicalURL(
+    item.seo.canonical_url || `/work/${slug}`,
+    settings?.seo.canonical_base,
+  );
+  return (
+    <PublicShell currentPath="/work" footerCta={contentFooterCta}>
+      {url ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: jsonLd({
+              "@context": "https://schema.org",
+              "@type": "CreativeWork",
+              name: item.title,
+              description: item.summary || undefined,
+              url,
+              datePublished: item.published_at,
+              dateModified: item.updated_at,
+            }),
+          }}
+        />
+      ) : null}
+      <main id="main-content" className={`${styles.detail} shell-container`}>
+        <p className="eyebrow">{item.category || "Work"}</p>
+        <h1>{item.title}</h1>
+        {item.summary ? <p className={styles.lede}>{item.summary}</p> : null}
+        <div className={styles.body}>{item.body}</div>
+        {item.results.length ? (
+          <section aria-labelledby="results">
+            <h2 id="results">Published results</h2>
+            <ul className={styles.results}>
+              {item.results.map((result) => (
+                <li key={`${result.label}-${result.value}`}>
+                  <strong>{result.value}</strong>
+                  <span>{result.label}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+      </main>
+    </PublicShell>
+  );
+}
