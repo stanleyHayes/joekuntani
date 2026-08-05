@@ -42,7 +42,7 @@ func TestCRMWorkflowReviewMigratesLegacyRecordsWithoutLoss(t *testing.T) {
 	bypass := options.InsertOne().SetBypassDocumentValidation(true)
 	for collection, document := range map[string]bson.M{
 		"users":         {"_id": staffID, "public_id": "00000000-0000-4000-8000-000000000105"},
-		"enquiries":     {"_id": legacyEnquiryID, "public_id": sourceID},
+		"enquiries":     {"_id": legacyEnquiryID, "public_id": sourceID, "reference": "JK-LEGACY-1"},
 		"crm_enquiries": {"public_id": crmID, "source_enquiry_id": sourceID},
 		"enquiry_notes": {"public_id": noteID, "enquiry_id": legacyEnquiryID, "author_id": staffID, "body": "Legacy private context", "created_at": now},
 		"tasks":         {"public_id": taskID, "enquiry_id": missingEnquiryID, "assignee_id": staffID, "title": "Legacy follow-up", "priority": "high", "status": "completed", "due_at": now.Add(time.Hour), "created_at": now},
@@ -58,7 +58,7 @@ func TestCRMWorkflowReviewMigratesLegacyRecordsWithoutLoss(t *testing.T) {
 	if count, _ := db.Collection("crm_enquiry_notes").CountDocuments(ctx, bson.M{"public_id": noteID}); count != 0 {
 		t.Fatalf("failed migration did not roll back note: %d", count)
 	}
-	if _, err := db.Collection("enquiries").InsertOne(ctx, bson.M{"_id": missingEnquiryID, "public_id": "00000000-0000-4000-8000-000000000106"}, bypass); err != nil {
+	if _, err := db.Collection("enquiries").InsertOne(ctx, bson.M{"_id": missingEnquiryID, "public_id": "00000000-0000-4000-8000-000000000106", "reference": "JK-LEGACY-2"}, bypass); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := db.Collection("crm_enquiries").InsertOne(ctx, bson.M{"public_id": "00000000-0000-4000-8000-000000000107", "source_enquiry_id": "00000000-0000-4000-8000-000000000106"}, bypass); err != nil {

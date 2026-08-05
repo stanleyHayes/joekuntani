@@ -11,11 +11,12 @@ import (
 )
 
 type fakeStore struct {
-	intent    Refund
-	payment   string
-	completed int
-	resend    int
-	idemHash  string
+	intent      Refund
+	payment     string
+	completed   int
+	resend      int
+	idemHash    string
+	requestHash string
 }
 
 func (f *fakeStore) ListOrders(context.Context, OrderFilter) ([]OrderView, []Summary, error) {
@@ -24,12 +25,16 @@ func (f *fakeStore) ListOrders(context.Context, OrderFilter) ([]OrderView, []Sum
 func (f *fakeStore) Resend(context.Context, string, string, time.Time) error           { f.resend++; return nil }
 func (*fakeStore) VoidTicket(context.Context, string, string, string, time.Time) error { return nil }
 func (f *fakeStore) BeginRefund(_ context.Context, in RefundInput, _, _ string, at time.Time) (Refund, string, error) {
-	f.idemHash = in.IdempotencyKey
 	if f.intent.ID != "" {
+		if f.idemHash == in.IdempotencyKey && f.requestHash != in.RequestHash {
+			return Refund{}, "", ErrConflict
+		}
 		v := f.intent
 		v.Replay = true
 		return v, f.payment, nil
 	}
+	f.idemHash = in.IdempotencyKey
+	f.requestHash = in.RequestHash
 	f.intent = Refund{ID: "00000000-0000-4000-8000-000000000001", OrderID: in.OrderID, Amount: in.Amount, Currency: "GHS", Reason: in.Reason, Status: "processing", CreatedAt: at}
 	f.payment = "pay_1"
 	return f.intent, f.payment, nil
@@ -86,9 +91,29 @@ func TestRefundIsIdempotentAndProviderBacked(t *testing.T) {
 	if store.idemHash == input.IdempotencyKey || len(store.idemHash) != 64 || provider.idemKey != store.idemHash {
 		t.Fatalf("idempotency key was not consistently hashed: store=%q provider=%q", store.idemHash, provider.idemKey)
 	}
+	if len(store.requestHash) != 64 || store.requestHash == store.idemHash {
+		t.Fatalf("request payload was not independently bound: %q", store.requestHash)
+	}
 	second, e := service.Refund(t.Context(), "actor", input)
 	if e != nil || !second.Replay || provider.calls != 1 {
 		t.Fatalf("replay=%#v calls=%d err=%v", second, provider.calls, e)
+	}
+}
+func TestRefundIdempotencyKeyReuseWithDifferentPayloadConflicts(t *testing.T) {
+	store := &fakeStore{}
+	provider := &fakeProvider{}
+	service := NewService(store, provider, nil)
+	base := RefundInput{OrderID: "00000000-0000-4000-8000-000000000099", Amount: "25.00", Reason: "Customer request", IdempotencyKey: "0123456789abcdef"}
+	if _, err := service.Refund(t.Context(), "actor", base); err != nil {
+		t.Fatal(err)
+	}
+	changed := base
+	changed.Amount = "26.00"
+	if _, err := service.Refund(t.Context(), "actor", changed); !errors.Is(err, ErrConflict) {
+		t.Fatalf("mismatched replay error=%v", err)
+	}
+	if provider.calls != 1 {
+		t.Fatalf("provider calls=%d, want 1", provider.calls)
 	}
 }
 func TestRefundProviderFailureIsFailClosed(t *testing.T) {

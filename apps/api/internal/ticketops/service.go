@@ -60,8 +60,10 @@ func (s *Service) Refund(ctx context.Context, actor string, input RefundInput) (
 	if input.Reason, err = normalizeReason(input.Reason); err != nil {
 		return Refund{}, err
 	}
-	digest := sha256.Sum256([]byte(input.IdempotencyKey))
-	input.IdempotencyKey = hex.EncodeToString(digest[:])
+	keyDigest := sha256.Sum256([]byte(input.IdempotencyKey))
+	requestDigest := sha256.Sum256([]byte(input.OrderID + "\n" + input.Amount + "\n" + input.Reason))
+	input.IdempotencyKey = hex.EncodeToString(keyDigest[:])
+	input.RequestHash = hex.EncodeToString(requestDigest[:])
 	intent, paymentRef, err := s.store.BeginRefund(ctx, input, actor, s.provider.Name(), s.now().UTC())
 	if err != nil {
 		return Refund{}, err

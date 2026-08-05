@@ -54,6 +54,7 @@ type RefundInput struct {
 	Amount         string `json:"amount"`
 	Reason         string `json:"reason"`
 	IdempotencyKey string `json:"-"`
+	RequestHash    string `json:"-"`
 }
 type Refund struct {
 	ID                string    `json:"id"`

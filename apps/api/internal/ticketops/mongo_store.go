@@ -226,8 +226,12 @@ func (s *MongoStore) BeginRefund(ctx context.Context, in RefundInput, actor, pro
 			Status            string          `bson:"status"`
 			CreatedAt         time.Time       `bson:"created_at"`
 			UpdatedAt         time.Time       `bson:"updated_at"`
+			RequestHash       string          `bson:"request_hash"`
 		}
 		if e := s.db.Collection("ticket_refunds").FindOne(tx, bson.M{"idempotency_hash": in.IdempotencyKey}).Decode(&existing); e == nil {
+			if existing.RequestHash != in.RequestHash {
+				return ErrConflict
+			}
 			out = Refund{ID: existing.PublicID, OrderID: existing.OrderPublicID, Amount: existing.Amount.String(), Currency: existing.Currency, Reason: existing.Reason, Provider: existing.Provider, ProviderReference: existing.ProviderReference, Status: existing.Status, CreatedAt: existing.CreatedAt, UpdatedAt: existing.UpdatedAt, Replay: true}
 			return nil
 		} else if !errors.Is(e, mongo.ErrNoDocuments) {
@@ -270,7 +274,15 @@ func (s *MongoStore) BeginRefund(ctx context.Context, in RefundInput, actor, pro
 		if e != nil {
 			return ErrInvalid
 		}
-		doc := bson.M{"public_id": id, "order_public_id": in.OrderID, "amount": amount, "currency": order.Currency, "reason": in.Reason, "provider": provider, "provider_reference": "", "idempotency_hash": in.IdempotencyKey, "status": "processing", "created_at": at, "updated_at": at}
+		// This write serializes competing refund reservations for one order. A
+		// retried transaction then observes every earlier processing reservation.
+		if result, updateErr := s.db.Collection("ticket_orders").UpdateOne(tx, bson.M{"public_id": in.OrderID, "status": order.Status}, bson.M{"$set": bson.M{"updated_at": at}}); updateErr != nil || result.MatchedCount != 1 {
+			if updateErr != nil {
+				return updateErr
+			}
+			return ErrConflict
+		}
+		doc := bson.M{"public_id": id, "order_public_id": in.OrderID, "amount": amount, "currency": order.Currency, "reason": in.Reason, "provider": provider, "provider_reference": "", "idempotency_hash": in.IdempotencyKey, "request_hash": in.RequestHash, "status": "processing", "created_at": at, "updated_at": at}
 		if _, e = s.db.Collection("ticket_refunds").InsertOne(tx, doc); e != nil {
 			return e
 		}
@@ -293,8 +305,12 @@ func (s *MongoStore) BeginRefund(ctx context.Context, in RefundInput, actor, pro
 			Status            string          `bson:"status"`
 			CreatedAt         time.Time       `bson:"created_at"`
 			UpdatedAt         time.Time       `bson:"updated_at"`
+			RequestHash       string          `bson:"request_hash"`
 		}
 		if e := s.db.Collection("ticket_refunds").FindOne(ctx, bson.M{"idempotency_hash": in.IdempotencyKey}).Decode(&existing); e == nil {
+			if existing.RequestHash != in.RequestHash {
+				return Refund{}, "", ErrConflict
+			}
 			out = Refund{ID: existing.PublicID, OrderID: existing.OrderPublicID, Amount: existing.Amount.String(), Currency: existing.Currency, Reason: existing.Reason, Provider: existing.Provider, ProviderReference: existing.ProviderReference, Status: existing.Status, CreatedAt: existing.CreatedAt, UpdatedAt: existing.UpdatedAt, Replay: true}
 			return out, "", nil
 		}
@@ -331,6 +347,52 @@ func (s *MongoStore) CompleteRefund(ctx context.Context, id, status, reference, 
 		}
 		if e = s.db.Collection("ticket_refunds").FindOne(tx, bson.M{"public_id": id}).Decode(&d); e != nil {
 			return e
+		}
+		if mapped == "succeeded" {
+			var order struct {
+				ID       bson.ObjectID   `bson:"_id"`
+				Total    bson.Decimal128 `bson:"total"`
+				Status   string          `bson:"status"`
+				PublicID string          `bson:"public_id"`
+			}
+			if e = s.db.Collection("ticket_orders").FindOne(tx, bson.M{"public_id": d.OrderPublicID, "status": bson.M{"$in": bson.A{"paid", "partially_refunded", "refunded"}}}).Decode(&order); e != nil {
+				return mapErr(e)
+			}
+			cursor, findErr := s.db.Collection("ticket_refunds").Find(tx, bson.M{"order_public_id": d.OrderPublicID, "status": "succeeded"})
+			if findErr != nil {
+				return findErr
+			}
+			var succeeded []struct {
+				Amount bson.Decimal128 `bson:"amount"`
+			}
+			if findErr = cursor.All(tx, &succeeded); findErr != nil {
+				return findErr
+			}
+			_ = cursor.Close(tx)
+			refunded := int64(0)
+			for _, refund := range succeeded {
+				value, parseErr := minor(refund.Amount.String())
+				if parseErr != nil {
+					return parseErr
+				}
+				refunded += value
+			}
+			total, parseErr := minor(order.Total.String())
+			if parseErr != nil || refunded > total {
+				return ErrConflict
+			}
+			orderStatus := "partially_refunded"
+			if refunded == total {
+				orderStatus = "refunded"
+			}
+			if _, e = s.db.Collection("ticket_orders").UpdateOne(tx, bson.M{"_id": order.ID}, bson.M{"$set": bson.M{"status": orderStatus, "updated_at": at}}); e != nil {
+				return e
+			}
+			if orderStatus == "refunded" {
+				if _, e = s.db.Collection("issued_tickets").UpdateMany(tx, bson.M{"order_id": order.ID, "status": bson.M{"$ne": "refunded"}}, bson.M{"$set": bson.M{"status": "refunded", "refunded_at": at}}); e != nil {
+					return e
+				}
+			}
 		}
 		out = Refund{ID: d.PublicID, OrderID: d.OrderPublicID, Amount: d.Amount.String(), Currency: d.Currency, Reason: d.Reason, Provider: d.Provider, ProviderReference: d.ProviderReference, Status: d.Status, CreatedAt: d.CreatedAt, UpdatedAt: d.UpdatedAt}
 		return s.audit(tx, actor, "ticket.refund.provider_result", id, at)
