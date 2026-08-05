@@ -128,8 +128,8 @@ func TestRegistryHasStableChecksum(t *testing.T) {
 	t.Parallel()
 
 	registry := Registry()
-	if len(registry) != 24 {
-		t.Fatalf("Registry() length = %d, want 24", len(registry))
+	if len(registry) != 25 {
+		t.Fatalf("Registry() length = %d, want 25", len(registry))
 	}
 	if registry[0].Name != bootstrapChangeName || len(registry[0].Checksum) != 64 {
 		t.Fatalf("unexpected registry entry: name=%q checksum=%q", registry[0].Name, registry[0].Checksum)
@@ -196,6 +196,9 @@ func TestRegistryHasStableChecksum(t *testing.T) {
 	}
 	if registry[23].Name != campaignReviewChangeName || len(registry[23].Checksum) != 64 || !reflect.DeepEqual(registry[23].Supersedes, []string{campaignsChangeName}) || !reflect.DeepEqual(registry[23].EvolvesCollections, []string{"campaigns", "deliverables", "campaign_deliverables"}) {
 		t.Fatalf("unexpected campaign review registry entry: %#v", registry[23])
+	}
+	if registry[24].Name != crmWorkflowReviewChangeName || len(registry[24].Checksum) != 64 || !reflect.DeepEqual(registry[24].Supersedes, []string{crmWorkflowChangeName}) || !reflect.DeepEqual(registry[24].EvolvesCollections, []string{"enquiry_notes", "tasks", "crm_enquiry_notes", "crm_tasks"}) {
+		t.Fatalf("unexpected CRM workflow review registry entry: %#v", registry[24])
 	}
 }
 

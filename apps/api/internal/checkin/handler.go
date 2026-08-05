@@ -23,11 +23,11 @@ type tokenRequest struct {
 }
 
 type maskedResponse struct {
-	Status     string     `json:"status"`
-	TicketID   string     `json:"ticket_id,omitempty"`
-	CheckedIn  bool       `json:"checked_in,omitempty"`
-	CheckedAt  *time.Time `json:"checked_in_at,omitempty"`
-	Message    string     `json:"message,omitempty"`
+	Status    string     `json:"status"`
+	TicketID  string     `json:"ticket_id,omitempty"`
+	CheckedIn bool       `json:"checked_in,omitempty"`
+	CheckedAt *time.Time `json:"checked_in_at,omitempty"`
+	Message   string     `json:"message,omitempty"`
 }
 
 // simpleAdminAuth checks a test-only header for admin auth. Replace with real session/CSRF checks.

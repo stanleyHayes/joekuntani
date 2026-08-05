@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/platform/mongo/schema"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -73,6 +74,20 @@ func TestIntegrationLegacyDeliverablesMigrateOnceWithoutLoss(t *testing.T) {
 	count, err := database.Collection("campaign_deliverables").CountDocuments(t.Context(), bson.M{"public_id": publicID})
 	if err != nil || count != 1 {
 		t.Fatalf("migrated count=%d err=%v", count, err)
+	}
+	if err := schema.Apply(t.Context(), database, exactCampaignReviewCollections()); err != nil {
+		t.Fatalf("apply reviewed campaign validators: %v", err)
+	}
+	invalidFee, _ := bson.ParseDecimal128("1E+1")
+	zero, _ := bson.ParseDecimal128("0.00")
+	invalidMoneyCampaign := bson.M{
+		"public_id": "018f47f6-9f5d-4d3a-8d4e-45f0f7d4c212", "enquiry_id": "018f47f6-9f5d-4d3a-8d4e-45f0f7d4c213",
+		"organization_id": "018f47f6-9f5d-4d3a-8d4e-45f0f7d4c214", "title": "Invalid accounting scale", "objective": "Must fail",
+		"platforms": bson.A{"web"}, "starts_on": dueAt, "ends_on": dueAt.Add(time.Hour), "status": "draft", "fee": invalidFee,
+		"expenses": zero, "currency": "GHS", "results": bson.A{}, "asset_ids": bson.A{}, "created_at": dueAt, "updated_at": dueAt,
+	}
+	if _, err := database.Collection("campaigns").InsertOne(t.Context(), invalidMoneyCampaign); err == nil {
+		t.Fatal("campaign validator accepted Decimal128 exponent notation")
 	}
 }
 
