@@ -139,6 +139,10 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, v any) bool {
 		writeProblem(w, ErrInvalid)
 		return false
 	}
+	if err := d.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		writeProblem(w, ErrInvalid)
+		return false
+	}
 	return true
 }
 func writeJSON(w http.ResponseWriter, status int, v any, err error) {

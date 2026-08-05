@@ -17,7 +17,7 @@ func Registry() []Change {
 		// These collections are evolved and verified by later append-only changes.
 		// Keeping their bootstrap validators here would make legitimate collMod
 		// evolution appear as historical drift on every idempotent reapply.
-		if collection.Name != "media_assets" && collection.Name != "services" && collection.Name != "pages" && collection.Name != "portfolio_items" && collection.Name != "videos" && collection.Name != "press_items" && collection.Name != "testimonials" && collection.Name != "events" && collection.Name != "ticket_types" && collection.Name != "enquiries" && collection.Name != "organizations" && collection.Name != "contacts" && collection.Name != "ticket_orders" && collection.Name != "ticket_order_items" && collection.Name != "payment_webhooks" && collection.Name != "bookings" && collection.Name != "campaigns" {
+		if collection.Name != "media_assets" && collection.Name != "services" && collection.Name != "pages" && collection.Name != "portfolio_items" && collection.Name != "videos" && collection.Name != "press_items" && collection.Name != "testimonials" && collection.Name != "events" && collection.Name != "ticket_types" && collection.Name != "enquiries" && collection.Name != "organizations" && collection.Name != "contacts" && collection.Name != "ticket_orders" && collection.Name != "ticket_order_items" && collection.Name != "payment_webhooks" && collection.Name != "bookings" && collection.Name != "campaigns" && collection.Name != "deliverables" {
 			verificationCollections = append(verificationCollections, collection)
 		}
 	}
@@ -34,7 +34,7 @@ func Registry() []Change {
 		Verify: func(ctx context.Context, database *mongo.Database) error {
 			return schema.Verify(ctx, database, verificationCollections)
 		},
-	}, authSessionsChange(), siteSettingsChange(), mediaAssetsChange(), exactGlobalSettingsChange(), exactMediaAssetsChange(), servicesChange(), contentChange(), serviceLifecycleChange(), contentRevisionChange(), eventsTicketTypesChange(), eventValidationChange(), enquiriesOutboxChange(), ticketOrdersInventoryChange(), enquiryReviewChange(), paymentsWebhooksChange(), ticketIssuanceChange(), crmChange(), crmReviewChange(), ticketDeliveryLeaseChange(), bookingsChange(), campaignsChange(), crmWorkflowChange()}
+	}, authSessionsChange(), siteSettingsChange(), mediaAssetsChange(), exactGlobalSettingsChange(), exactMediaAssetsChange(), servicesChange(), contentChange(), serviceLifecycleChange(), contentRevisionChange(), eventsTicketTypesChange(), eventValidationChange(), enquiriesOutboxChange(), ticketOrdersInventoryChange(), enquiryReviewChange(), paymentsWebhooksChange(), ticketIssuanceChange(), crmChange(), crmReviewChange(), ticketDeliveryLeaseChange(), bookingsChange(), campaignsChange(), crmWorkflowChange(), campaignReviewChange()}
 }
 
 func bootstrapCollections() []schema.Collection {
