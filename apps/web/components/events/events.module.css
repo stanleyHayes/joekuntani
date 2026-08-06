@@ -184,13 +184,21 @@
 
 .card {
   display: grid;
-  gap: 0.75rem;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: calc(var(--radius-panel, 1rem) - 0.2rem);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface-raised, var(--surface-canvas)) 94%, var(--brand-j)) 0%,
+      var(--surface-canvas) 100%
+    );
 }
 
 .cardMedia {
-  margin: -1rem -1rem 0.25rem;
+  margin: 0;
   overflow: hidden;
-  border-bottom: 1px solid var(--border-subtle);
   aspect-ratio: 16 / 10;
   background: var(--surface-muted, var(--surface-canvas));
 }
@@ -200,6 +208,133 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.cardBody {
+  display: grid;
+  gap: 0.85rem;
+  padding: clamp(1rem, 3vw, 1.35rem);
+}
+
+.cardTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem 0.75rem;
+}
+
+.cardPeriod {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--ink-soft));
+}
+
+.cardStatus {
+  margin: 0;
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--surface-raised, var(--surface-canvas)) 70%, transparent);
+  color: var(--text-muted, var(--ink-soft));
+}
+
+.cardStatus[data-tone="live"] {
+  background: color-mix(in srgb, var(--brand-j) 28%, transparent);
+  color: var(--ink, var(--text-primary));
+}
+
+.cardStatus[data-tone="warn"] {
+  background: color-mix(in srgb, var(--brand-k) 22%, transparent);
+  color: var(--ink, var(--text-primary));
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.cardSummary {
+  margin: 0;
+  color: var(--text-muted, var(--ink-soft));
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.cardFacts {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0.15rem 0 0;
+  padding: 0.85rem 0 0;
+  border-top: 1px solid color-mix(in srgb, var(--border-subtle) 80%, transparent);
+}
+
+.cardFacts div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.cardFacts dt {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--ink-soft));
+}
+
+.cardFacts dd {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.cardCity {
+  font-weight: 500;
+  color: var(--text-muted, var(--ink-soft));
+}
+
+.cardCta {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 2.65rem;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.15rem;
+  border-radius: 999px;
+  padding: 0.55rem 1.1rem;
+  background:
+    linear-gradient(
+      115deg,
+      var(--brand-j) 0%,
+      color-mix(in srgb, var(--brand-j) 55%, var(--brand-k)) 100%
+    );
+  color: #14110c;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  text-decoration: none;
+}
+
+.cardCta:hover {
+  filter: brightness(1.04);
+}
+
+.cardCta:focus-visible {
+  outline: 2px solid var(--focus, var(--brand-k));
+  outline-offset: 3px;
 }
 
 .detailMedia {
@@ -267,6 +402,11 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .cardFacts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1.25rem;
+  }
+
   .facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -279,7 +419,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .filterApply:hover {
+  .filterApply:hover,
+  .cardCta:hover {
     filter: none;
   }
 }

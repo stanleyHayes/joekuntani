@@ -17,7 +17,7 @@ it("renders published event and scheduled banner with contextual links", () => {
   expect(
     screen.getByRole("link", { name: "View event and tickets" }),
   ).toHaveAttribute("href", "/events/approved-event");
-  expect(screen.getByText("Tickets on sale")).toBeVisible();
+  expect(screen.getByText("On sale")).toBeVisible();
 });
 
 it("enables only API-approved live checkout links", () => {
@@ -30,9 +30,9 @@ it("enables only API-approved live checkout links", () => {
 
 it.each([
   ["scheduled", "Tickets scheduled"],
-  ["paused", "Ticket sales paused"],
+  ["paused", "Sales paused"],
   ["sold_out", "Sold out"],
-  ["sale_ended", "Ticket sales closed"],
+  ["sale_ended", "Sales closed"],
 ] as const)(
   "renders the %s ticket state without checkout",
   (availability, label) => {
@@ -71,5 +71,8 @@ it("labels a completed event as past", () => {
       })}
     />,
   );
+  expect(
+    screen.getByRole("link", { name: /View event details|Get tickets/ }),
+  ).toBeVisible();
   expect(screen.getByText("Past event")).toBeVisible();
 });
