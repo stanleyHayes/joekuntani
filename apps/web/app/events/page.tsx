@@ -5,19 +5,26 @@ import { getPublicEvents } from "../../components/events/data";
 import type { PublicEvent } from "../../components/events/types";
 import styles from "../../components/events/events.module.css";
 import { PublicShell } from "../../components/layout/public-shell";
+import { DemoBanner } from "../../components/ui/demo-banner";
+import { EmptyState } from "../../components/ui/empty-state";
+import {
+  demoContentEnabled,
+  demoEventCovers,
+  demoEvents,
+} from "../../lib/demo/content";
 import { pageMetadata, unavailableMetadata } from "../../lib/seo";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
   const result = await getPublicEvents();
+  const demo = demoContentEnabled();
+  const hasEvents = result.data.length > 0 || demo;
   const input = {
     title: "Events",
     description: "Published upcoming and past Joe Kuntani events.",
     path: "/events",
   };
-  return result.state === "ready" && result.data.length
-    ? pageMetadata(input)
-    : unavailableMetadata(input.title, input.description);
+  return hasEvents ? pageMetadata(input) : unavailableMetadata(input.title, input.description);
 }
 
 type Filters = {
@@ -36,10 +43,11 @@ export default async function EventsPage({
     getPublicEvents(),
     searchParams,
   ]);
-  const events = filterEvents(result.data, filters);
-  const cities = [
-    ...new Set(result.data.map((event) => event.venue.city)),
-  ].sort();
+  const demo = demoContentEnabled();
+  const usingDemo = demo && result.data.length === 0;
+  const source = usingDemo ? demoEvents : result.data;
+  const events = filterEvents(source, filters);
+  const cities = [...new Set(source.map((event) => event.venue.city))].sort();
   return (
     <PublicShell
       currentPath="/events"
@@ -50,13 +58,17 @@ export default async function EventsPage({
         description: "Use the approved contact route for event questions.",
       }}
     >
+      {usingDemo ? <DemoBanner /> : null}
       <main id="main-content">
         <header className={`${styles.hero} shell-container`}>
-          <p className="eyebrow">Live events</p>
+          <p className="eyebrow">
+            {usingDemo ? "Demo preview" : "Live events"}
+          </p>
           <h1>Events</h1>
           <p className={styles.lede}>
-            Published event dates, venues, access information and live ticket
-            status.
+            {usingDemo
+              ? "Demo ticketed nights for layout review — Accra and Kumasi rooms with sample ticket states. Replace via Events admin before marketing."
+              : "Published event dates, venues, access information and live ticket status."}
           </p>
         </header>
         <section
@@ -69,7 +81,7 @@ export default async function EventsPage({
             filters={filters}
             safeDate={safeDate(filters.date)}
           />
-          {result.state === "error" ? (
+          {result.state === "error" && !usingDemo ? (
             <p className={styles.notice} role="alert">
               Published events are temporarily unavailable. No event or ticket
               details have been inferred.
@@ -77,13 +89,21 @@ export default async function EventsPage({
           ) : events.length ? (
             <div className={styles.grid}>
               {events.map((event) => (
-                <EventCard event={event} key={event.id} />
+                <EventCard
+                  event={event}
+                  key={event.id}
+                  coverSrc={
+                    usingDemo ? demoEventCovers[event.slug] : undefined
+                  }
+                />
               ))}
             </div>
           ) : (
-            <p className={styles.notice} role="status">
-              No published events match these filters.
-            </p>
+            <EmptyState
+              title="No matching events"
+              description="No published events match these filters. Clear filters or check back when new dates are published."
+              tone="calendar"
+            />
           )}
         </section>
       </main>

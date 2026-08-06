@@ -1,4 +1,5 @@
 import type { ContentItem } from "../../components/content/types";
+import type { PublicEvent } from "../../components/events/types";
 import type { PublicService } from "../../components/services/types";
 
 /**
@@ -373,3 +374,176 @@ export const demoServices: PublicService[] = [
     updated_at: stamp,
   },
 ];
+
+/**
+ * Demo first-party events for layout / filter / ticket UI review.
+ * Not on-sale inventory. Titles and venues are placeholders inspired by
+ * Accra/Kumasi live-arts rooms — not confirmed Joe Kuntani dates.
+ */
+export const demoEvents: PublicEvent[] = [
+  {
+    id: "00000000-0000-4000-8000-000000000061",
+    slug: "accra-delivery-night-demo",
+    title: "Delivery Night — Accra (demo)",
+    summary:
+      "Demo ticketed comedy-with-guitar night for Accra rooms. Layout only until CMS publishes a real date.",
+    description:
+      "Placeholder first-party event so the public events list, filters, and ticket cards can be reviewed. Inspired by the publicly described delivery-musician live format — not a confirmed Joe Kuntani show. Replace via Events admin before marketing this date.",
+    starts_at: "2026-09-20T19:00:00Z",
+    ends_at: "2026-09-20T22:00:00Z",
+    timezone: "Africa/Accra",
+    banner_asset_id: "",
+    venue: {
+      name: "National Theatre environs (demo venue)",
+      address: "South Liberation Link — demo address only",
+      city: "Accra",
+      country_code: "GH",
+      map_url: "https://www.google.com/maps/search/?api=1&query=National+Theatre+Accra",
+      accessibility: "Demo accessibility note — confirm step-free access in CMS.",
+    },
+    policies: {
+      refunds:
+        "Demo policy: refunds follow the published event terms once CMS replaces this stub.",
+      entry: "Demo policy: doors open before start; ticket QR required at entry.",
+      age_limit: 16,
+      age_guidance: "Recommended 16+ for comedy language (demo guidance).",
+      accessibility: "Contact the box office for access needs (demo copy).",
+    },
+    banner: {
+      featured: true,
+      starts_at: "2026-08-01T00:00:00Z",
+      ends_at: "2026-09-20T19:00:00Z",
+    },
+    availability: "on_sale",
+    tickets: [
+      {
+        id: "00000000-0000-4000-8000-000000000071",
+        name: "General admission",
+        description: "Standing / general floor — demo tier.",
+        price: "80.00",
+        currency: "GHS",
+        capacity: 200,
+        sold: 42,
+        reserved: 8,
+        min_per_order: 1,
+        max_per_order: 4,
+        sales_start: "2026-08-01T00:00:00Z",
+        sales_end: "2026-09-20T18:00:00Z",
+        availability: "on_sale",
+        checkout_href:
+          "/tickets/checkout?event=accra-delivery-night-demo&ticket=00000000-0000-4000-8000-000000000071",
+      },
+      {
+        id: "00000000-0000-4000-8000-000000000072",
+        name: "Early entry",
+        description: "Earlier doors + closer floor access — demo tier.",
+        price: "140.00",
+        currency: "GHS",
+        capacity: 40,
+        sold: 18,
+        reserved: 2,
+        min_per_order: 1,
+        max_per_order: 2,
+        sales_start: "2026-08-01T00:00:00Z",
+        sales_end: "2026-09-20T18:00:00Z",
+        availability: "on_sale",
+        checkout_href:
+          "/tickets/checkout?event=accra-delivery-night-demo&ticket=00000000-0000-4000-8000-000000000072",
+      },
+    ],
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000062",
+    slug: "kumasi-campus-session-demo",
+    title: "Campus Session — Kumasi (demo)",
+    summary:
+      "Demo campus / community comedy-music session for Kumasi. Not a confirmed booking.",
+    description:
+      "Placeholder event for second-city filter coverage. Public press has mentioned Kumasi programme bills; this card does not claim that specific Alliance Française date — publish verified shows from admin.",
+    starts_at: "2026-10-11T18:30:00Z",
+    ends_at: "2026-10-11T21:00:00Z",
+    timezone: "Africa/Accra",
+    banner_asset_id: "",
+    venue: {
+      name: "Campus hall (demo venue)",
+      address: "Demo campus address, Kumasi",
+      city: "Kumasi",
+      country_code: "GH",
+      accessibility: "Demo — confirm access routes with the venue.",
+    },
+    policies: {
+      refunds: "Demo refund copy — replace in CMS.",
+      entry: "Demo entry: student ID may be requested at door.",
+      age_limit: 16,
+      age_guidance: "Campus-friendly demo guidance.",
+    },
+    banner: { featured: false },
+    availability: "scheduled",
+    tickets: [
+      {
+        id: "00000000-0000-4000-8000-000000000073",
+        name: "Standard",
+        description: "General campus ticket — demo.",
+        price: "50.00",
+        currency: "GHS",
+        capacity: 300,
+        sold: 0,
+        reserved: 0,
+        min_per_order: 1,
+        max_per_order: 6,
+        sales_start: "2026-09-01T00:00:00Z",
+        sales_end: "2026-10-11T17:00:00Z",
+        availability: "scheduled",
+      },
+    ],
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000063",
+    slug: "private-brand-room-demo",
+    title: "Brand Room Preview — Accra (demo)",
+    summary:
+      "Demo corporate / brand-room style listing for Accra. Shows sold-out and closed states in the UI.",
+    description:
+      "Placeholder past/sold-out listing so filters and ticket status labels can be reviewed. Not a real corporate booking.",
+    starts_at: "2026-07-12T17:00:00Z",
+    ends_at: "2026-07-12T19:30:00Z",
+    timezone: "Africa/Accra",
+    banner_asset_id: "",
+    venue: {
+      name: "Private brand venue (demo)",
+      address: "Airport Residential Area — demo only",
+      city: "Accra",
+      country_code: "GH",
+    },
+    policies: {
+      refunds: "Sales closed — demo past event.",
+      entry: "Invite / ticket hold — demo.",
+      age_limit: 18,
+    },
+    banner: { featured: false },
+    availability: "sold_out",
+    tickets: [
+      {
+        id: "00000000-0000-4000-8000-000000000074",
+        name: "Guest pass",
+        description: "Demo sold-out tier.",
+        price: "0.00",
+        currency: "GHS",
+        capacity: 80,
+        sold: 80,
+        reserved: 0,
+        min_per_order: 1,
+        max_per_order: 1,
+        sales_start: "2026-06-01T00:00:00Z",
+        sales_end: "2026-07-12T12:00:00Z",
+        availability: "sold_out",
+      },
+    ],
+  },
+];
+
+export const demoEventCovers: Record<string, string> = {
+  "accra-delivery-night-demo": demoImages.workC,
+  "kumasi-campus-session-demo": demoImages.workA,
+  "private-brand-room-demo": demoImages.workB,
+};

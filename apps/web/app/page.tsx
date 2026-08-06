@@ -18,6 +18,7 @@ import { ScheduledEventBanner } from "../components/events/event-ui";
 import {
   demoContentEnabled,
   demoCovers,
+  demoEvents,
   demoHome,
   demoImages,
   demoTestimonials,
@@ -54,7 +55,9 @@ export default async function HomePage() {
     : demo
       ? demoTestimonials
       : [];
-  const featuredEvent = activeFeaturedEvent(events.data);
+  const featuredEvent =
+    activeFeaturedEvent(events.data) ||
+    (demo ? activeFeaturedEvent(demoEvents) : undefined);
   return (
     <PublicShell
       currentPath="/"

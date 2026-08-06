@@ -101,6 +101,8 @@ it("distinguishes a missing detail from a valid published detail", async () => {
 });
 
 it("fails closed for missing configuration, invalid slugs and non-success responses", async () => {
+  vi.unstubAllEnvs();
+  delete process.env.API_BASE_URL;
   await expect(getPublicEvents()).resolves.toEqual({
     state: "error",
     data: [],

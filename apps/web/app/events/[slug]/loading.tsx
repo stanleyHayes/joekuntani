@@ -1,7 +1,5 @@
+import { BrandSplash } from "../../../components/ui/brand-splash";
+
 export default function EventLoading() {
-  return (
-    <p className="shell-container" role="status">
-      Loading event details…
-    </p>
-  );
+  return <BrandSplash label="Loading event" />;
 }

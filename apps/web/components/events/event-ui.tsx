@@ -23,9 +23,22 @@ export function ScheduledEventBanner({ event }: { event: PublicEvent }) {
   );
 }
 
-export function EventCard({ event }: { event: PublicEvent }) {
+export function EventCard({
+  event,
+  coverSrc,
+}: {
+  event: PublicEvent;
+  coverSrc?: string;
+}) {
   return (
     <article className={styles.card}>
+      {coverSrc ? (
+        <div className={styles.cardMedia} aria-hidden="true">
+          {/* Demo/CMS cover; next/image optional for fixture paths. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={coverSrc} alt="" width={800} height={500} />
+        </div>
+      ) : null}
       <p className="eyebrow">{periodFor(event)}</p>
       <h2>{event.title}</h2>
       <p>{event.summary}</p>

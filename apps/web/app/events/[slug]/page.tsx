@@ -6,6 +6,12 @@ import {
 } from "../../../components/events/event-ui";
 import styles from "../../../components/events/events.module.css";
 import { PublicShell } from "../../../components/layout/public-shell";
+import { DemoBanner } from "../../../components/ui/demo-banner";
+import {
+  demoContentEnabled,
+  demoEventCovers,
+  demoEvents,
+} from "../../../lib/demo/content";
 import {
   canonicalURL,
   jsonLd,
@@ -23,16 +29,21 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const result = await getPublicEvent(slug);
-  if (!result.data)
+  const demoEvent =
+    demoContentEnabled() && !result.data
+      ? demoEvents.find((item) => item.slug === slug)
+      : null;
+  const event = result.data ?? demoEvent ?? null;
+  if (!event)
     return unavailableMetadata(
       "Event unavailable",
       "Published event information is unavailable.",
     );
   return pageMetadata({
-    title: result.data.title,
-    description: result.data.summary,
+    title: event.title,
+    description: event.summary,
     path: `/events/${slug}`,
-    socialImageAssetID: result.data.banner_asset_id,
+    socialImageAssetID: event.banner_asset_id,
   });
 }
 
@@ -46,8 +57,15 @@ export default async function EventDetailPage({
     getPublicEvent(slug),
     getPublicSettings(),
   ]);
-  const event = result.data;
+  const demo = demoContentEnabled();
+  const demoEvent =
+    demo && !result.data
+      ? demoEvents.find((item) => item.slug === slug)
+      : null;
+  const usingDemo = Boolean(demoEvent);
+  const event = result.data ?? demoEvent ?? null;
   const url = canonicalURL(`/events/${slug}`, settings?.seo.canonical_base);
+  const cover = usingDemo && event ? demoEventCovers[event.slug] : undefined;
   return (
     <PublicShell
       currentPath="/events"
@@ -58,7 +76,8 @@ export default async function EventDetailPage({
         description: "Return to all published upcoming and past events.",
       }}
     >
-      {event && url ? (
+      {usingDemo ? <DemoBanner /> : null}
+      {event && url && !usingDemo ? (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -118,10 +137,19 @@ export default async function EventDetailPage({
         ) : (
           <>
             <header className={`${styles.hero} shell-container`}>
-              <p className="eyebrow">Published event</p>
+              <p className="eyebrow">
+                {usingDemo ? "Demo event" : "Published event"}
+              </p>
               <h1>{event.title}</h1>
               <p className={styles.lede}>{event.summary}</p>
               <p>{formatDateRange(event)}</p>
+              {cover ? (
+                <figure className={styles.detailMedia}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={cover} alt="" width={1600} height={900} />
+                  <figcaption>Demo media — replace via CMS</figcaption>
+                </figure>
+              ) : null}
               <a className={styles.primary} href="#tickets">
                 Review ticket availability
               </a>
