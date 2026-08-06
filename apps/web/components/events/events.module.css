@@ -28,6 +28,127 @@
   display: grid;
   gap: 1rem;
 }
+
+.filterBar {
+  display: grid;
+  gap: 1.15rem;
+  margin-block: 1.35rem 1.75rem;
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+  border: 1px solid color-mix(in srgb, var(--line, var(--border-subtle)) 80%, var(--brand-k));
+  border-radius: calc(var(--radius-panel, 1.25rem) - 0.15rem);
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--surface-raised, var(--surface-canvas)) 92%, var(--brand-j)) 0%,
+      var(--surface-canvas) 100%
+    );
+  box-shadow: var(--shadow, 0 18px 40px color-mix(in srgb, black 18%, transparent));
+}
+
+.filterBarHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 1rem;
+}
+
+.filterBarTitle {
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.filterBarMeta {
+  margin: 0;
+  color: var(--text-muted, var(--ink-soft));
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.filterFields {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.filterField {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.filterLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--ink-soft));
+}
+
+.filterField :global(button),
+.filterField :global(input) {
+  width: 100%;
+  min-height: 2.85rem;
+}
+
+.filterActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem 1rem;
+  padding-top: 0.15rem;
+  border-top: 1px solid color-mix(in srgb, var(--line, var(--border-subtle)) 70%, transparent);
+}
+
+.filterClear {
+  color: var(--text-muted, var(--ink-soft));
+  font-size: 0.9rem;
+  font-weight: 650;
+  text-decoration: none;
+  text-underline-offset: 0.18em;
+}
+
+.filterClear:hover {
+  color: var(--text-primary, var(--ink));
+  text-decoration: underline;
+}
+
+.filterApply {
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.65rem 1.35rem;
+  background:
+    linear-gradient(
+      115deg,
+      var(--brand-j) 0%,
+      color-mix(in srgb, var(--brand-j) 55%, var(--brand-k)) 55%,
+      var(--brand-k) 120%
+    );
+  color: #14110c;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  cursor: pointer;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--brand-j) 22%, transparent);
+}
+
+.filterApply:hover {
+  filter: brightness(1.04);
+}
+
+.filterApply:focus-visible,
+.filterClear:focus-visible {
+  outline: 2px solid var(--focus, var(--brand-k));
+  outline-offset: 3px;
+}
+
+/* Legacy hooks kept for older markup references */
 .filters {
   margin-block: 1.5rem;
 }
@@ -44,6 +165,13 @@
   border: 1px solid var(--border-subtle);
   background: var(--surface-canvas);
 }
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
 .card,
 .ticket,
 .notice,
@@ -53,10 +181,12 @@
   border: 1px solid var(--border-subtle);
   background: var(--surface-canvas);
 }
+
 .card {
   display: grid;
   gap: 0.75rem;
 }
+
 .cardMedia {
   margin: -1rem -1rem 0.25rem;
   overflow: hidden;
@@ -64,37 +194,37 @@
   aspect-ratio: 16 / 10;
   background: var(--surface-muted, var(--surface-canvas));
 }
+
 .cardMedia img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+
 .detailMedia {
   margin: 0;
   display: grid;
   gap: 0.5rem;
 }
+
 .detailMedia img {
   width: min(100%, 52rem);
   height: auto;
   border-radius: 0.75rem;
   object-fit: cover;
 }
+
 .detailMedia figcaption {
   color: var(--text-muted);
   font-size: 0.85rem;
 }
+
 .meta,
 .status {
   color: var(--text-muted);
 }
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-}
+
 .primary {
   display: inline-flex;
   width: fit-content;
@@ -105,31 +235,51 @@
   background: var(--text-primary);
   text-decoration: none;
 }
+
 .disabled {
   opacity: 0.65;
 }
+
 .facts {
   margin: 0;
 }
+
 .facts div {
   min-width: 0;
 }
+
 .facts dt {
   color: var(--text-muted);
   font-size: 0.85rem;
 }
+
 .facts dd {
   margin: 0.25rem 0 0;
   overflow-wrap: anywhere;
 }
+
 @media (min-width: 44rem) {
-  .filters {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  .filterFields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
   .facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .filterFields {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filterApply:hover {
+    filter: none;
   }
 }

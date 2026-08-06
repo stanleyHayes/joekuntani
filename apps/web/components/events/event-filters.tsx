@@ -32,63 +32,88 @@ export function EventFilters({ cities, filters, safeDate }: EventFiltersProps) {
     filters.availability ?? "all",
   );
 
+  const activeCount = [
+    city,
+    date,
+    period !== "upcoming" ? period : "",
+    availability !== "all" ? availability : "",
+  ].filter(Boolean).length;
+
   return (
-    <form className={styles.filters} action="/events" method="get">
-      <label className={styles.filter}>
-        City
-        <Select
-          name="city"
-          aria-label="City"
-          value={city}
-          onChange={setCity}
-          options={cityOptions}
-          placeholder="All cities"
-        />
-      </label>
-      <label className={styles.filter}>
-        Date
-        <DateField
-          name="date"
-          aria-label="Date"
-          mode="date"
-          value={date}
-          onChange={setDate}
-        />
-      </label>
-      <label className={styles.filter}>
-        Time
-        <Select
-          name="period"
-          aria-label="Time period"
-          value={period}
-          onChange={setPeriod}
-          options={[
-            { value: "upcoming", label: "Upcoming" },
-            { value: "past", label: "Past" },
-            { value: "all", label: "All dates" },
-          ]}
-        />
-      </label>
-      <label className={styles.filter}>
-        Tickets
-        <Select
-          name="availability"
-          aria-label="Ticket availability"
-          value={availability}
-          onChange={setAvailability}
-          options={[
-            { value: "all", label: "All states" },
-            { value: "on_sale", label: "On sale" },
-            { value: "scheduled", label: "Scheduled" },
-            { value: "paused", label: "Sales paused" },
-            { value: "sold_out", label: "Sold out" },
-            { value: "sale_ended", label: "Sales closed" },
-          ]}
-        />
-      </label>
-      <div className={styles.actions}>
-        <button type="submit">Apply filters</button>
-        <Link href="/events">Clear filters</Link>
+    <form className={styles.filterBar} action="/events" method="get">
+      <div className={styles.filterBarHead}>
+        <p className={styles.filterBarTitle}>Refine events</p>
+        {activeCount > 0 ? (
+          <p className={styles.filterBarMeta} aria-live="polite">
+            {activeCount} active
+          </p>
+        ) : (
+          <p className={styles.filterBarMeta}>Show upcoming by default</p>
+        )}
+      </div>
+
+      <div className={styles.filterFields}>
+        <label className={styles.filterField}>
+          <span className={styles.filterLabel}>City</span>
+          <Select
+            name="city"
+            aria-label="City"
+            value={city}
+            onChange={setCity}
+            options={cityOptions}
+            placeholder="All cities"
+          />
+        </label>
+        <label className={styles.filterField}>
+          <span className={styles.filterLabel}>Date</span>
+          <DateField
+            name="date"
+            aria-label="Date"
+            mode="date"
+            value={date}
+            onChange={setDate}
+          />
+        </label>
+        <label className={styles.filterField}>
+          <span className={styles.filterLabel}>When</span>
+          <Select
+            name="period"
+            aria-label="When"
+            value={period}
+            onChange={setPeriod}
+            options={[
+              { value: "upcoming", label: "Upcoming" },
+              { value: "past", label: "Past" },
+              { value: "all", label: "Any time" },
+            ]}
+          />
+        </label>
+        <label className={styles.filterField}>
+          <span className={styles.filterLabel}>Availability</span>
+          <Select
+            name="availability"
+            aria-label="Ticket availability"
+            value={availability}
+            onChange={setAvailability}
+            options={[
+              { value: "all", label: "Any availability" },
+              { value: "on_sale", label: "On sale" },
+              { value: "scheduled", label: "Scheduled" },
+              { value: "paused", label: "Sales paused" },
+              { value: "sold_out", label: "Sold out" },
+              { value: "sale_ended", label: "Sales closed" },
+            ]}
+          />
+        </label>
+      </div>
+
+      <div className={styles.filterActions}>
+        <Link className={styles.filterClear} href="/events">
+          Reset
+        </Link>
+        <button className={styles.filterApply} type="submit">
+          Show events
+        </button>
       </div>
     </form>
   );
