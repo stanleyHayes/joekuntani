@@ -19,9 +19,14 @@ import (
 type SecretBox struct{ aead cipher.AEAD }
 
 func NewSecretBox(encodedKey string) (*SecretBox, error) {
+	encodedKey = strings.TrimSpace(encodedKey)
 	key, err := base64.RawStdEncoding.DecodeString(encodedKey)
+	if err != nil {
+		// Accept standard padded base64 from secret generators / dashboards.
+		key, err = base64.StdEncoding.DecodeString(encodedKey)
+	}
 	if err != nil || len(key) != 32 {
-		return nil, errors.New("MFA_ENCRYPTION_KEY must be base64 without padding and decode to 32 bytes")
+		return nil, errors.New("MFA_ENCRYPTION_KEY must be base64 (padded or unpadded) and decode to 32 bytes")
 	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
