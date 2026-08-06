@@ -6,31 +6,45 @@ import {
 } from "../../components/content/public-content";
 import styles from "../../components/content/content.module.css";
 import { PublicShell } from "../../components/layout/public-shell";
+import { DemoBanner } from "../../components/ui/demo-banner";
+import {
+  demoContentEnabled,
+  demoCovers,
+  demoPress,
+} from "../../lib/demo/content";
 import { pageMetadata, unavailableMetadata } from "../../lib/seo";
+
 export const dynamic = "force-dynamic";
 export async function generateMetadata() {
   const items = await getPublicContent("press");
+  const demo = demoContentEnabled();
   const input = {
     title: "Press",
     description: "Approved press coverage and appearances.",
     path: "/press",
   };
-  return items.length
+  return items.length || demo
     ? pageMetadata(input)
     : unavailableMetadata(input.title, input.description);
 }
 export default async function PressPage() {
-  const items = await getPublicContent("press");
+  const itemsRaw = await getPublicContent("press");
+  const demo = demoContentEnabled();
+  const usingDemo = demo && itemsRaw.length === 0;
+  const items = itemsRaw.length ? itemsRaw : demo ? demoPress : [];
   return (
     <PublicShell currentPath="/press" footerCta={contentFooterCta}>
+      {usingDemo ? <DemoBanner /> : null}
       <main id="main-content">
         <header className={`${styles.hero} shell-container`}>
           <div>
-            <p className="eyebrow">Press</p>
+            <p className="eyebrow">{usingDemo ? "Press · demo" : "Press"}</p>
             <h1>Coverage.</h1>
           </div>
           <p className={styles.lede}>
-            Published references link to their original verified sources.
+            {usingDemo
+              ? "Demo press rows for layout only. Links point to example.invalid and must be replaced."
+              : "Published references link to their original verified sources."}
           </p>
         </header>
         <section
@@ -39,7 +53,10 @@ export default async function PressPage() {
         >
           <h2 id="press-list">Press items</h2>
           {items.length ? (
-            <ContentGrid items={items} />
+            <ContentGrid
+              items={items}
+              covers={usingDemo ? demoCovers : undefined}
+            />
           ) : (
             <ContentEmpty label="Press coverage" />
           )}

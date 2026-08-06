@@ -73,6 +73,15 @@ type Options struct {
 	AdminTicketDeadLetters   http.Handler
 	AdminBookings            http.Handler
 	AdminCampaigns           http.Handler
+	AdminTicketOps           http.Handler
+	AdminExports             http.Handler
+	AdminAudit               http.Handler
+	AdminAnalytics           http.Handler
+	AdminPrivacy             http.Handler
+	AdminSearch              http.Handler
+	AdminCheckin             http.Handler
+	AdminTicketAnalytics     http.Handler
+	PublicAnalyticsTrack     http.Handler
 }
 
 func NewHandler(options ...Options) http.Handler {
@@ -231,6 +240,33 @@ func NewHandler(options ...Options) http.Handler {
 	}
 	if configuration.AdminCampaigns != nil {
 		router.Mount("/api/admin/campaigns", configuration.AdminCampaigns)
+	}
+	if configuration.AdminTicketOps != nil {
+		router.Mount("/api/admin/ticket-ops", configuration.AdminTicketOps)
+	}
+	if configuration.AdminExports != nil {
+		router.Mount("/api/admin/exports", configuration.AdminExports)
+	}
+	if configuration.AdminAudit != nil {
+		router.Mount("/api/admin/audit", configuration.AdminAudit)
+	}
+	if configuration.AdminAnalytics != nil {
+		router.Mount("/api/admin/analytics", configuration.AdminAnalytics)
+	}
+	if configuration.AdminPrivacy != nil {
+		router.Mount("/api/admin/privacy", configuration.AdminPrivacy)
+	}
+	if configuration.AdminSearch != nil {
+		router.Mount("/api/admin/search", configuration.AdminSearch)
+	}
+	if configuration.AdminCheckin != nil {
+		router.Mount("/api/admin/checkin", configuration.AdminCheckin)
+	}
+	if configuration.AdminTicketAnalytics != nil {
+		router.Mount("/api/admin/ticket-analytics", configuration.AdminTicketAnalytics)
+	}
+	if configuration.PublicAnalyticsTrack != nil {
+		router.Method(http.MethodPost, "/api/public/analytics/events", configuration.PublicAnalyticsTrack)
 	}
 	return router
 }

@@ -1,0 +1,90 @@
+.page {
+  position: relative;
+  isolation: isolate;
+  min-height: min(78vh, 48rem);
+  display: grid;
+  align-items: center;
+  padding-block: clamp(3rem, 10vw, 6rem);
+  overflow: hidden;
+  background:
+    radial-gradient(
+      70% 55% at 15% 10%,
+      color-mix(in srgb, var(--brand-j) 18%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      60% 50% at 90% 20%,
+      color-mix(in srgb, var(--brand-k) 16%, transparent),
+      transparent 70%
+    ),
+    var(--canvas);
+}
+
+.inner {
+  position: relative;
+  z-index: 1;
+  max-width: 40rem;
+}
+
+.code {
+  margin: 0 0 0.75rem;
+  color: color-mix(in srgb, var(--brand-j) 80%, var(--ink));
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 12vw, 5.5rem);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.copy {
+  margin: 1rem 0 1.75rem;
+  max-width: 34rem;
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  border-radius: 999px;
+  padding: 0.65rem 1.15rem;
+  font-family: var(--font-display);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.primary {
+  background: linear-gradient(
+    110deg,
+    var(--brand-j),
+    color-mix(in srgb, var(--brand-j) 40%, var(--brand-k))
+  );
+  color: var(--accent-contrast);
+}
+
+.secondary {
+  border: 1px solid var(--line);
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+
+.secondary:hover {
+  border-color: var(--brand-k);
+}

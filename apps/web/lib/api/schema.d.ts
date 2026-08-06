@@ -657,6 +657,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/auth/mfa/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Return authenticator enrollment material for a password-accepted, MFA-pending session */
+        get: operations["getStaffMFASetup"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/auth/mfa/verify": {
         parameters: {
             query?: never;
@@ -1293,6 +1310,330 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/exports/resources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List CSV export resources authorized for the current role */
+        get: operations["listAdminExportResources"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/exports/{resource}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download a role-filtered audited CSV export */
+        get: operations["downloadAdminExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search administrator audit events without personal-data payloads */
+        get: operations["searchAdminAudit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/analytics/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read privacy-safe analytics overview KPIs */
+        get: operations["getAdminAnalyticsOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/analytics/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record an allowlisted privacy-safe conversion event */
+        post: operations["trackPublicAnalyticsEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/privacy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read enquiry retention status and active legal-hold counts */
+        get: operations["getAdminPrivacyStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/privacy/holds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List active legal holds */
+        get: operations["listAdminPrivacyHolds"];
+        put?: never;
+        /** Place an audited legal hold on a CRM contact */
+        post: operations["placeAdminPrivacyHold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/privacy/holds/{contactId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Clear an active legal hold for a CRM contact */
+        delete: operations["clearAdminPrivacyHold"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/privacy/retention": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run the default 24-month enquiry personal-data retention purge */
+        post: operations["runAdminPrivacyRetention"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Role-filtered global search across authorized operational records */
+        get: operations["searchAdminRecords"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/ticket-ops/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List ticket orders with revenue and refund summary */
+        get: operations["listAdminTicketOrders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/ticket-ops/orders/{orderId}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Re-queue purchase confirmation delivery for a paid order */
+        post: operations["resendAdminTicketOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/ticket-ops/orders/{orderId}/refund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve a full or partial refund for a paid order */
+        post: operations["refundAdminTicketOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/ticket-ops/tickets/{ticketId}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Void a valid issued ticket */
+        post: operations["voidAdminTicket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/ticket-ops/events/{eventId}/attendees.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export attendee CSV for an event */
+        get: operations["exportAdminEventAttendees"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/ticket-ops/events/{eventId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an event and queue refund-guidance communications */
+        post: operations["cancelAdminTicketEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/checkin/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Atomically check in a valid ticket bearer for an event */
+        post: operations["scanAdminCheckin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/checkin/events/{eventId}/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Live checked-in attendance count for an event */
+        get: operations["getAdminCheckinCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/ticket-analytics/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read ticket sales, inventory, conversion and attendance dashboards */
+        get: operations["getAdminTicketAnalyticsDashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1691,6 +2032,243 @@ export interface components {
         };
         TicketDeliveryDeadLetterList: {
             items: components["schemas"]["TicketDeliveryDeadLetter"][];
+        };
+        /** @enum {string} */
+        ExportResource: "enquiries" | "contacts" | "bookings" | "campaigns";
+        AuditEntry: {
+            /** Format: uuid */
+            id: string;
+            action: string;
+            entity_type: string;
+            entity_id: string;
+            outcome?: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        AuditSearchResponse: {
+            query: string;
+            items: components["schemas"]["AuditEntry"][];
+            limited: boolean;
+        };
+        AnalyticsNamedCount: {
+            name: string;
+            count: number;
+        };
+        AnalyticsAudienceMetric: {
+            platform: string;
+            /** Format: date */
+            metric_date: string;
+            followers: number;
+            reach: number;
+            impressions: number;
+        };
+        AnalyticsOverview: {
+            /** Format: date-time */
+            generated_at: string;
+            conversion_total: number;
+            booking_submitted: number;
+            ticket_purchases: number;
+            pipeline: {
+                [key: string]: number;
+            };
+            bookings_by_status: {
+                [key: string]: number;
+            };
+            campaigns_by_status: {
+                [key: string]: number;
+            };
+            content_published: number;
+            top_sources: components["schemas"]["AnalyticsNamedCount"][];
+            top_paths: components["schemas"]["AnalyticsNamedCount"][];
+            audience: components["schemas"]["AnalyticsAudienceMetric"][];
+        };
+        AnalyticsTrackInput: {
+            name: string;
+            properties?: {
+                [key: string]: string;
+            };
+            /** Format: date-time */
+            occurred_at?: string;
+        };
+        AnalyticsTrackReceipt: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: date-time */
+            occurred_at: string;
+        };
+        PrivacyStatus: {
+            retention_months: number;
+            eligible_count: number;
+            active_holds: number;
+            /** Format: date-time */
+            generated_at: string;
+        };
+        PrivacyHold: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            contact_id: string;
+            reason: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            cleared_at?: string;
+        };
+        PrivacyHoldInput: {
+            /** Format: uuid */
+            contact_id: string;
+            reason: string;
+        };
+        PrivacyRetentionResult: {
+            purged: number;
+            skipped: number;
+            /** Format: date-time */
+            cutoff_at: string;
+            /** Format: date-time */
+            completed_at: string;
+        };
+        AdminSearchResponse: {
+            query: string;
+            limited: boolean;
+            items: components["schemas"]["AdminSearchResult"][];
+        };
+        AdminSearchResult: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "enquiry" | "contact" | "campaign" | "booking" | "content";
+            title: string;
+            context: string;
+            href: string;
+        };
+        TicketOpsOrderList: {
+            items: components["schemas"]["TicketOpsOrder"][];
+            summary: components["schemas"]["TicketOpsSummary"][];
+        };
+        TicketOpsOrder: {
+            /** Format: uuid */
+            id: string;
+            reference: string;
+            event_id: string;
+            buyer_name: string;
+            /** Format: email */
+            buyer_email: string;
+            /** @enum {string} */
+            currency: "GHS" | "USD" | "EUR" | "GBP";
+            subtotal: string;
+            fees: string;
+            total: string;
+            refunded: string;
+            status: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        TicketOpsSummary: {
+            /** @enum {string} */
+            currency: "GHS" | "USD" | "EUR" | "GBP";
+            revenue: string;
+            fees: string;
+            refunded: string;
+            net: string;
+            orders: number;
+        };
+        TicketOpsRefundInput: {
+            amount: string;
+            reason: string;
+        };
+        TicketOpsRefund: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            order_id: string;
+            amount: string;
+            /** @enum {string} */
+            currency: "GHS" | "USD" | "EUR" | "GBP";
+            reason: string;
+            provider: string;
+            provider_reference?: string;
+            /** @enum {string} */
+            status: "processing" | "pending" | "succeeded" | "provider_failed";
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            replay?: boolean;
+        };
+        CheckinScanInput: {
+            /** Format: uuid */
+            event_id: string;
+            token: string;
+            device_label?: string;
+        };
+        CheckinScanResult: {
+            /** @enum {string} */
+            result: "admitted" | "already_checked_in" | "invalid" | "wrong_event" | "not_valid";
+            ticket_ref?: string;
+            /** Format: date-time */
+            checked_in_at?: string;
+            checked_in_count: number;
+            message?: string;
+        };
+        CheckinCount: {
+            /** Format: uuid */
+            event_id: string;
+            checked_in_count: number;
+        };
+        TicketAnalyticsDashboard: {
+            /** Format: date-time */
+            generated_at: string;
+            financial: boolean;
+            sales?: components["schemas"]["TicketAnalyticsMoney"][];
+            settlement?: components["schemas"]["TicketAnalyticsSettlement"][];
+            inventory: components["schemas"]["TicketAnalyticsInventory"];
+            funnel: components["schemas"]["TicketAnalyticsFunnel"];
+            attendance: components["schemas"]["TicketAnalyticsAttendance"];
+            events: components["schemas"]["TicketAnalyticsEventAttendance"][];
+        };
+        TicketAnalyticsMoney: {
+            /** @enum {string} */
+            currency: "GHS" | "USD" | "EUR" | "GBP";
+            revenue: string;
+            fees: string;
+            refunded: string;
+            net: string;
+            orders: number;
+        };
+        TicketAnalyticsSettlement: {
+            /** @enum {string} */
+            currency: "GHS" | "USD" | "EUR" | "GBP";
+            recorded_net: string;
+            provider_reported: string;
+            variance: string;
+            note: string;
+        };
+        TicketAnalyticsInventory: {
+            quantity_total: number;
+            quantity_reserved: number;
+            quantity_sold: number;
+            quantity_available: number;
+        };
+        TicketAnalyticsFunnel: {
+            selection_started: number;
+            checkout_started: number;
+            purchase_completed: number;
+            purchase_failed: number;
+            checked_in_events: number;
+        };
+        TicketAnalyticsAttendance: {
+            valid: number;
+            checked_in: number;
+            void: number;
+            refunded: number;
+        };
+        TicketAnalyticsEventAttendance: {
+            /** Format: uuid */
+            event_id: string;
+            title: string;
+            checked_in: number;
+            issued: number;
         };
         EnquiryContact: {
             name: string;
@@ -2261,6 +2839,18 @@ export interface components {
         };
         MFAVerificationRequest: {
             code: string;
+        };
+        MFASetupResponse: {
+            /** Format: email */
+            email: string;
+            secret: string;
+            /** Format: uri */
+            otpauth_uri: string;
+            issuer: string;
+            /** @constant */
+            digits: 6;
+            /** @constant */
+            period_seconds: 30;
         };
         AuthenticatedResponse: {
             /** @constant */
@@ -3446,6 +4036,29 @@ export interface operations {
             };
             400: components["responses"]["Problem"];
             401: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+        };
+    };
+    getStaffMFASetup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Enrollment secret and otpauth URI for the pending MFA challenge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MFASetupResponse"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
         };
     };
@@ -4661,6 +5274,542 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TicketDeliveryDeadLetterList"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    listAdminExportResources: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Authorized export resource identifiers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        resources: components["schemas"]["ExportResource"][];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    downloadAdminExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resource: components["schemas"]["ExportResource"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV attachment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    searchAdminAudit: {
+        parameters: {
+            query?: {
+                q?: string;
+                action?: string;
+                entity_type?: string;
+                from?: string;
+                to?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Matching audit events */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditSearchResponse"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    getAdminAnalyticsOverview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dashboard overview */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalyticsOverview"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    trackPublicAnalyticsEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalyticsTrackInput"];
+            };
+        };
+        responses: {
+            /** @description Conversion event accepted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalyticsTrackReceipt"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    getAdminPrivacyStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Privacy retention status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacyStatus"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    listAdminPrivacyHolds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Active legal holds */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["PrivacyHold"][];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    placeAdminPrivacyHold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrivacyHoldInput"];
+            };
+        };
+        responses: {
+            /** @description Legal hold placed */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacyHold"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    clearAdminPrivacyHold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contactId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Legal hold cleared */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacyHold"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    runAdminPrivacyRetention: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Retention batch result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacyRetentionResult"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    searchAdminRecords: {
+        parameters: {
+            query: {
+                q: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ranked search results limited to the caller's role */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSearchResponse"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    listAdminTicketOrders: {
+        parameters: {
+            query?: {
+                event_id?: string;
+                status?: "pending" | "awaiting_payment" | "paid" | "payment_failed" | "expired" | "cancelled" | "reconciliation_required" | "partially_refunded" | "refunded";
+                q?: string;
+                date_from?: string;
+                date_to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Filtered orders and currency summaries */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketOpsOrderList"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    resendAdminTicketOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Delivery re-queued */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    refundAdminTicketOrder: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                orderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketOpsRefundInput"];
+            };
+        };
+        responses: {
+            /** @description Refund accepted or idempotent replay */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketOpsRefund"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    voidAdminTicket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticketId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Ticket voided */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    exportAdminEventAttendees: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Attendee CSV */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    cancelAdminTicketEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Cancellation accepted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        communications_queued: number;
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    scanAdminCheckin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckinScanInput"];
+            };
+        };
+        responses: {
+            /** @description Check-in result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckinScanResult"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            /** @description Duplicate check-in */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckinScanResult"];
+                };
+            };
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    getAdminCheckinCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Live attendance count */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckinCount"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    getAdminTicketAnalyticsDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ticket analytics dashboard */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketAnalyticsDashboard"];
                 };
             };
             403: components["responses"]["Problem"];

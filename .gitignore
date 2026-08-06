@@ -2,6 +2,9 @@
 .env
 .env.*
 !.env.example
+!.env.production.example
+!**/.env.example
+!**/.env.production.example
 
 # JavaScript / Next.js
 node_modules/
@@ -24,6 +27,7 @@ test-results/
 .vscode/
 tmp/
 dist/
+.playwright-report/
 
 # Local infrastructure data
 .data/

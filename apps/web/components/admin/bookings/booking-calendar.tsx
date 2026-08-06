@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { DateField } from "../../ui/date-field";
+import { Select } from "../../ui/select";
 import styles from "./booking-calendar.module.css";
 
 type Status = "tentative" | "confirmed" | "cancelled";
@@ -250,11 +252,12 @@ export function BookingCalendar() {
           ))}
           <label>
             Calendar date
-            <input
-              type="date"
+            <DateField
+              aria-label="Calendar date"
+              mode="date"
               value={anchor.toISOString().slice(0, 10)}
-              onChange={(e) =>
-                setAnchor(new Date(`${e.target.value}T12:00:00Z`))
+              onChange={(value) =>
+                setAnchor(new Date(`${value || "1970-01-01"}T12:00:00Z`))
               }
             />
           </label>
@@ -295,11 +298,16 @@ export function BookingCalendar() {
         </label>
         <label>
           Starts
-          <input name="start_at" type="datetime-local" required />
+          <DateField
+            name="start_at"
+            aria-label="Starts"
+            mode="datetime"
+            required
+          />
         </label>
         <label>
           Ends
-          <input name="end_at" type="datetime-local" required />
+          <DateField name="end_at" aria-label="Ends" mode="datetime" required />
         </label>
         <label>
           Venue
@@ -315,10 +323,15 @@ export function BookingCalendar() {
         </label>
         <label>
           Status
-          <select name="status" defaultValue="tentative">
-            <option value="tentative">Tentative</option>
-            <option value="confirmed">Confirmed</option>
-          </select>
+          <Select
+            name="status"
+            defaultValue="tentative"
+            options={[
+              { value: "tentative", label: "Tentative" },
+              { value: "confirmed", label: "Confirmed" },
+            ]}
+            aria-label="Booking status"
+          />
         </label>
         <label>
           Fee

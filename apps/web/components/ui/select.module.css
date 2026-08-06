@@ -1,0 +1,98 @@
+.root {
+  position: relative;
+  width: 100%;
+}
+
+.trigger {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 2.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 0.7rem 0.9rem;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--brand-j) 8%, transparent),
+      color-mix(in srgb, var(--brand-k) 8%, transparent)
+    ),
+    var(--surface-raised);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    transform 100ms ease,
+    box-shadow 160ms ease;
+}
+
+.trigger:hover:not(:disabled) {
+  border-color: var(--brand-k);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.trigger span[data-empty="true"] {
+  color: var(--ink-soft);
+  font-weight: 550;
+}
+
+.chevron {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid var(--brand-j);
+  border-bottom: 2px solid var(--brand-k);
+  transform: rotate(45deg) translateY(-0.1rem);
+}
+
+.root[data-open="true"] .chevron {
+  transform: rotate(225deg) translateY(-0.05rem);
+}
+
+.list {
+  position: fixed;
+  z-index: 80;
+  margin: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 0.35rem;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+  list-style: none;
+}
+
+.option {
+  border-radius: calc(var(--radius-control) - 0.15rem);
+  padding: 0.65rem 0.75rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.option[data-active="true"],
+.option:hover {
+  background: color-mix(in srgb, var(--brand-k) 16%, var(--surface));
+}
+
+.option[aria-selected="true"] {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--brand-j) 22%, transparent),
+    color-mix(in srgb, var(--brand-k) 18%, transparent)
+  );
+  font-weight: 750;
+}

@@ -1,0 +1,21 @@
+.workspace { display: grid; gap: 1.5rem; max-width: 70rem; }
+.header { max-width: 46rem; }
+.header h2 { margin: .2rem 0 .5rem; font-size: clamp(1.75rem, 4vw, 2.75rem); line-height: 1; }
+.header p { color: var(--color-text-muted); }
+.eyebrow { margin: 0; color: var(--color-accent, #0f766e) !important; font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.form { display: grid; gap: 1rem; padding: clamp(1rem, 3vw, 1.5rem); border: 1px solid var(--color-border, #d8d5cf); border-radius: 1rem; background: var(--color-surface, #fff); }
+.fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+.fields label { display: grid; gap: .35rem; font-weight: 750; }
+.fields input, .form button { min-height: 3rem; border-radius: .7rem; font: inherit; }
+.fields input { min-width: 0; padding: 0 .9rem; border: 1px solid var(--color-border, #bbb); background: var(--color-background, #fff); color: inherit; }
+.form button { width: fit-content; padding: 0 1.25rem; border: 0; background: var(--color-text, #171717); color: var(--color-background, #fff); font-weight: 750; cursor: pointer; }
+.form button:disabled { cursor: wait; opacity: .65; }
+.fields input:focus-visible, .form button:focus-visible { outline: 3px solid var(--color-focus, #0f766e); outline-offset: 3px; }
+.status, .notice { margin: 0; color: var(--color-text-muted); font-size: .9rem; }
+.table { width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
+.caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.table th, .table td { padding: .75rem .65rem; border-bottom: 1px solid var(--color-border, #d8d5cf); text-align: left; vertical-align: top; }
+.table th { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); }
+.empty { padding: 2rem; border: 1px dashed var(--color-border, #bbb); border-radius: .85rem; text-align: center; }
+.empty h3, .empty p { margin: .25rem; }
+@media (max-width: 52rem) { .fields { grid-template-columns: 1fr; } .form button { width: 100%; } }

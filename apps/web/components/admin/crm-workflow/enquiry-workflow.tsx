@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { DateField } from "../../ui/date-field";
+import { Select } from "../../ui/select";
 
 type Note = {
   id: string;
@@ -205,16 +207,26 @@ export function EnquiryWorkflow({
         </label>
         <label>
           Priority
-          <select name="priority" defaultValue="normal">
-            <option value="low">Low</option>
-            <option value="normal">Normal</option>
-            <option value="high">High</option>
-            <option value="urgent">Urgent</option>
-          </select>
+          <Select
+            name="priority"
+            defaultValue="normal"
+            options={[
+              { value: "low", label: "Low" },
+              { value: "normal", label: "Normal" },
+              { value: "high", label: "High" },
+              { value: "urgent", label: "Urgent" },
+            ]}
+            aria-label="Task priority"
+          />
         </label>
         <label>
           Due at
-          <input name="due_at" type="datetime-local" required />
+          <DateField
+            name="due_at"
+            aria-label="Due at"
+            mode="datetime"
+            required
+          />
         </label>
         <button type="submit">Add task</button>
       </form>

@@ -1,0 +1,96 @@
+# Render Blueprint — Joe Kuntani API only (JK-017 / OPS-DEPLOY-001).
+# Frontend (Next.js) deploys on Vercel. Do not add a joe-web service here.
+#
+# Staging and production must use distinct env groups, MongoDB databases,
+# Cloudinary folders, Resend recipients, analytics projects, and secrets.
+# Never point staging at production data stores.
+# Set secret values in the Render dashboard / env groups (sync: false).
+
+previewsEnabled: true
+
+services:
+  - type: web
+    name: joe-api
+    runtime: go
+    plan: starter
+    region: oregon
+    rootDir: apps/api
+    buildCommand: go build -o joe-api ./cmd/api
+    startCommand: ./joe-api
+    healthCheckPath: /health/live
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        sync: false
+      - key: APP_TIMEZONE
+        value: Africa/Accra
+      # Process listens on $PORT when Render injects it (see cmd/api).
+      - key: API_ADDR
+        value: ":10000"
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DATABASE
+        sync: false
+      # Must be the HTTPS Vercel web origin (exact match for auth CSRF/origin).
+      - key: PUBLIC_WEB_URL
+        sync: false
+      - key: MFA_ENCRYPTION_KEY
+        sync: false
+      - key: TICKET_TOKEN_HMAC_KEY
+        sync: false
+      - key: ENQUIRY_IP_HMAC_KEY
+        sync: false
+      - key: CRM_ATTACHMENT_HMAC_KEY
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: CSRF_SECRET
+        sync: false
+      - key: AUTH_TRUSTED_PROXY_CIDRS
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: RESEND_API_URL
+        value: https://api.resend.com/emails
+      - key: INTERNAL_NOTIFICATION_EMAIL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_WEBHOOK_SECRET
+        sync: false
+      - key: CLOUDINARY_FOLDER
+        sync: false
+      - key: MEDIA_MAX_BYTES
+        value: "10485760"
+      - key: MEDIA_MAX_DIMENSION
+        value: "6000"
+      - key: PAYMENT_PROVIDER
+        sync: false
+      - key: PAYMENT_PROVIDER_SECRET
+        sync: false
+      - key: PAYMENT_WEBHOOK_SECRET
+        sync: false
+      - key: PAYMENT_RETURN_URL
+        sync: false
+      - key: POSTHOG_API_KEY
+        sync: false
+      - key: POSTHOG_HOST
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: RELEASE_VERSION
+        sync: false
+      - key: ENQUIRY_TRUSTED_PROXY_CIDRS
+        sync: false
+      - key: ENQUIRY_RATE_LIMIT
+        value: "5"
+      - key: ENQUIRY_RATE_WINDOW
+        value: 1m
+      - key: TICKET_HOLD_DURATION
+        value: 10m

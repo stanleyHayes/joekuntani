@@ -62,8 +62,14 @@ type Store interface {
 	PrivacyDelete(context.Context, string, time.Time, AuditEvent) (PrivacyDeleteResult, error)
 }
 
+// RetentionGuard blocks privacy-delete when lawful retention (e.g. legal hold) applies.
+type RetentionGuard interface {
+	AssertContactDeletable(context.Context, string) error
+}
+
 type Service struct {
 	store Store
+	guard RetentionGuard
 	now   func() time.Time
 	id    func() (string, error)
 }
@@ -76,6 +82,10 @@ func NewService(store Store, now func() time.Time, id func() (string, error)) *S
 		id = UUID
 	}
 	return &Service{store: store, now: now, id: id}
+}
+
+func (service *Service) SetRetentionGuard(guard RetentionGuard) {
+	service.guard = guard
 }
 
 func (service *Service) CreateOrganization(ctx context.Context, actor Actor, input OrganizationInput) (Organization, error) {
@@ -277,6 +287,14 @@ func (service *Service) PrivacyDelete(ctx context.Context, actor Actor, contactI
 	}
 	if !validID(contactID) {
 		return PrivacyDeleteResult{}, ErrInvalid
+	}
+	if service.guard != nil {
+		if err := service.guard.AssertContactDeletable(ctx, contactID); err != nil {
+			if errors.Is(err, ErrRetention) {
+				return PrivacyDeleteResult{}, ErrRetention
+			}
+			return PrivacyDeleteResult{}, err
+		}
 	}
 	return service.store.PrivacyDelete(ctx, contactID, service.now().UTC(), service.audit(actor, "privacy.delete", "contact", contactID))
 }

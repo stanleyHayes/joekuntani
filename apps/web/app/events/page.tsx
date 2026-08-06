@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { EventCard } from "../../components/events/event-ui";
+import { EventFilters } from "../../components/events/event-filters";
 import { getPublicEvents } from "../../components/events/data";
 import type { PublicEvent } from "../../components/events/types";
 import styles from "../../components/events/events.module.css";
@@ -64,53 +64,11 @@ export default async function EventsPage({
           aria-labelledby="event-list"
         >
           <h2 id="event-list">Find an event</h2>
-          <form className={styles.filters} action="/events" method="get">
-            <label className={styles.filter}>
-              City
-              <select name="city" defaultValue={filters.city ?? ""}>
-                <option value="">All cities</option>
-                {cities.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className={styles.filter}>
-              Date
-              <input
-                name="date"
-                type="date"
-                defaultValue={safeDate(filters.date)}
-              />
-            </label>
-            <label className={styles.filter}>
-              Time
-              <select name="period" defaultValue={filters.period ?? "upcoming"}>
-                <option value="upcoming">Upcoming</option>
-                <option value="past">Past</option>
-                <option value="all">All dates</option>
-              </select>
-            </label>
-            <label className={styles.filter}>
-              Tickets
-              <select
-                name="availability"
-                defaultValue={filters.availability ?? "all"}
-              >
-                <option value="all">All states</option>
-                <option value="on_sale">On sale</option>
-                <option value="scheduled">Scheduled</option>
-                <option value="paused">Sales paused</option>
-                <option value="sold_out">Sold out</option>
-                <option value="sale_ended">Sales closed</option>
-              </select>
-            </label>
-            <div className={styles.actions}>
-              <button type="submit">Apply filters</button>
-              <Link href="/events">Clear filters</Link>
-            </div>
-          </form>
+          <EventFilters
+            cities={cities}
+            filters={filters}
+            safeDate={safeDate(filters.date)}
+          />
           {result.state === "error" ? (
             <p className={styles.notice} role="alert">
               Published events are temporarily unavailable. No event or ticket

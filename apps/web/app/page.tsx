@@ -9,17 +9,29 @@ import {
 import styles from "../components/content/content.module.css";
 import { PublicShell } from "../components/layout/public-shell";
 import { ContentPlaceholder } from "../components/ui/content-placeholder";
+import { DemoBanner } from "../components/ui/demo-banner";
 import {
   getPublicEvents,
   activeFeaturedEvent,
 } from "../components/events/data";
 import { ScheduledEventBanner } from "../components/events/event-ui";
+import {
+  demoContentEnabled,
+  demoCovers,
+  demoHome,
+  demoImages,
+  demoTestimonials,
+  demoWork,
+} from "../lib/demo/content";
 import { contentMetadata } from "../lib/seo";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
-  return contentMetadata(await getPublicContentBySlug("page", "home"), {
+  const home =
+    (await getPublicContentBySlug("page", "home")) ||
+    (demoContentEnabled() ? demoHome : null);
+  return contentMetadata(home, {
     title: "Joe Kuntani",
     description: "Official website content is awaiting approval.",
     path: "/",
@@ -27,12 +39,21 @@ export async function generateMetadata() {
 }
 
 export default async function HomePage() {
-  const [home, work, testimonials, events] = await Promise.all([
+  const [homeRaw, workRaw, testimonialsRaw, events] = await Promise.all([
     getPublicContentBySlug("page", "home"),
     getPublicContent("portfolio", { featured: true }),
     getPublicContent("testimonial", { featured: true }),
     getPublicEvents(),
   ]);
+  const demo = demoContentEnabled();
+  const usingDemo = demo && !homeRaw;
+  const home = homeRaw || (demo ? demoHome : null);
+  const work = workRaw.length ? workRaw : demo ? demoWork : [];
+  const testimonials = testimonialsRaw.length
+    ? testimonialsRaw
+    : demo
+      ? demoTestimonials
+      : [];
   const featuredEvent = activeFeaturedEvent(events.data);
   return (
     <PublicShell
@@ -44,10 +65,13 @@ export default async function HomePage() {
         description: "Share the project details with the booking team.",
       }}
     >
+      {usingDemo ? <DemoBanner /> : null}
       <main id="main-content">
         <header className={`${styles.hero} shell-container`}>
           <div>
-            <p className="eyebrow">Official platform</p>
+            <p className="eyebrow">
+              {usingDemo ? "Demo preview" : "Official platform"}
+            </p>
             <h1>{home?.title ?? "Joe Kuntani"}</h1>
           </div>
           {home ? (
@@ -60,10 +84,24 @@ export default async function HomePage() {
               <a href="#planned-content">Review planned sections</a>
             </div>
           )}
-          <ContentPlaceholder
-            label="Hero media"
-            detail="Approved photography or video will appear here."
-          />
+          {usingDemo ? (
+            <figure className={styles.demoMedia}>
+              {/* SVG demo asset; CMS will replace with approved Cloudinary media. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={demoImages.hero}
+                alt="Demo stage atmosphere placeholder. Replace via CMS."
+                width={1600}
+                height={900}
+              />
+              <figcaption>Demo media — replace via CMS</figcaption>
+            </figure>
+          ) : (
+            <ContentPlaceholder
+              label="Hero media"
+              detail="Approved photography or video will appear here."
+            />
+          )}
         </header>
         {featuredEvent ? <ScheduledEventBanner event={featuredEvent} /> : null}
         <section
@@ -73,7 +111,11 @@ export default async function HomePage() {
         >
           <h2 id="featured-work">Selected work</h2>
           {work.length ? (
-            <ContentGrid items={work} detailBase="/work" />
+            <ContentGrid
+              items={work}
+              detailBase="/work"
+              covers={usingDemo ? demoCovers : undefined}
+            />
           ) : (
             <ContentEmpty label="Selected work" />
           )}

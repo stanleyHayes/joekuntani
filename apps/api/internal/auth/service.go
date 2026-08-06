@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -118,6 +119,37 @@ func (service *Service) Authenticate(ctx context.Context, token string) (Princip
 		return Principal{}, session, ErrMFARequired
 	}
 	return Principal{UserID: user.PublicID, InternalUserID: user.ID, Name: user.Name, Role: user.Role, MFAVerified: session.MFAVerified}, session, nil
+}
+
+type MFASetup struct {
+	Email      string
+	Secret     string
+	OTPAuthURI string
+}
+
+// PendingMFASetup returns authenticator enrollment material for a session that
+// has passed password login but has not completed MFA yet.
+func (service *Service) PendingMFASetup(ctx context.Context, token string) (MFASetup, error) {
+	session, err := service.store.FindSessionByTokenHash(ctx, digest(token))
+	if err != nil || session.RevokedAt != nil || !service.now().Before(session.ExpiresAt) {
+		return MFASetup{}, ErrUnauthorized
+	}
+	if session.MFAVerified {
+		return MFASetup{}, ErrConflict
+	}
+	user, err := service.store.FindUserByID(ctx, session.UserID)
+	if err != nil || !user.Active() || !user.MFAEnabled || user.MFASecret == "" {
+		return MFASetup{}, ErrUnauthorized
+	}
+	label := url.PathEscape("Joe Kuntani:" + user.Email)
+	issuer := url.QueryEscape("Joe Kuntani")
+	uri := fmt.Sprintf(
+		"otpauth://totp/%s?secret=%s&issuer=%s&algorithm=SHA1&digits=6&period=30",
+		label,
+		strings.ToUpper(strings.ReplaceAll(user.MFASecret, " ", "")),
+		issuer,
+	)
+	return MFASetup{Email: user.Email, Secret: user.MFASecret, OTPAuthURI: uri}, nil
 }
 
 func (service *Service) CompleteMFA(ctx context.Context, token, code string) (Tokens, error) {

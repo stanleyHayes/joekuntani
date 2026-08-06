@@ -2,12 +2,14 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { BrandMark, BRAND_LOGO_SRC } from "../../layout/brand-mark";
 import styles from "./auth-form.module.css";
 
 export function LoginForm() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -20,12 +22,24 @@ export function LoginForm() {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: form.get("email"),
+          email: String(form.get("email") ?? "").trim(),
           password: form.get("password"),
         }),
       });
       if (!response.ok) {
-        setError("Sign-in was not accepted. Check your details and try again.");
+        if (response.status === 403) {
+          setError(
+            "This browser origin was rejected. Open the site at http://localhost:3000 (not 127.0.0.1) and try again.",
+          );
+        } else if (response.status === 429) {
+          setError("Too many attempts. Wait a minute, then try again.");
+        } else if (response.status >= 500) {
+          setError(
+            "Sign-in service is unavailable. Confirm the API is running on port 8080.",
+          );
+        } else {
+          setError("Sign-in was not accepted. Check your details and try again.");
+        }
         return;
       }
       const result = (await response.json()) as { mfa_required: boolean };
@@ -39,15 +53,36 @@ export function LoginForm() {
   }
 
   return (
-    <main className={styles.shell}>
+    <main className={styles.split}>
+      <aside className={styles.hero} aria-hidden="true">
+        <div className={styles.heroGlow} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          alt=""
+          className={styles.heroLogo}
+          height={160}
+          src={BRAND_LOGO_SRC}
+          width={160}
+        />
+        <p className={styles.heroBrand}>Joe Kuntani</p>
+        <p className={styles.heroTag}>Staff console</p>
+        <p className={styles.heroCopy}>
+          Secure access for publishing, bookings, CRM, and live ticketing.
+        </p>
+      </aside>
+
       <section className={styles.panel} aria-labelledby="sign-in-title">
+        <div className={styles.brandRow}>
+          <BrandMark className={styles.brandMark} />
+          <p className={styles.brandMeta}>Staff console</p>
+        </div>
         <p className={styles.eyebrow}>Authorized staff only</p>
         <h1 id="sign-in-title" className={styles.title}>
-          Administration
+          Sign in
         </h1>
         <p className={styles.intro}>
-          Sign in with your staff account. Administrator access always requires
-          a second factor.
+          Use your staff account. Administrator sessions always continue with a
+          second factor.
         </p>
         <form className={styles.form} onSubmit={submit}>
           <label className={styles.label}>
@@ -57,32 +92,50 @@ export function LoginForm() {
               name="email"
               type="email"
               autoComplete="username"
+              placeholder="you@example.com"
               required
             />
           </label>
           <label className={styles.label}>
             Password
-            <input
-              className={styles.input}
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              minLength={12}
-              required
-            />
+            <span className={styles.passwordField}>
+              <input
+                className={styles.input}
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                minLength={12}
+                required
+              />
+              <button
+                type="button"
+                className={styles.reveal}
+                aria-pressed={showPassword}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((value) => !value)}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </span>
           </label>
-          {error && (
+          {error ? (
             <p className={styles.error} role="alert">
               {error}
             </p>
-          )}
+          ) : null}
           <button className={styles.button} disabled={pending} type="submit">
-            {pending ? "Signing in…" : "Continue securely"}
+            <span>{pending ? "Signing in…" : "Continue securely"}</span>
+            <span className={styles.buttonArrow} aria-hidden="true">
+              →
+            </span>
           </button>
         </form>
         <p className={styles.help}>
-          Repeated attempts are rate-limited and security-relevant activity is
-          audited.
+          Repeated attempts are rate-limited. Security-relevant activity is
+          audited. Use{" "}
+          <code className={styles.code}>http://localhost:3000</code> for local
+          sign-in.
         </p>
       </section>
     </main>

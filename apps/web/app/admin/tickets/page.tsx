@@ -7,6 +7,7 @@ export default function AdminTicketsPage() {
       navigation={[
         { href: "/admin", label: "Overview" },
         { href: "/admin/tickets", label: "Tickets & Orders" },
+        { href: "/admin/checkin", label: "Check-in" },
       ]}
       title="Tickets & Orders"
     >

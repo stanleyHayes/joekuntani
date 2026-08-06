@@ -1,7 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { ThemeProvider } from "../theme/theme-provider";
+import { ThemeToggle } from "../theme/theme-toggle";
 import { ContentIncompleteWarning } from "../ui/content-incomplete-warning";
+import { BrandMark } from "./brand-mark";
 
 export type AdminNavigationItem = {
   href: string;
@@ -49,6 +52,7 @@ export function AdminShell({
     ? bookingNavigation
     : [...bookingNavigation, { href: "/admin/campaigns", label: "Campaigns" }];
   return (
+    <ThemeProvider>
     <div className="admin-shell">
       <a className="skip-link" href="#admin-main-content">
         Skip to workspace
@@ -59,11 +63,15 @@ export function AdminShell({
           href="/admin"
           aria-label="Joe Kuntani admin home"
         >
-          Joe Kuntani <span>Admin</span>
+          <BrandMark brandName="Joe Kuntani" size="sm" />
+          <span>Admin</span>
         </Link>
-        <Link href="/" target="_blank" rel="noreferrer">
-          View public site
-        </Link>
+        <div className="site-header__actions">
+          <ThemeToggle />
+          <Link href="/" target="_blank" rel="noreferrer">
+            View public site
+          </Link>
+        </div>
       </header>
       <aside className="admin-sidebar">
         <nav aria-label="Administration">
@@ -89,5 +97,6 @@ export function AdminShell({
         {children}
       </main>
     </div>
+    </ThemeProvider>
   );
 }

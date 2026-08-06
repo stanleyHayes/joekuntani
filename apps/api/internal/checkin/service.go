@@ -1,59 +1,53 @@
 package checkin
 
-// Service layer scaffolding for JK-025 check-in domain.
-// Keep logic minimal and deterministic so unit tests can be added.
-
 import (
 	"context"
-	"errors"
-	"sync"
 	"time"
 )
 
-// TicketLookupResult is a minimal domain result for a ticket lookup by token/hash.
-type TicketLookupResult struct {
-	OrderReference string
-	EventID        string
-	TicketID       string
-	CheckedIn      bool
-	CheckedAt      *time.Time
+type Store interface {
+	Scan(context.Context, Actor, ScanInput, time.Time) (ScanResult, error)
+	CountCheckedIn(context.Context, string) (int64, error)
 }
 
-// In-memory store used for deterministic unit tests. Production implementations should
-// use the repository's MongoDB store with transactions and append-only audits.
-var (
-	storeMu sync.Mutex
-	// map[ticketID]checked
-	checked = map[string]bool{}
-)
-
-var ErrAlreadyCheckedIn = errors.New("already checked in")
-
-// LookupTicketByToken finds a ticket by its bearer token. In this scaffold,
-// a token of "test-token" returns a deterministic ticket used by unit tests.
-func LookupTicketByToken(ctx context.Context, token string) (*TicketLookupResult, error) {
-	if token == "test-token" {
-		return &TicketLookupResult{
-			OrderReference: "ORD-TEST-1",
-			EventID:        "EVT-TEST-1",
-			TicketID:       "TICKET-123",
-			CheckedIn:      false,
-		}, nil
-	}
-	return nil, nil
+type Service struct {
+	store Store
+	now   func() time.Time
 }
 
-// AtomicCheckin attempts to atomically mark a ticket as checked-in and returns the resulting masked state.
-// This in-memory version uses a mutex to simulate atomic behavior for unit tests.
-func AtomicCheckin(ctx context.Context, eventID, ticketID string) (*TicketLookupResult, error) {
-	storeMu.Lock()
-	defer storeMu.Unlock()
+func NewService(store Store) *Service {
+	return &Service{store: store, now: time.Now}
+}
 
-	if checked[ticketID] {
-		return &TicketLookupResult{TicketID: ticketID, CheckedIn: true}, ErrAlreadyCheckedIn
+func (s *Service) Scan(ctx context.Context, actor Actor, input ScanInput) (ScanResult, error) {
+	normalized, err := input.normalized()
+	if err != nil {
+		return ScanResult{}, err
 	}
-	// Mark checked
-	checked[ticketID] = true
-	now := time.Now().UTC()
-	return &TicketLookupResult{TicketID: ticketID, CheckedIn: true, CheckedAt: &now}, nil
+	if actor.InternalID == "" {
+		return ScanResult{}, ErrForbidden
+	}
+	return s.store.Scan(ctx, actor, normalized, s.now().UTC())
+}
+
+func (s *Service) Count(ctx context.Context, actor Actor, eventID string) (Count, error) {
+	if actor.InternalID == "" {
+		return Count{}, ErrForbidden
+	}
+	eventID = trimUUID(eventID)
+	if eventID == "" {
+		return Count{}, ErrInvalid
+	}
+	count, err := s.store.CountCheckedIn(ctx, eventID)
+	if err != nil {
+		return Count{}, err
+	}
+	return Count{EventID: eventID, CheckedInCount: count}, nil
+}
+
+func trimUUID(value string) string {
+	if !uuidPattern.MatchString(value) {
+		return ""
+	}
+	return value
 }

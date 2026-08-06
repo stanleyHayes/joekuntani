@@ -13,6 +13,12 @@ import (
 
 const cancellationTemplate = `<!doctype html><html><body><h1>Your event has been cancelled</h1><p>Order {{.OrderReference}} is affected.</p><p>{{.Reason}}</p><p>Our team will contact you with refund updates. Refund timing depends on the payment provider and original payment method.</p></body></html>`
 
+type UnavailableCommunicationSender struct{}
+
+func (UnavailableCommunicationSender) SendCancellation(context.Context, Communication) error {
+	return ErrUnavailable
+}
+
 type ResendCommunicationSender struct {
 	client   *http.Client
 	endpoint string

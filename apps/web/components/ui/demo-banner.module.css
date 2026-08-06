@@ -1,0 +1,11 @@
+.banner {
+  margin: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--brand-j) 45%, var(--line));
+  padding: 0.55rem var(--space-page);
+  background: color-mix(in srgb, var(--brand-j) 14%, var(--surface));
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-align: center;
+}

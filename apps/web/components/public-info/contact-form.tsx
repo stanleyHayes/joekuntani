@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import type { PublicService } from "../services/types";
 import type { PublicSettings } from "../../lib/settings";
+import { Select } from "../ui/select";
 import styles from "./public-info.module.css";
 
 export function ContactForm({
@@ -15,6 +16,7 @@ export function ContactForm({
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
   if (!settings || services.length === 0)
     return (
       <p role="status" className={styles.notice}>
@@ -78,13 +80,17 @@ export function ContactForm({
     <form className={styles.form} onSubmit={submit} noValidate>
       <label>
         Enquiry route
-        <select name="service_id" required>
-          {services.map((service) => (
-            <option key={service.id} value={service.id}>
-              {service.name}
-            </option>
-          ))}
-        </select>
+        <Select
+          name="service_id"
+          aria-label="Enquiry route"
+          required
+          value={serviceId}
+          onChange={setServiceId}
+          options={services.map((service) => ({
+            value: service.id,
+            label: service.name,
+          }))}
+        />
       </label>
       <label>
         Name

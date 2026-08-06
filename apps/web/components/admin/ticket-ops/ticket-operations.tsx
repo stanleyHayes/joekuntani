@@ -1,5 +1,7 @@
 "use client";
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { DateField } from "../../ui/date-field";
+import { Select } from "../../ui/select";
 import styles from "./ticket-operations.module.css";
 type Order = {
   id: string;
@@ -90,14 +92,19 @@ export function TicketOperations() {
         </label>
         <label>
           Status
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">All</option>
-            <option>paid</option>
-            <option>payment_failed</option>
-            <option>cancelled</option>
-            <option>partially_refunded</option>
-            <option>refunded</option>
-          </select>
+          <Select
+            value={status}
+            onChange={setStatus}
+            placeholder="All"
+            options={[
+              { value: "paid", label: "paid" },
+              { value: "payment_failed", label: "payment_failed" },
+              { value: "cancelled", label: "cancelled" },
+              { value: "partially_refunded", label: "partially_refunded" },
+              { value: "refunded", label: "refunded" },
+            ]}
+            aria-label="Order status filter"
+          />
         </label>
         <label>
           Buyer or reference
@@ -105,18 +112,20 @@ export function TicketOperations() {
         </label>
         <label>
           From
-          <input
-            type="date"
+          <DateField
+            aria-label="From date"
+            mode="date"
             value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
+            onChange={setDateFrom}
           />
         </label>
         <label>
           To
-          <input
-            type="date"
+          <DateField
+            aria-label="To date"
+            mode="date"
             value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
+            onChange={setDateTo}
           />
         </label>
         <button type="button" onClick={() => void load()}>

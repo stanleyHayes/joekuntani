@@ -13,23 +13,32 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/analytics"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/audit"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/auth"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/bookings"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/campaigns"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/checkin"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/content"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/crm"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/crmworkflow"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/enquiries"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/events"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/exports"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/httpapi"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/issuance"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/media"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/payments"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/platform/config"
 	mongoplatform "github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/platform/mongo"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/platform/observability"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/privacy"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/search"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/services"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/settings"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/ticketanalytics"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/ticketing"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/ticketops"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -46,6 +55,10 @@ func main() {
 		logger.Error("sentry initialization failed", "error", err)
 	}
 	defer sentry.Flush(2 * time.Second)
+	if err := config.ValidateStartup(os.Getenv); err != nil {
+		logger.Error("environment validation failed", "error", err)
+		os.Exit(1)
+	}
 	appEnvironment := envOrDefault("APP_ENV", "development")
 	mongoClient, err := mongoplatform.Connect(context.Background(), mongoplatform.Config{URI: os.Getenv("MONGODB_URI"), Database: os.Getenv("MONGODB_DATABASE"), Environment: appEnvironment})
 	if err != nil {
@@ -209,7 +222,10 @@ func main() {
 		logger.Error("ticket delivery configuration failed", "error", err)
 		os.Exit(1)
 	}
-	crmHandler := crm.NewHandler(crm.NewService(crm.NewMongoStore(mongoClient.Database()), nil, nil), func(request *http.Request) (crm.Actor, error) {
+	crmService := crm.NewService(crm.NewMongoStore(mongoClient.Database()), nil, nil)
+	privacyStore := privacy.NewMongoStore(mongoClient.Database())
+	crmService.SetRetentionGuard(privacy.NewContactGuard(privacyStore))
+	crmHandler := crm.NewHandler(crmService, func(request *http.Request) (crm.Actor, error) {
 		principal, ok := auth.PrincipalFromContext(request.Context())
 		if !ok {
 			return crm.Actor{}, auth.ErrUnauthorized
@@ -313,8 +329,108 @@ func main() {
 		}
 		campaignWrite.ServeHTTP(response, request)
 	})
+	ticketOpsService := ticketops.NewService(ticketops.NewMongoStore(mongoClient.Database(), crm.UUID), paymentProvider, nil)
+	ticketOpsHandler := ticketops.NewHandler(ticketOpsService)
+	ticketOpsRead := authHandler.Protect(auth.PermissionBookingsManage, false, ticketOpsHandler)
+	ticketOpsWrite := authHandler.Protect(auth.PermissionBookingsManage, true, ticketOpsHandler)
+	ticketOpsProtected := http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet {
+			ticketOpsRead.ServeHTTP(response, request)
+			return
+		}
+		ticketOpsWrite.ServeHTTP(response, request)
+	})
+	searchHandler := search.NewHandler(search.NewService(search.NewMongoStore(mongoClient.Database())), func(request *http.Request) (search.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return search.Actor{}, auth.ErrUnauthorized
+		}
+		return search.Actor{UserID: principal.UserID, Role: principal.Role}, nil
+	})
+	var ticketCommSender ticketops.CommunicationSender = ticketops.UnavailableCommunicationSender{}
+	if resendKey := os.Getenv("RESEND_API_KEY"); resendKey != "" {
+		ticketCommSender, err = ticketops.NewResendCommunicationSender(&http.Client{Timeout: 10 * time.Second}, envOrDefault("RESEND_API_URL", "https://api.resend.com/emails"), resendKey, os.Getenv("RESEND_FROM_EMAIL"))
+		if err != nil {
+			logger.Error("ticket operations email configuration failed", "error", err)
+			os.Exit(1)
+		}
+	}
+	ticketCommWorker, err := ticketops.NewCommunicationWorker(mongoClient.Database(), ticketCommSender)
+	if err != nil {
+		logger.Error("ticket communication worker configuration failed", "error", err)
+		os.Exit(1)
+	}
+	checkinHandler := checkin.NewHandler(checkin.NewService(checkin.NewMongoStore(mongoClient.Database(), crm.UUID)), func(request *http.Request) (checkin.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return checkin.Actor{}, auth.ErrUnauthorized
+		}
+		if principal.Role != auth.RoleAdministrator && principal.Role != auth.RoleBookingManager {
+			return checkin.Actor{}, auth.ErrForbidden
+		}
+		return checkin.Actor{UserID: principal.UserID, InternalID: principal.InternalUserID, Role: string(principal.Role)}, nil
+	})
+	checkinRead := authHandler.Protect(auth.PermissionBookingsManage, false, checkinHandler)
+	checkinWrite := authHandler.Protect(auth.PermissionBookingsManage, true, checkinHandler)
+	checkinRoutes := http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet {
+			checkinRead.ServeHTTP(response, request)
+			return
+		}
+		checkinWrite.ServeHTTP(response, request)
+	})
+	ticketAnalyticsHandler := ticketanalytics.NewHandler(ticketanalytics.NewService(ticketanalytics.NewMongoStore(mongoClient.Database())), func(request *http.Request) (ticketanalytics.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return ticketanalytics.Actor{}, auth.ErrUnauthorized
+		}
+		return ticketanalytics.Actor{UserID: principal.UserID, Role: principal.Role}, nil
+	})
+	exportHandler := exports.NewHandler(exports.NewService(exports.NewMongoStore(mongoClient.Database(), crm.UUID)), func(request *http.Request) (exports.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return exports.Actor{}, auth.ErrUnauthorized
+		}
+		return exports.Actor{UserID: principal.UserID, InternalID: principal.InternalUserID, Role: principal.Role}, nil
+	})
+	auditHandler := audit.NewHandler(audit.NewService(audit.NewMongoStore(mongoClient.Database())), func(request *http.Request) (audit.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return audit.Actor{}, auth.ErrUnauthorized
+		}
+		return audit.Actor{UserID: principal.UserID, Role: principal.Role}, nil
+	})
+	var analyticsSink analytics.Sink = analytics.NoopSink{}
+	if key := strings.TrimSpace(os.Getenv("POSTHOG_API_KEY")); key != "" {
+		analyticsSink = analytics.NewPostHogSink(os.Getenv("POSTHOG_HOST"), key)
+	}
+	analyticsHandler := analytics.NewHandler(analytics.NewService(analytics.NewMongoStore(mongoClient.Database()), analyticsSink, crm.UUID), func(request *http.Request) (analytics.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return analytics.Actor{}, auth.ErrUnauthorized
+		}
+		return analytics.Actor{UserID: principal.UserID, Role: principal.Role}, nil
+	})
+	privacyService := privacy.NewService(privacyStore, nil, nil)
+	privacyHandler := privacy.NewHandler(privacyService, func(request *http.Request) (privacy.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return privacy.Actor{}, auth.ErrUnauthorized
+		}
+		return privacy.Actor{UserID: principal.UserID, InternalID: principal.InternalUserID, Role: principal.Role}, nil
+	})
+	privacyWorker := privacy.NewRetentionWorker(privacyService, privacy.Actor{UserID: "system", InternalID: "000000000000000000000000", Role: auth.RoleAdministrator})
+	privacyRead := authHandler.Protect(auth.PermissionUsersManage, false, privacyHandler)
+	privacyWrite := authHandler.Protect(auth.PermissionUsersManage, true, privacyHandler)
+	privacyRoutes := http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet {
+			privacyRead.ServeHTTP(response, request)
+			return
+		}
+		privacyWrite.ServeHTTP(response, request)
+	})
 	server := &http.Server{
-		Addr: envOrDefault("API_ADDR", ":8080"),
+		Addr: listenAddr(),
 		Handler: httpapi.NewHandler(httpapi.Options{
 			Logger:                   logger,
 			CapturePanic:             func(err error) { sentry.CaptureException(err) },
@@ -361,6 +477,15 @@ func main() {
 			AdminTicketDeadLetters:   authHandler.Protect(auth.PermissionUsersManage, false, http.HandlerFunc(ticketAdminHandler.DeadLetters)),
 			AdminBookings:            bookingRoutes,
 			AdminCampaigns:           campaignRoutes,
+			AdminTicketOps:           ticketOpsProtected,
+			AdminExports:             authHandler.Protect(auth.PermissionAdminAccess, false, exportHandler),
+			AdminAudit:               authHandler.Protect(auth.PermissionUsersManage, false, auditHandler),
+			AdminAnalytics:           authHandler.Protect(auth.PermissionDashboardsRead, false, analyticsHandler),
+			AdminPrivacy:             privacyRoutes,
+			AdminSearch:              authHandler.Protect(auth.PermissionAdminAccess, false, searchHandler),
+			AdminCheckin:             checkinRoutes,
+			AdminTicketAnalytics:     authHandler.Protect(auth.PermissionDashboardsRead, false, ticketAnalyticsHandler),
+			PublicAnalyticsTrack:     analyticsHandler.PublicTrack(),
 			ReadinessChecks: []httpapi.ReadinessCheck{func(ctx context.Context) error {
 				return mongoClient.Database().RunCommand(ctx, bson.D{{Key: "ping", Value: 1}}).Err()
 			}},
@@ -374,6 +499,12 @@ func main() {
 	shutdownContext, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	go func() {
+		if workerErr := privacyWorker.Run(shutdownContext, 24*time.Hour, 50); workerErr != nil && !errors.Is(workerErr, context.Canceled) {
+			logger.Error("privacy retention worker stopped", "error", workerErr)
+			stop()
+		}
+	}()
+	go func() {
 		if workerErr := ticketing.NewExpiryWorker(ticketOrderService, 30*time.Second).Run(shutdownContext); workerErr != nil && !errors.Is(workerErr, context.Canceled) {
 			logger.Error("ticket hold expiry worker stopped", "error", workerErr)
 			stop()
@@ -383,6 +514,20 @@ func main() {
 		if workerErr := ticketDeliveryWorker.Run(shutdownContext, 30*time.Second); workerErr != nil && !errors.Is(workerErr, context.Canceled) {
 			logger.Error("ticket delivery worker stopped", "error", workerErr)
 			stop()
+		}
+	}()
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			if workerErr := ticketCommWorker.RunOnce(shutdownContext, 100); workerErr != nil && !errors.Is(workerErr, context.Canceled) {
+				logger.Error("ticket communication worker failed", "error", workerErr)
+			}
+			select {
+			case <-shutdownContext.Done():
+				return
+			case <-ticker.C:
+			}
 		}
 	}()
 	go func() {
@@ -438,8 +583,19 @@ func splitNonempty(value string) []string {
 }
 
 func envOrDefault(name, fallback string) string {
-	if value := os.Getenv(name); value != "" {
+	if value := strings.TrimSpace(os.Getenv(name)); value != "" {
 		return value
 	}
 	return fallback
+}
+
+// listenAddr prefers Render's injected PORT, then API_ADDR, then local :8080.
+func listenAddr() string {
+	if port := strings.TrimSpace(os.Getenv("PORT")); port != "" {
+		if strings.HasPrefix(port, ":") {
+			return port
+		}
+		return ":" + port
+	}
+	return envOrDefault("API_ADDR", ":8080")
 }

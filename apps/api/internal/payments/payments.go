@@ -77,7 +77,12 @@ type Service struct {
 
 func NewService(store Store, provider PaymentProvider, returnBase string, telemetry Telemetry) (*Service, error) {
 	u, err := url.Parse(returnBase)
-	if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+	if err != nil || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		return nil, ErrInvalid
+	}
+	host := strings.ToLower(u.Hostname())
+	loopback := host == "localhost" || host == "127.0.0.1" || host == "::1"
+	if u.Scheme != "https" && !(u.Scheme == "http" && loopback) {
 		return nil, ErrInvalid
 	}
 	return &Service{store: store, provider: provider, now: time.Now, returnBase: strings.TrimRight(returnBase, "/"), telemetry: telemetry}, nil

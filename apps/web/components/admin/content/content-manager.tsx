@@ -7,6 +7,9 @@ import type {
   ContentItem,
   ContentKind,
 } from "../../content/types";
+import { DateField } from "../../ui/date-field";
+import { EmptyState } from "../../ui/empty-state";
+import { Select } from "../../ui/select";
 import styles from "./content-manager.module.css";
 
 type StaffRole =
@@ -341,19 +344,15 @@ export function ContentManager({
         <div className={styles.toolbar}>
           <label className={styles.field}>
             Content type
-            <select
+            <Select
               aria-label="Content type"
               value={kind}
-              onChange={(event) =>
-                switchKind(event.target.value as ContentKind)
-              }
-            >
-              {kinds.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => switchKind(value as ContentKind)}
+              options={kinds.map((item) => ({
+                value: item.value,
+                label: item.label,
+              }))}
+            />
           </label>
           <button disabled={pending} onClick={newItem} type="button">
             New draft
@@ -367,30 +366,33 @@ export function ContentManager({
           />
           <label className={styles.field}>
             Status
-            <select
+            <Select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <option value="all">All statuses</option>
-              <option value="draft">Draft</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="published">Published</option>
-              <option value="unpublished">Unpublished</option>
-            </select>
+              onChange={setStatusFilter}
+              options={[
+                { value: "all", label: "All statuses" },
+                { value: "draft", label: "Draft" },
+                { value: "scheduled", label: "Scheduled" },
+                { value: "published", label: "Published" },
+                { value: "unpublished", label: "Unpublished" },
+              ]}
+              aria-label="Status filter"
+            />
           </label>
           <label className={styles.field}>
             Filter by category
-            <select
+            <Select
               value={categoryFilter}
-              onChange={(event) => setCategoryFilter(event.target.value)}
-            >
-              <option value="all">All categories</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+              onChange={setCategoryFilter}
+              options={[
+                { value: "all", label: "All categories" },
+                ...categories.map((category) => ({
+                  value: category,
+                  label: category,
+                })),
+              ]}
+              aria-label="Category filter"
+            />
           </label>
         </div>
         {loading ? (
@@ -414,11 +416,19 @@ export function ContentManager({
             ))}
           </ul>
         ) : (
-          <p role="status">
-            {items.length
-              ? "No content matches these filters."
-              : `No ${kind} content exists yet.`}
-          </p>
+          <EmptyState
+            tone={items.length ? "search" : "stage"}
+            title={
+              items.length
+                ? "Nothing matches these filters"
+                : `No ${kind} pieces yet`
+            }
+            description={
+              items.length
+                ? "Widen the filters or clear the search to see drafts and published items again."
+                : "Start a draft in the editor. Approval and publish keep unsupported claims out of the public site."
+            }
+          />
         )}
       </section>
       <section className={styles.panel} aria-labelledby="content-editor-title">
@@ -479,26 +489,23 @@ export function ContentManager({
             {mediaOptions.some((asset) => asset.status === "ready") ? (
               <label className={styles.field}>
                 Add approved media
-                <select
-                  defaultValue=""
-                  onChange={(event) => {
-                    const id = event.target.value;
+                <Select
+                  value=""
+                  placeholder="Choose a ready asset…"
+                  onChange={(id) => {
                     if (id && !split(gallery, "\n").includes(id))
                       setGallery(
                         [gallery.trim(), id].filter(Boolean).join("\n"),
                       );
-                    event.target.value = "";
                   }}
-                >
-                  <option value="">Choose a ready asset…</option>
-                  {mediaOptions
+                  options={mediaOptions
                     .filter((asset) => asset.status === "ready")
-                    .map((asset) => (
-                      <option key={asset.id} value={asset.id}>
-                        {asset.filename} — {asset.alt_text}
-                      </option>
-                    ))}
-                </select>
+                    .map((asset) => ({
+                      value: asset.id,
+                      label: `${asset.filename} — ${asset.alt_text}`,
+                    }))}
+                  aria-label="Add approved media"
+                />
               </label>
             ) : null}
             <Field
@@ -729,6 +736,20 @@ function Field({
   required?: boolean;
   type?: string;
 }) {
+  if (type === "date" || type === "datetime-local") {
+    return (
+      <label className={styles.field}>
+        {label}
+        <DateField
+          aria-label={label}
+          required={required}
+          mode={type === "date" ? "date" : "datetime"}
+          value={value}
+          onChange={onChange}
+        />
+      </label>
+    );
+  }
   return (
     <label className={styles.field}>
       {label}

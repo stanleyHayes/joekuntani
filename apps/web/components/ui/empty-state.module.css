@@ -1,0 +1,185 @@
+.root {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  width: min(100%, 28rem);
+  margin-inline: auto;
+  padding: 2rem 1.25rem;
+  text-align: center;
+}
+
+.iconWrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 5.5rem;
+  height: 5.5rem;
+}
+
+.halo {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--brand-j) 35%, transparent), transparent 55%),
+    radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--brand-k) 30%, transparent), transparent 50%);
+  animation: halo-pulse 2.8s ease-in-out infinite;
+}
+
+.glyph {
+  position: relative;
+  z-index: 1;
+  width: 3.6rem;
+  height: 3.6rem;
+  overflow: visible;
+}
+
+.ring,
+.tray,
+.frame,
+.flap,
+.mic,
+.stand,
+.lens {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mic {
+  fill: color-mix(in srgb, var(--brand-j) 22%, transparent);
+  stroke: var(--brand-j);
+  transform-origin: 32px 28px;
+  animation: mic-bob 2.4s ease-in-out infinite;
+}
+
+.ring {
+  stroke: color-mix(in srgb, var(--brand-k) 70%, var(--ink));
+  stroke-dasharray: 18 80;
+  animation: ring-spin 4.5s linear infinite;
+}
+
+.tray,
+.frame {
+  stroke: color-mix(in srgb, var(--brand-k) 55%, var(--ink));
+}
+
+.flap {
+  stroke: var(--brand-j);
+  animation: flap-nudge 2.6s ease-in-out infinite;
+}
+
+.lens {
+  stroke: var(--brand-j);
+  animation: lens-pulse 2.2s ease-in-out infinite;
+}
+
+.stand {
+  stroke: var(--ink-soft);
+}
+
+.spark,
+.sparkDelay {
+  fill: var(--brand-ring);
+  animation: spark-pop 2s ease-in-out infinite;
+}
+
+.sparkDelay {
+  animation-delay: 0.45s;
+  fill: var(--brand-k);
+}
+
+.title {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.5vw, 1.45rem);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.description {
+  margin: 0;
+  max-width: 26rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.action {
+  margin-top: 0.35rem;
+}
+
+@keyframes halo-pulse {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes mic-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes ring-spin {
+  to {
+    stroke-dashoffset: -98;
+  }
+}
+
+@keyframes flap-nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(1.5px);
+  }
+}
+
+@keyframes lens-pulse {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes spark-pop {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .halo,
+  .mic,
+  .ring,
+  .flap,
+  .lens,
+  .spark,
+  .sparkDelay {
+    animation: none;
+  }
+}

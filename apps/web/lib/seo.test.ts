@@ -19,6 +19,43 @@ it("accepts only same-origin HTTPS canonical URLs", () => {
   expect(
     canonicalURL("/work/one", "https://user:secret@example.test"),
   ).toBeUndefined();
+  expect(
+    canonicalURL("https://user:secret@example.test/work/one", "https://example.test"),
+  ).toBeUndefined();
+  expect(canonicalURL("/work/one")).toBeUndefined();
+});
+
+it("fails closed when social-image fetches error or return non-OK", async () => {
+  vi.stubEnv("API_BASE_URL", "https://api.example.test");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string | URL | Request) => {
+      if (String(input).endsWith("/settings")) {
+        return Response.json({
+          seo: { canonical_base: "https://example.test", social_image_asset_id: "asset-1" },
+        });
+      }
+      return new Response(null, { status: 503 });
+    }),
+  );
+  await expect(
+    pageMetadata({ title: "Page", description: "Description", path: "/page" }),
+  ).resolves.toMatchObject({ openGraph: { images: undefined } });
+
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string | URL | Request) => {
+      if (String(input).endsWith("/settings")) {
+        return Response.json({
+          seo: { canonical_base: "https://example.test", social_image_asset_id: "asset-1" },
+        });
+      }
+      throw new Error("network down");
+    }),
+  );
+  await expect(
+    pageMetadata({ title: "Page", description: "Description", path: "/page" }),
+  ).resolves.toMatchObject({ openGraph: { images: undefined } });
 });
 
 it("builds canonical global page metadata without an unapproved image", async () => {

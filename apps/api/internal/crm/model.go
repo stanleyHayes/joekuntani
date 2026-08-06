@@ -29,6 +29,7 @@ var (
 	ErrInvalid   = errors.New("invalid crm input")
 	ErrNotFound  = errors.New("crm record not found")
 	ErrConflict  = errors.New("crm record conflict")
+	ErrRetention = errors.New("privacy deletion blocked by lawful retention")
 	uuidPattern  = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`)
 )
 

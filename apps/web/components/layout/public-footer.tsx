@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ButtonLink } from "../ui/button-link";
+import { BrandMark } from "./brand-mark";
 
 type FooterCta = {
   description: string;
@@ -42,8 +43,12 @@ export function PublicFooter({
         <ButtonLink href={cta.href}>{cta.label}</ButtonLink>
       </section>
       <div className="footer-meta shell-container">
-        <Link className="wordmark" href="/" aria-label="Joe Kuntani home">
-          {brandName || "Joe Kuntani"}
+        <Link
+          className="wordmark"
+          href="/"
+          aria-label={`${brandName || "Joe Kuntani"} home`}
+        >
+          <BrandMark brandName={brandName || "Joe Kuntani"} size="sm" />
         </Link>
         <nav aria-label="Footer navigation">
           {links.map((link) => (

@@ -76,6 +76,9 @@ func TestCheckoutAndWebhookFailClosed(t *testing.T) {
 	if !errors.Is(err, ErrInvalid) || service != nil {
 		t.Fatal("unsafe return origin accepted")
 	}
+	if _, err = NewService(&memoryStore{}, provider, "http://localhost:3000/tickets/checkout", nil); err != nil {
+		t.Fatalf("loopback http return origin rejected: %v", err)
+	}
 	store := &memoryStore{events: map[string]bool{}}
 	service, _ = NewService(store, provider, "https://example.test", nil)
 	if _, err = service.Webhook(t.Context(), http.Header{}, []byte(`{}`)); !errors.Is(err, ErrForbidden) {

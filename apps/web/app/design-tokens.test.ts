@@ -8,6 +8,13 @@ function token(block: string, name: string): string {
   return match[1];
 }
 
+function resolveAccent(block: string, brandJ: string): string {
+  const hex = block.match(/--accent:\s*(#[0-9a-f]{6})/i)?.[1];
+  if (hex) return hex;
+  if (/--accent:\s*var\(--brand-j\)/i.test(block)) return brandJ;
+  throw new Error("Missing accent token");
+}
+
 function luminance(hex: string): number {
   const channels = [hex.slice(1, 3), hex.slice(3, 5), hex.slice(5, 7)].map(
     (value) => Number.parseInt(value, 16) / 255,
@@ -25,20 +32,25 @@ function contrast(first: string, second: string): number {
 
 describe("selection design tokens", () => {
   it("uses the accent pair and meets WCAG AA in light and dark themes", () => {
-    const light = css.match(/:root\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+    const root = css.match(/:root\s*\{([\s\S]*?)\}/)?.[1] ?? "";
     const dark =
-      css.match(
-        /@media \(prefers-color-scheme: dark\)\s*\{\s*:root\s*\{([\s\S]*?)\}/,
-      )?.[1] ?? "";
+      css.match(/html,\s*html\[data-theme="dark"\]\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+    const light =
+      css.match(/html\[data-theme="light"\]\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+
+    const brandJ = token(root, "brand-j");
+    const brandK = token(root, "brand-k");
+    expect(brandJ.toLowerCase()).toBe("#f5d400");
+    expect(brandK.toLowerCase()).toBe("#00c8f0");
 
     expect(css).toMatch(
       /::selection\s*\{[^}]*background:\s*var\(--accent\);[^}]*color:\s*var\(--accent-contrast\)/s,
     );
     expect(
-      contrast(token(light, "accent"), token(light, "accent-contrast")),
+      contrast(resolveAccent(light, brandJ), token(light, "accent-contrast")),
     ).toBeGreaterThanOrEqual(4.5);
     expect(
-      contrast(token(dark, "accent"), token(dark, "accent-contrast")),
+      contrast(resolveAccent(dark, brandJ), token(dark, "accent-contrast")),
     ).toBeGreaterThanOrEqual(4.5);
   });
 });

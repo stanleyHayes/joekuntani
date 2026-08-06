@@ -21,6 +21,25 @@
   white-space: pre-wrap;
   line-height: 1.75;
 }
+.demoMedia {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+.demoMedia img {
+  width: 100%;
+  height: auto;
+}
+.demoMedia figcaption {
+  padding: 0.65rem 1rem;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 .filters {
   display: flex;
   flex-wrap: wrap;
@@ -47,6 +66,20 @@
   min-width: 0;
   padding: clamp(1.25rem, 4vw, 2.5rem);
   background: var(--surface-canvas);
+}
+.cardMedia {
+  margin: 0 0 1rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius-panel) - 0.15rem);
+  background: var(--surface);
+}
+.cardMedia img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
 }
 .card h2 {
   margin-block: 0.5rem 0.75rem;

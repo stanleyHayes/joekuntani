@@ -36,7 +36,10 @@ describe("PublicShell", () => {
     ).toBeVisible();
     expect(
       screen.getAllByRole("link", { name: "Make an enquiry" }),
-    ).toHaveLength(3);
+    ).toHaveLength(2);
+    expect(
+      screen.getByRole("button", { name: "Open menu" }),
+    ).toBeInTheDocument();
   });
 
   it("keeps decorative visual rhythm out of the accessibility tree", () => {
@@ -108,9 +111,9 @@ describe("PublicShell", () => {
         <main id="main-content" />
       </PublicShell>,
     );
-    expect(screen.getAllByRole("link", { name: "Approved" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "Approved" })).toHaveLength(1);
     expect(screen.getAllByRole("link", { name: "Approved CTA" })).toHaveLength(
-      2,
+      1,
     );
     expect(
       screen.queryByRole("link", { name: "Make an enquiry" }),

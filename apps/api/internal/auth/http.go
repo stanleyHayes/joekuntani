@@ -61,6 +61,7 @@ func (handler *HTTPHandler) Routes() http.Handler {
 	router := chi.NewRouter()
 	router.With(handler.sameOrigin).Post("/login", handler.rateLimit(handler.login))
 	router.With(handler.sameOrigin).Post("/mfa/verify", handler.rateLimit(handler.completeMFA))
+	router.With(handler.sameOrigin).Get("/mfa/setup", handler.rateLimit(handler.mfaSetup))
 	router.Group(func(protected chi.Router) {
 		protected.Use(handler.authenticate)
 		protected.Get("/me", handler.me)
@@ -121,6 +122,31 @@ func (handler *HTTPHandler) login(response http.ResponseWriter, request *http.Re
 	}
 	handler.cookies(response, tokens)
 	jsonResponse(response, http.StatusOK, map[string]any{"mfa_required": tokens.MFARequired})
+}
+
+func (handler *HTTPHandler) mfaSetup(response http.ResponseWriter, request *http.Request) {
+	cookie, err := request.Cookie(SessionCookie)
+	if err != nil {
+		problem(response, http.StatusUnauthorized, "Authentication failed")
+		return
+	}
+	setup, err := handler.service.PendingMFASetup(request.Context(), cookie.Value)
+	if err != nil {
+		if errors.Is(err, ErrConflict) {
+			problem(response, http.StatusConflict, "MFA already verified")
+			return
+		}
+		problem(response, http.StatusUnauthorized, "Authentication failed")
+		return
+	}
+	jsonResponse(response, http.StatusOK, map[string]any{
+		"email":        setup.Email,
+		"secret":       setup.Secret,
+		"otpauth_uri":  setup.OTPAuthURI,
+		"issuer":       "Joe Kuntani",
+		"digits":       6,
+		"period_seconds": 30,
+	})
 }
 
 func (handler *HTTPHandler) completeMFA(response http.ResponseWriter, request *http.Request) {

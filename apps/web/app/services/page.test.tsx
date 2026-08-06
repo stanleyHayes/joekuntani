@@ -12,7 +12,7 @@ it("shows a content-safe empty state without invented service claims", async () 
   render(await ServicesPage());
   expect(
     screen.getByRole("heading", {
-      name: "Service details are awaiting approval.",
+      name: "Services are still being cleared",
     }),
   ).toBeVisible();
   expect(

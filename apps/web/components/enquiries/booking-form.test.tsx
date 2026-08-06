@@ -50,6 +50,34 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+function chooseSelect(label: string | RegExp, option: string) {
+  fireEvent.click(screen.getByRole("button", { name: label }));
+  fireEvent.click(screen.getByRole("option", { name: option }));
+}
+
+function chooseDate(label: string | RegExp, day: number) {
+  fireEvent.click(screen.getByRole("button", { name: label }));
+  fireEvent.click(screen.getByRole("button", { name: String(day) }));
+}
+
+function chooseDateTime(
+  label: string | RegExp,
+  day: number,
+  hours: number,
+  minutes: number,
+) {
+  fireEvent.click(screen.getByRole("button", { name: label }));
+  fireEvent.click(screen.getByRole("button", { name: String(day) }));
+  fireEvent.change(screen.getByLabelText("Hour"), {
+    target: { value: String(hours) },
+  });
+  fireEvent.change(screen.getByLabelText("Minute"), {
+    target: { value: String(minutes) },
+  });
+  // Close dialog by pressing Escape on document
+  fireEvent.keyDown(document, { key: "Escape" });
+}
+
 it("completes the five accessible steps and clears the draft on success", async () => {
   vi.stubGlobal("crypto", { randomUUID: () => "idem-1234567890123456" });
   Object.defineProperty(window, "turnstile", {
@@ -79,9 +107,7 @@ it("completes the five accessible steps and clears the draft on success", async 
   );
   vi.stubGlobal("fetch", fetcher);
   render(<BookingForm initialSlug={service.slug} services={[service]} />);
-  fireEvent.change(screen.getByLabelText("How did you hear about Joe?"), {
-    target: { value: "search" },
-  });
+  chooseSelect("How did you hear about Joe?", "Search");
   fireEvent.click(screen.getByRole("button", { name: "Continue" }));
   fireEvent.change(screen.getByLabelText("Name"), {
     target: { value: "Ada Person" },
@@ -93,9 +119,11 @@ it("completes the five accessible steps and clears the draft on success", async 
     target: { value: "Director" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+  fireEvent.change(screen.getByLabelText("Event type"), {
+    target: { value: "Comedy" },
+  });
+  chooseDateTime("Event date and time", 10, 18, 0);
   for (const [label, value] of [
-    ["Event type", "Comedy"],
-    ["Event date and time", "2026-08-10T18:00"],
     ["Venue", "National Theatre"],
     ["City", "Accra"],
     ["Event country code", "GH"],
@@ -110,9 +138,7 @@ it("completes the five accessible steps and clears the draft on success", async 
   fireEvent.change(screen.getByLabelText("Budget range"), {
     target: { value: "GHS 1,000-2,000" },
   });
-  fireEvent.change(screen.getByLabelText("Decision deadline"), {
-    target: { value: "2026-08-09" },
-  });
+  chooseDate("Decision deadline", 9);
   fireEvent.click(screen.getByRole("button", { name: "Continue" }));
   expect(await screen.findByText("Anti-spam verification")).toBeVisible();
   fireEvent.click(screen.getByLabelText(/I consent to the processing/));
@@ -171,12 +197,8 @@ it("submits the exact brand and commercial fields with optional marketing consen
       expect.objectContaining({ cache: "no-store" }),
     ),
   );
-  fireEvent.change(screen.getByLabelText("Enquiry type"), {
-    target: { value: "brand" },
-  });
-  fireEvent.change(screen.getByLabelText("How did you hear about Joe?"), {
-    target: { value: "referral" },
-  });
+  chooseSelect("Enquiry type", "Brand partnership");
+  chooseSelect("How did you hear about Joe?", "Referral");
   fireEvent.click(screen.getByRole("button", { name: "Continue" }));
   for (const [label, value] of [
     ["Name", "Brand Person"],
@@ -200,9 +222,7 @@ it("submits the exact brand and commercial fields with optional marketing consen
   fireEvent.change(screen.getByLabelText("Budget range"), {
     target: { value: "GHS 10,000" },
   });
-  fireEvent.change(screen.getByLabelText("Decision deadline"), {
-    target: { value: "2026-08-20" },
-  });
+  chooseDate("Decision deadline", 20);
   fireEvent.change(screen.getByLabelText("Additional notes"), {
     target: { value: "Please respond by email." },
   });
@@ -248,9 +268,7 @@ it("renders and updates every dynamic control family", () => {
       value=""
     />,
   );
-  fireEvent.change(screen.getByLabelText("Channel"), {
-    target: { value: "Web" },
-  });
+  chooseSelect("Channel", "Web");
   expect(onChange).toHaveBeenLastCalledWith("Web");
   rerender(
     <DynamicQuestion

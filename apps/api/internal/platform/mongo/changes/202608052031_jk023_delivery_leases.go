@@ -16,7 +16,11 @@ func ticketDeliveryLeaseChange() Change {
 	if err != nil {
 		panic(err)
 	}
-	return Change{Name: ticketDeliveryLeaseChangeName, Checksum: Checksum(canonical + "|supersedes=" + ticketIssuanceChangeName + "|evolves=ticket_delivery_outbox"), Supersedes: []string{ticketIssuanceChangeName}, EvolvesCollections: []string{"ticket_delivery_outbox"}, Apply: func(ctx context.Context, db *mongo.Database) error { return schema.Apply(ctx, db, collections) }, Verify: func(ctx context.Context, db *mongo.Database) error { return schema.Verify(ctx, db, collections) }}
+	// Apply may collMod the inherited issuance set; Verify only the outbox this
+	// change owns. Later JK-024 evolves ticket_orders further, so re-checking
+	// inherited order validators here would false-fail idempotent reapply.
+	outboxOnly := []schema.Collection{collections[3]}
+	return Change{Name: ticketDeliveryLeaseChangeName, Checksum: Checksum(canonical + "|supersedes=" + ticketIssuanceChangeName + "|evolves=ticket_delivery_outbox"), Supersedes: []string{ticketIssuanceChangeName}, EvolvesCollections: []string{"ticket_delivery_outbox"}, Apply: func(ctx context.Context, db *mongo.Database) error { return schema.Apply(ctx, db, collections) }, Verify: func(ctx context.Context, db *mongo.Database) error { return schema.Verify(ctx, db, outboxOnly) }}
 }
 
 func exactTicketDeliveryLeaseCollections() []schema.Collection {

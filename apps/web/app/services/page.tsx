@@ -1,23 +1,31 @@
 import { PublicShell } from "../../components/layout/public-shell";
 import { getPublicServices } from "../../components/services/data";
 import styles from "../../components/services/services.module.css";
+import { ButtonLink } from "../../components/ui/button-link";
+import { DemoBanner } from "../../components/ui/demo-banner";
+import { EmptyState } from "../../components/ui/empty-state";
+import { demoContentEnabled, demoServices } from "../../lib/demo/content";
 import { pageMetadata, unavailableMetadata } from "../../lib/seo";
 
 export async function generateMetadata() {
   const services = await getPublicServices();
+  const demo = demoContentEnabled();
   const input = {
     title: "Services",
     description: "Approved services and enquiry paths.",
     path: "/services",
   };
-  return services.length
+  return services.length || demo
     ? pageMetadata(input)
     : unavailableMetadata(input.title, input.description);
 }
 export const dynamic = "force-dynamic";
 
 export default async function ServicesPage() {
-  const services = await getPublicServices();
+  const published = await getPublicServices();
+  const demo = demoContentEnabled();
+  const services = published.length ? published : demo ? demoServices : [];
+  const usingDemo = demo && !published.length;
   return (
     <PublicShell
       currentPath="/services"
@@ -29,14 +37,16 @@ export default async function ServicesPage() {
           "Use the enquiry form to share the project context with the booking team.",
       }}
     >
+      {usingDemo ? <DemoBanner /> : null}
       <main id="main-content">
         <header className={`${styles.hero} shell-container`}>
           <div>
-            <p className="eyebrow">Services</p>
+            <p className="eyebrow">{usingDemo ? "Demo services" : "Services"}</p>
             <h1>Choose the right starting point.</h1>
             <p>
-              This page lists only service descriptions approved through the
-              content system. Each option opens a contextual enquiry path.
+              {usingDemo
+                ? "These demo services exist only for layout and enquiry-flow review. Replace them with approved services in admin."
+                : "This page lists only service descriptions approved through the content system. Each option opens a contextual enquiry path."}
             </p>
           </div>
           <p className={styles.heroAside}>
@@ -53,16 +63,17 @@ export default async function ServicesPage() {
             Available services
           </h2>
           {services.length === 0 ? (
-            <div className={styles.empty} role="status">
-              <h2>Service details are awaiting approval.</h2>
-              <p>
-                Nothing has been published yet. Please use the general enquiry
-                route if you would like to contact the booking team.
-              </p>
-              <a className={styles.cta} href="/book">
-                Make a general enquiry
-              </a>
-            </div>
+            <EmptyState
+              className={styles.empty}
+              tone="inbox"
+              title="Services are still being cleared"
+              description="Nothing approved has published yet. Send a general enquiry if you need the booking team in the meantime."
+              action={
+                <ButtonLink href="/book" variant="primary">
+                  Make a general enquiry
+                </ButtonLink>
+              }
+            />
           ) : (
             <ol className={styles.list}>
               {services.map((service) => (

@@ -206,7 +206,7 @@ func problem(w http.ResponseWriter, err error) {
 		code = http.StatusUnprocessableEntity
 	case errors.Is(err, ErrNotFound):
 		code = http.StatusNotFound
-	case errors.Is(err, ErrConflict):
+	case errors.Is(err, ErrConflict), errors.Is(err, ErrRetention):
 		code = http.StatusConflict
 	}
 	status(w, code)

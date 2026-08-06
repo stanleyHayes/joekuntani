@@ -54,5 +54,8 @@ it("renders internal case-study links and external sources safely", () => {
 });
 it("renders an explicit incomplete state", () => {
   render(<ContentEmpty label="Press coverage" />);
-  expect(screen.getByRole("status")).toHaveTextContent("awaiting approval");
+  expect(screen.getByRole("status")).toHaveTextContent("still off stage");
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "Approved pieces will land here",
+  );
 });

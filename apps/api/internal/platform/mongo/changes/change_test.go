@@ -128,8 +128,8 @@ func TestRegistryHasStableChecksum(t *testing.T) {
 	t.Parallel()
 
 	registry := Registry()
-	if len(registry) != 25 {
-		t.Fatalf("Registry() length = %d, want 25", len(registry))
+	if len(registry) != 30 {
+		t.Fatalf("Registry() length = %d, want 30", len(registry))
 	}
 	if registry[0].Name != bootstrapChangeName || len(registry[0].Checksum) != 64 {
 		t.Fatalf("unexpected registry entry: name=%q checksum=%q", registry[0].Name, registry[0].Checksum)
@@ -199,6 +199,21 @@ func TestRegistryHasStableChecksum(t *testing.T) {
 	}
 	if registry[24].Name != crmWorkflowReviewChangeName || len(registry[24].Checksum) != 64 || !reflect.DeepEqual(registry[24].Supersedes, []string{crmWorkflowChangeName}) || !reflect.DeepEqual(registry[24].EvolvesCollections, []string{"enquiry_notes", "tasks", "crm_enquiry_notes", "crm_tasks"}) {
 		t.Fatalf("unexpected CRM workflow review registry entry: %#v", registry[24])
+	}
+	if registry[25].Name != auditExportIndexesChangeName || len(registry[25].Checksum) != 64 || !reflect.DeepEqual(registry[25].EvolvesCollections, []string{"audit_logs"}) {
+		t.Fatalf("unexpected audit export indexes registry entry: %#v", registry[25])
+	}
+	if registry[26].Name != conversionEventsChangeName || len(registry[26].Checksum) != 64 {
+		t.Fatalf("unexpected conversion events registry entry: %#v", registry[26])
+	}
+	if registry[27].Name != privacyHoldsChangeName || len(registry[27].Checksum) != 64 {
+		t.Fatalf("unexpected privacy holds registry entry: %#v", registry[27])
+	}
+	if registry[28].Name != ticketOperationsChangeName || len(registry[28].Checksum) != 64 || !reflect.DeepEqual(registry[28].EvolvesCollections, []string{"ticket_orders", "issued_tickets"}) {
+		t.Fatalf("unexpected ticket operations registry entry: %#v", registry[28])
+	}
+	if registry[29].Name != checkinChangeName || len(registry[29].Checksum) != 64 || !reflect.DeepEqual(registry[29].EvolvesCollections, []string{"ticket_check_ins"}) {
+		t.Fatalf("unexpected check-in registry entry: %#v", registry[29])
 	}
 }
 

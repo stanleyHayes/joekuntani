@@ -1,0 +1,25 @@
+.workspace { display: grid; gap: 1.5rem; max-width: 46rem; }
+.header h2 { margin: .2rem 0 .5rem; font-size: clamp(1.75rem, 4vw, 2.75rem); line-height: 1; }
+.header p { color: var(--color-text-muted); }
+.eyebrow { margin: 0; color: var(--color-accent, #0f766e); font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin: 0; }
+.metrics div { padding: .9rem 1rem; border: 1px solid var(--color-border, #d8d5cf); border-radius: 1rem; background: var(--color-surface, #fff); }
+.metrics dt { margin: 0; color: var(--color-text-muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; }
+.metrics dd { margin: .35rem 0 0; font-size: 1.5rem; font-weight: 750; }
+.form { display: grid; gap: .65rem; padding: clamp(1rem, 3vw, 1.5rem); border: 1px solid var(--color-border, #d8d5cf); border-radius: 1rem; background: var(--color-surface, #fff); }
+.form h3 { margin: 0; font-size: 1.1rem; }
+.form label { font-weight: 750; }
+.form input, .form textarea, .form button { min-height: 3rem; border-radius: .7rem; font: inherit; }
+.form input, .form textarea { width: 100%; padding: .7rem .9rem; border: 1px solid var(--color-border, #bbb); background: var(--color-background, #fff); color: inherit; }
+.form button { justify-self: start; padding: 0 1.25rem; border: 0; background: var(--color-text, #171717); color: var(--color-background, #fff); font-weight: 750; cursor: pointer; }
+.form button:disabled, .form input:disabled, .form textarea:disabled { cursor: not-allowed; opacity: .65; }
+.form input:focus-visible, .form textarea:focus-visible, .form button:focus-visible { outline: 3px solid var(--color-focus, #0f766e); outline-offset: 3px; }
+.status { margin: 0; color: var(--color-text-muted); font-size: .9rem; }
+.holds { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+.holds li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .75rem; align-items: start; }
+.holds p { margin: .25rem 0 0; color: var(--color-text-muted); }
+@media (max-width: 42rem) {
+  .metrics { grid-template-columns: 1fr; }
+  .holds li { grid-template-columns: 1fr; }
+  .form button { width: 100%; justify-self: stretch; }
+}

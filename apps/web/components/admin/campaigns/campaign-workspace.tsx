@@ -1,5 +1,7 @@
 "use client";
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { DateField } from "../../ui/date-field";
+import { Select } from "../../ui/select";
 import styles from "./campaign-workspace.module.css";
 type Campaign = {
   id: string;
@@ -226,14 +228,12 @@ export function CampaignWorkspace() {
             </dl>
             <label>
               Status
-              <select
+              <Select
                 value={selected.status}
-                onChange={(e) => void transition(selected, e.target.value)}
-              >
-                {statuses.map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
+                onChange={(value) => void transition(selected, value)}
+                options={statuses.map((s) => ({ value: s, label: s }))}
+                aria-label="Campaign status"
+              />
             </label>
             <h4>Deliverables</h4>
             {deliverables.length ? (
@@ -243,35 +243,34 @@ export function CampaignWorkspace() {
                     <strong>{item.title}</strong>
                     <label>
                       Workflow status
-                      <select
+                      <Select
                         aria-label={`${item.title} workflow status`}
                         value={item.status}
-                        onChange={(event) =>
+                        onChange={(value) =>
                           replaceDeliverable(item.id, {
-                            status: event.target.value,
+                            status: value,
                           })
                         }
-                      >
-                        {deliverableStatuses.map((status) => (
-                          <option key={status}>{status}</option>
-                        ))}
-                      </select>
+                        options={deliverableStatuses.map((status) => ({
+                          value: status,
+                          label: status,
+                        }))}
+                      />
                     </label>
                     <label>
                       Approval
-                      <select
+                      <Select
                         aria-label={`${item.title} approval`}
                         value={item.approval_status}
-                        onChange={(event) =>
+                        onChange={(value) =>
                           replaceDeliverable(item.id, {
-                            approval_status: event.target.value,
+                            approval_status: value,
                           })
                         }
-                      >
-                        {["pending", "approved", "rejected"].map((status) => (
-                          <option key={status}>{status}</option>
-                        ))}
-                      </select>
+                        options={["pending", "approved", "rejected"].map(
+                          (status) => ({ value: status, label: status }),
+                        )}
+                      />
                     </label>
                     <label>
                       Published URL
@@ -312,7 +311,12 @@ export function CampaignWorkspace() {
               </label>
               <label>
                 Due at
-                <input name="due_at" type="datetime-local" required />
+                <DateField
+                  name="due_at"
+                  aria-label="Due at"
+                  mode="datetime"
+                  required
+                />
               </label>
               <label>
                 Asset IDs (comma separated)
@@ -351,12 +355,15 @@ export function CampaignWorkspace() {
         ))}
         <label>
           Currency
-          <select name="currency">
-            <option>GHS</option>
-            <option>USD</option>
-            <option>EUR</option>
-            <option>GBP</option>
-          </select>
+          <Select
+            name="currency"
+            defaultValue="GHS"
+            options={["GHS", "USD", "EUR", "GBP"].map((currency) => ({
+              value: currency,
+              label: currency,
+            }))}
+            aria-label="Campaign currency"
+          />
         </label>
         <button type="submit">Create campaign</button>
       </form>

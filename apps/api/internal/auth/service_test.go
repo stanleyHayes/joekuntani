@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -149,6 +150,26 @@ func TestExactRolePermissionMatrix(t *testing.T) {
 	if !RoleAnalyst.Allows(PermissionDashboardsRead) || !RoleAnalyst.Allows(PermissionReportsExport) || RoleAnalyst.Allows(PermissionContentEdit) || RoleAnalyst.Allows(PermissionUsersManage) {
 		t.Fatal("analyst matrix is incorrect")
 	}
+}
+
+func TestPendingMFASetupReturnsEnrollmentMaterial(t *testing.T) {
+	service, store, now, password := testService(t, RoleAdministrator, true)
+	tokens, err := service.Login(context.Background(), Credentials{Email: "staff@example.invalid", Password: password})
+	if err != nil || !tokens.MFARequired {
+		t.Fatalf("login tokens=%+v err=%v", tokens, err)
+	}
+	setup, err := service.PendingMFASetup(context.Background(), tokens.Session)
+	if err != nil || setup.Secret != testMFASecret || !strings.Contains(setup.OTPAuthURI, "otpauth://totp/") {
+		t.Fatalf("setup=%+v err=%v", setup, err)
+	}
+	rotated, err := service.CompleteMFA(context.Background(), tokens.Session, totpCode(testMFASecret, now))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.PendingMFASetup(context.Background(), rotated.Session); !errors.Is(err, ErrConflict) {
+		t.Fatalf("verified session setup err=%v", err)
+	}
+	_ = store
 }
 
 func TestAdministratorWithoutMFAConfigurationCannotLogin(t *testing.T) {

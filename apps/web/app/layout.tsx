@@ -1,9 +1,30 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { DM_Sans, Outfit } from "next/font/google";
 import { getPublicSettings } from "../lib/settings";
 import { canonicalURL, jsonLd } from "../lib/seo";
+import { Providers } from "../components/providers";
 
 import "./globals.css";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+  weight: ["500", "600", "700", "800"],
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
+
+const brandIcons: NonNullable<Metadata["icons"]> = {
+  icon: [{ url: "/brand/logo.jpeg", type: "image/jpeg" }],
+  apple: [{ url: "/brand/logo.jpeg", type: "image/jpeg" }],
+};
 
 const fallbackMetadata: Metadata = {
   title: {
@@ -11,7 +32,10 @@ const fallbackMetadata: Metadata = {
     template: "%s | Joe Kuntani",
   },
   description: "Official website content is awaiting approval.",
+  icons: brandIcons,
 };
+
+const themeBootScript = `(function(){try{var t=localStorage.getItem("jk-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.dataset.theme="dark";document.documentElement.style.colorScheme="dark";}})();`;
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getPublicSettings();
@@ -25,14 +49,15 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: settings.seo.canonical_base
       ? new URL(settings.seo.canonical_base)
       : undefined,
+    icons: brandIcons,
   };
 }
 
 export const viewport: Viewport = {
-  colorScheme: "light dark",
+  colorScheme: "dark light",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f7f3" },
-    { media: "(prefers-color-scheme: dark)", color: "#171916" },
+    { media: "(prefers-color-scheme: light)", color: "#f6f4ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0b0f" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -44,7 +69,10 @@ export default async function RootLayout({
   const settings = await getPublicSettings();
   const website = canonicalURL("/", settings?.seo.canonical_base);
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark" className={`${outfit.variable} ${dmSans.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
       <body>
         {website && settings?.brand.name ? (
           <script
@@ -59,7 +87,7 @@ export default async function RootLayout({
             }}
           />
         ) : null}
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

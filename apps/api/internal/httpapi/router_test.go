@@ -174,6 +174,42 @@ func TestCampaignRoutesUseExplicitCompositionHandler(t *testing.T) {
 	}
 }
 
+func TestExportAndAuditRoutesUseExplicitCompositionHandlers(t *testing.T) {
+	handler := httpapi.NewHandler(httpapi.Options{
+		AdminExports: http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) { response.WriteHeader(219) }),
+		AdminAudit:   http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) { response.WriteHeader(221) }),
+	})
+	for _, path := range []string{"/api/admin/exports", "/api/admin/exports/bookings", "/api/admin/exports/resources"} {
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
+		if response.Code != 219 {
+			t.Fatalf("%s status=%d", path, response.Code)
+		}
+	}
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/admin/audit?q=export", nil))
+	if response.Code != 221 {
+		t.Fatalf("audit status=%d", response.Code)
+	}
+}
+
+func TestAnalyticsRoutesUseExplicitCompositionHandlers(t *testing.T) {
+	handler := httpapi.NewHandler(httpapi.Options{
+		AdminAnalytics:       http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) { response.WriteHeader(222) }),
+		PublicAnalyticsTrack: http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) { response.WriteHeader(223) }),
+	})
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/admin/analytics/overview", nil))
+	if response.Code != 222 {
+		t.Fatalf("admin analytics status=%d", response.Code)
+	}
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/api/public/analytics/events", nil))
+	if response.Code != 223 {
+		t.Fatalf("public analytics status=%d", response.Code)
+	}
+}
+
 func TestServiceRoutesUseExplicitCompositionHandlers(t *testing.T) {
 	marker := func(status int) http.Handler {
 		return http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) { response.WriteHeader(status) })

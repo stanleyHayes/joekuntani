@@ -3,6 +3,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import Image from "next/image";
 
+import { EmptyState } from "../../ui/empty-state";
+import { Select } from "../../ui/select";
 import styles from "./media-library.module.css";
 
 export type MediaAsset = {
@@ -227,11 +229,16 @@ export function MediaLibrary({
           </label>
           <label>
             Folder
-            <select name="folder" defaultValue="content">
-              <option value="content">Content</option>
-              <option value="press">Press</option>
-              <option value="documents">Documents</option>
-            </select>
+            <Select
+              name="folder"
+              defaultValue="content"
+              options={[
+                { value: "content", label: "Content" },
+                { value: "press", label: "Press" },
+                { value: "documents", label: "Documents" },
+              ]}
+              aria-label="Media folder"
+            />
           </label>
           <label>
             Alternative text
@@ -249,10 +256,12 @@ export function MediaLibrary({
         <div className={styles.gridPanel}>
           <h2>Assets</h2>
           {assets.length === 0 ? (
-            <div className={styles.empty}>
-              <strong>No assets yet</strong>
-              <span>Approved uploads will appear here.</span>
-            </div>
+            <EmptyState
+              className={styles.empty}
+              tone="media"
+              title="The media shelf is clear"
+              description="Request a secure upload above. Ready assets will appear here with their dimensions and approval state."
+            />
           ) : (
             <ul className={styles.grid} aria-label="Media assets">
               {assets.map((asset) => (

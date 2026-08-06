@@ -20,6 +20,8 @@
     "lint": "pnpm lint:web && pnpm lint:api",
     "lint:api": "cd apps/api && test -z \"$(gofmt -l .)\" && go vet ./... && go run honnef.co/go/tools/cmd/staticcheck@v0.7.0 ./...",
     "lint:web": "pnpm --filter @joe-kuntani/web lint",
+    "qa:sec": "./scripts/qa-sec.sh",
+    "test:e2e": "playwright test --config tests/e2e/playwright.config.ts",
     "test": "pnpm test:web && pnpm test:api",
     "test:api": "cd apps/api && go test -race ./...",
     "test:api:integration": "cd apps/api && test -n \"${MONGODB_INTEGRATION_URI:-}\" && go test -race -count=1 ./internal/platform/mongo/...",
@@ -27,6 +29,8 @@
     "typecheck": "pnpm --filter @joe-kuntani/web typecheck"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@playwright/test": "1.57.0",
     "@redocly/cli": "2.44.1",
     "openapi-typescript": "7.13.0",
     "prettier": "3.6.2",

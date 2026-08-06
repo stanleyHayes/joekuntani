@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { Select } from "../../ui/select";
 import { EnquiryWorkflow } from "../crm-workflow/enquiry-workflow";
 import styles from "./crm-workspace.module.css";
 
@@ -211,14 +212,16 @@ export function CRMWorkspace() {
         </label>
         <label>
           Stage
-          <select value={stage} onChange={(e) => setStage(e.target.value)}>
-            <option value="">All stages</option>
-            {stages.map((value) => (
-              <option key={value} value={value}>
-                {stageLabels[value]}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={stage}
+            onChange={setStage}
+            placeholder="All stages"
+            options={stages.map((value) => ({
+              value,
+              label: stageLabels[value],
+            }))}
+            aria-label="Stage filter"
+          />
         </label>
         <label>
           Owner ID
@@ -354,23 +357,21 @@ export function CRMWorkspace() {
                   <div className={styles.actions}>
                     <label>
                       Stage
-                      <select
+                      <Select
                         aria-label={`Stage for ${item.reference}`}
                         value={item.stage}
-                        onChange={(e) =>
+                        onChange={(value) =>
                           void mutate(
                             `/api/admin/crm/enquiries/${item.id}/stage`,
-                            { stage: e.target.value },
+                            { stage: value },
                             "PATCH",
                           )
                         }
-                      >
-                        {stages.map((value) => (
-                          <option key={value} value={value}>
-                            {stageLabels[value]}
-                          </option>
-                        ))}
-                      </select>
+                        options={stages.map((value) => ({
+                          value,
+                          label: stageLabels[value],
+                        }))}
+                      />
                     </label>
                     <label>
                       Owner

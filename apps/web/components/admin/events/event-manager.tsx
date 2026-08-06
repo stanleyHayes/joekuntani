@@ -2,6 +2,9 @@
 
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 
+import { DateField } from "../../ui/date-field";
+import { EmptyState } from "../../ui/empty-state";
+import { Select } from "../../ui/select";
 import styles from "./event-manager.module.css";
 
 type Status = "draft" | "published" | "cancelled";
@@ -277,7 +280,11 @@ export function EventManager() {
         {loading ? (
           <p role="status">Loading events…</p>
         ) : events.length === 0 ? (
-          <p>No approved event content exists yet.</p>
+          <EmptyState
+            tone="calendar"
+            title="No events on the board"
+            description="Create a draft event to define venue, capacity, and ticket types. Nothing goes public until it is published."
+          />
         ) : (
           <ul className={styles.list}>
             {events.map((item) => (
@@ -326,24 +333,24 @@ export function EventManager() {
           </Field>
           <div className={styles.grid}>
             <Field label="Starts at">
-              <input
-                maxLength={120}
+              <DateField
                 required
-                type="datetime-local"
+                aria-label="Starts at"
+                mode="datetime"
                 value={localDate(draft.starts_at)}
-                onChange={(event) =>
-                  setDraft({ ...draft, starts_at: isoDate(event.target.value) })
+                onChange={(value) =>
+                  setDraft({ ...draft, starts_at: isoDate(value) })
                 }
               />
             </Field>
             <Field label="Ends at">
-              <input
-                maxLength={200}
+              <DateField
                 required
-                type="datetime-local"
+                aria-label="Ends at"
+                mode="datetime"
                 value={localDate(draft.ends_at)}
-                onChange={(event) =>
-                  setDraft({ ...draft, ends_at: isoDate(event.target.value) })
+                onChange={(value) =>
+                  setDraft({ ...draft, ends_at: isoDate(value) })
                 }
               />
             </Field>
@@ -557,32 +564,34 @@ export function EventManager() {
               </Field>
               <div className={styles.grid}>
                 <Field label="Banner starts at">
-                  <input
+                  <DateField
                     required
-                    type="datetime-local"
+                    aria-label="Banner starts at"
+                    mode="datetime"
                     value={localDate(draft.banner.starts_at ?? "")}
-                    onChange={(event) =>
+                    onChange={(value) =>
                       setDraft({
                         ...draft,
                         banner: {
                           ...draft.banner,
-                          starts_at: isoDate(event.target.value),
+                          starts_at: isoDate(value),
                         },
                       })
                     }
                   />
                 </Field>
                 <Field label="Banner ends at">
-                  <input
+                  <DateField
                     required
-                    type="datetime-local"
+                    aria-label="Banner ends at"
+                    mode="datetime"
                     value={localDate(draft.banner.ends_at ?? "")}
-                    onChange={(event) =>
+                    onChange={(value) =>
                       setDraft({
                         ...draft,
                         banner: {
                           ...draft.banner,
-                          ends_at: isoDate(event.target.value),
+                          ends_at: isoDate(value),
                         },
                       })
                     }
@@ -710,20 +719,21 @@ export function EventManager() {
                   />
                 </Field>
                 <Field label="Currency">
-                  <select
+                  <Select
                     required
                     value={ticketDraft.currency}
-                    onChange={(event) =>
+                    onChange={(currency) =>
                       setTicketDraft({
                         ...ticketDraft,
-                        currency: event.target.value,
+                        currency,
                       })
                     }
-                  >
-                    {["GHS", "USD", "EUR", "GBP"].map((currency) => (
-                      <option key={currency}>{currency}</option>
-                    ))}
-                  </select>
+                    options={["GHS", "USD", "EUR", "GBP"].map((currency) => ({
+                      value: currency,
+                      label: currency,
+                    }))}
+                    aria-label="Ticket currency"
+                  />
                 </Field>
                 <Field label="Sort order">
                   <input
@@ -780,27 +790,29 @@ export function EventManager() {
                   />
                 </Field>
                 <Field label="Sales start">
-                  <input
+                  <DateField
                     required
-                    type="datetime-local"
+                    aria-label="Sales start"
+                    mode="datetime"
                     value={localDate(ticketDraft.sales_start)}
-                    onChange={(event) =>
+                    onChange={(value) =>
                       setTicketDraft({
                         ...ticketDraft,
-                        sales_start: isoDate(event.target.value),
+                        sales_start: isoDate(value),
                       })
                     }
                   />
                 </Field>
                 <Field label="Sales end">
-                  <input
+                  <DateField
                     required
-                    type="datetime-local"
+                    aria-label="Sales end"
+                    mode="datetime"
                     value={localDate(ticketDraft.sales_end)}
-                    onChange={(event) =>
+                    onChange={(value) =>
                       setTicketDraft({
                         ...ticketDraft,
-                        sales_end: isoDate(event.target.value),
+                        sales_end: isoDate(value),
                       })
                     }
                   />

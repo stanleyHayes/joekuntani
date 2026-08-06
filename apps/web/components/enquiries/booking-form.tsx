@@ -10,6 +10,8 @@ import {
   useState,
 } from "react";
 import type { PublicService, ServiceQuestion } from "../services/types";
+import { DateField } from "../ui/date-field";
+import { Select } from "../ui/select";
 import styles from "./booking-form.module.css";
 
 const DRAFT_KEY = "jk-enquiry-draft-v1";
@@ -204,19 +206,21 @@ export function BookingForm({
             <legend>Your intent</legend>
             <label>
               Enquiry type
-              <select
+              <Select
+                aria-label="Enquiry type"
                 value={draft.enquiryType}
-                onChange={(e) =>
+                onChange={(enquiryType) =>
                   setDraft((v) => ({
                     ...v,
-                    enquiryType: e.target.value as "event" | "brand",
+                    enquiryType: enquiryType as "event" | "brand",
                     details: {},
                   }))
                 }
-              >
-                <option value="event">Event booking</option>
-                <option value="brand">Brand partnership</option>
-              </select>
+                options={[
+                  { value: "event", label: "Event booking" },
+                  { value: "brand", label: "Brand partnership" },
+                ]}
+              />
             </label>
             {services.map((item) => (
               <label className={styles.choice} key={item.id}>
@@ -238,20 +242,20 @@ export function BookingForm({
             ))}
             <label>
               How did you hear about Joe?
-              <select
+              <Select
+                aria-label="How did you hear about Joe?"
                 required
+                placeholder="Choose one"
                 value={draft.source}
-                onChange={(e) =>
-                  setDraft((v) => ({ ...v, source: e.target.value }))
-                }
-              >
-                <option value="">Choose one</option>
-                <option value="search">Search</option>
-                <option value="social">Social media</option>
-                <option value="referral">Referral</option>
-                <option value="press">Press</option>
-                <option value="other">Other</option>
-              </select>
+                onChange={(source) => setDraft((v) => ({ ...v, source }))}
+                options={[
+                  { value: "search", label: "Search" },
+                  { value: "social", label: "Social media" },
+                  { value: "referral", label: "Referral" },
+                  { value: "press", label: "Press" },
+                  { value: "other", label: "Other" },
+                ]}
+              />
             </label>
           </fieldset>
         )}
@@ -431,16 +435,15 @@ export function BookingForm({
             />
             <label>
               Currency
-              <select
+              <Select
+                aria-label="Currency"
                 value={draft.currency}
-                onChange={(e) =>
-                  setDraft((v) => ({ ...v, currency: e.target.value }))
-                }
-              >
-                {["GHS", "USD", "EUR", "GBP"].map((value) => (
-                  <option key={value}>{value}</option>
-                ))}
-              </select>
+                onChange={(currency) => setDraft((v) => ({ ...v, currency }))}
+                options={["GHS", "USD", "EUR", "GBP"].map((value) => ({
+                  value,
+                  label: value,
+                }))}
+              />
             </label>
             <Field
               label="Decision deadline"
@@ -749,6 +752,20 @@ function Field({
   required?: boolean;
   type?: string;
 }) {
+  if (type === "date" || type === "datetime-local") {
+    return (
+      <label>
+        {label}
+        <DateField
+          aria-label={label}
+          required={required}
+          mode={type === "date" ? "date" : "datetime"}
+          value={value}
+          onChange={onChange}
+        />
+      </label>
+    );
+  }
   return (
     <label>
       {label}
@@ -798,16 +815,17 @@ export function DynamicQuestion({
     return (
       <label>
         {question.label}
-        <select
+        <Select
+          aria-label={question.label}
           required={question.required}
+          placeholder="Choose one"
           value={String(value ?? "")}
-          onChange={(e) => onChange(e.target.value)}
-        >
-          <option value="">Choose one</option>
-          {question.options?.map((option) => (
-            <option key={option}>{option}</option>
-          ))}
-        </select>
+          onChange={onChange}
+          options={(question.options ?? []).map((option) => ({
+            value: option,
+            label: option,
+          }))}
+        />
       </label>
     );
   if (question.type === "checkbox")
@@ -832,16 +850,26 @@ export function DynamicQuestion({
         />
       </label>
     );
+  if (question.type === "date") {
+    return (
+      <label>
+        {question.label}
+        <DateField
+          aria-label={question.label}
+          required={question.required}
+          mode="date"
+          value={String(value ?? "")}
+          onChange={onChange}
+        />
+      </label>
+    );
+  }
   return (
     <label>
       {question.label}
       <input
         required={question.required}
-        type={
-          question.type === "date" || question.type === "number"
-            ? question.type
-            : "text"
-        }
+        type={question.type === "number" ? "number" : "text"}
         value={String(value ?? "")}
         onChange={(e) =>
           onChange(

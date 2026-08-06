@@ -1,0 +1,74 @@
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem 0.2rem 0.25rem;
+  background: var(--surface-raised);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    transform 100ms ease;
+}
+
+.toggle:hover {
+  border-color: var(--brand-k);
+}
+
+.toggle:active {
+  transform: scale(0.97);
+}
+
+.track {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--brand-j) 55%, transparent), transparent 55%),
+    radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--brand-k) 55%, transparent), transparent 55%),
+    var(--surface);
+}
+
+.thumb {
+  display: grid;
+  place-items: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--canvas);
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.thumb[data-theme="light"] {
+  transform: rotate(-20deg);
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 40rem) {
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .toggle {
+    padding-inline: 0.25rem;
+  }
+}

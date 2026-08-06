@@ -36,7 +36,7 @@
   gap: 0.35rem;
 }
 .filter input,
-.filter select {
+.filter :global(button) {
   min-height: 2.75rem;
   max-width: 100%;
   padding: 0.65rem;

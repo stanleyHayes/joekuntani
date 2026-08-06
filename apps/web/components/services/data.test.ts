@@ -7,6 +7,7 @@ function service(
   id: string,
   active: boolean,
   sortOrder: number,
+  overrides: Partial<PublicService> = {},
 ): PublicService {
   return {
     id,
@@ -23,6 +24,7 @@ function service(
     cta: { label: "Enquire", href: "/book" },
     created_at: "2026-08-05T00:00:00Z",
     updated_at: "2026-08-05T00:00:00Z",
+    ...overrides,
   };
 }
 
@@ -40,13 +42,23 @@ describe("getPublicServices", () => {
             service("later", true, 3),
             service("hidden", false, 0),
             service("first", true, 1),
+            service("same-b", true, 2, { name: "B" }),
+            service("same-a", true, 2, { name: "A" }),
+            service("wrong-cta", true, 0, {
+              cta: { label: "Elsewhere", href: "/elsewhere" },
+            }),
           ],
         }),
         { status: 200 },
       ),
     );
     const result = await getPublicServices(fetcher);
-    expect(result.map((item) => item.id)).toEqual(["first", "later"]);
+    expect(result.map((item) => item.id)).toEqual([
+      "first",
+      "same-a",
+      "same-b",
+      "later",
+    ]);
     expect(fetcher).toHaveBeenCalledWith(
       "https://api.example.test/api/public/services",
       expect.objectContaining({ cache: "no-store" }),
@@ -57,6 +69,18 @@ describe("getPublicServices", () => {
     process.env.API_BASE_URL = "https://api.example.test";
     expect(
       await getPublicServices(vi.fn().mockRejectedValue(new Error("offline"))),
+    ).toEqual([]);
+    expect(
+      await getPublicServices(
+        vi.fn().mockResolvedValue(new Response(null, { status: 500 })),
+      ),
+    ).toEqual([]);
+    expect(
+      await getPublicServices(
+        vi.fn().mockResolvedValue(
+          new Response(JSON.stringify({ items: "nope" }), { status: 200 }),
+        ),
+      ),
     ).toEqual([]);
     delete process.env.API_BASE_URL;
     expect(await getPublicServices()).toEqual([]);
