@@ -1,0 +1,105 @@
+.wrap {
+  display: grid;
+  gap: 1.75rem;
+}
+
+.hero {
+  display: grid;
+  gap: 0.55rem;
+  max-width: 40rem;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft, var(--text-muted));
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.lede {
+  margin: 0;
+  color: var(--ink-soft, var(--text-muted));
+  line-height: 1.55;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1.15rem 1.2rem;
+  border: 1px solid color-mix(in srgb, var(--line, var(--border-subtle)) 80%, var(--brand-k));
+  border-radius: calc(var(--radius-panel, 1rem) - 0.15rem);
+  background:
+    linear-gradient(
+      155deg,
+      color-mix(in srgb, var(--surface-raised, var(--surface)) 92%, var(--brand-j)) 0%,
+      var(--surface, var(--surface-canvas)) 100%
+    );
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: 1.15rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.cardCopy {
+  margin: 0;
+  color: var(--ink-soft, var(--text-muted));
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.85rem;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.links a {
+  display: inline-flex;
+  min-height: 2.35rem;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--line, var(--border-subtle));
+  background: var(--canvas, var(--surface-canvas));
+  color: inherit;
+  font-size: 0.86rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.links a:hover {
+  border-color: var(--brand-k);
+}
+
+.links a:focus-visible {
+  outline: 2px solid var(--focus, var(--brand-k));
+  outline-offset: 2px;
+}
+
+@media (min-width: 52rem) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
