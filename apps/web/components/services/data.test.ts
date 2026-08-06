@@ -45,8 +45,9 @@ describe("getPublicServices", () => {
             service("same-b", true, 2, { name: "B" }),
             service("same-a", true, 2, { name: "A" }),
             service("wrong-cta", true, 0, {
+              // Runtime API may send non-/book CTAs; filter must drop them.
               cta: { label: "Elsewhere", href: "/elsewhere" },
-            }),
+            } as unknown as Partial<PublicService>),
           ],
         }),
         { status: 200 },

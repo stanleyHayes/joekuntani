@@ -39,10 +39,10 @@ Object.defineProperty(window, "localStorage", {
 });
 
 globalThis.requestAnimationFrame = ((cb: FrameRequestCallback) =>
-  setTimeout(() => cb(Date.now()), 16)) as typeof requestAnimationFrame;
+  window.setTimeout(() => cb(Date.now()), 16)) as unknown as typeof requestAnimationFrame;
 globalThis.cancelAnimationFrame = ((id: number) => {
-  clearTimeout(id);
-}) as typeof cancelAnimationFrame;
+  window.clearTimeout(id);
+}) as unknown as typeof cancelAnimationFrame;
 
 vi.mock("next/font/google", () => ({
   Outfit: () => ({ className: "font-outfit", variable: "--font-outfit" }),
