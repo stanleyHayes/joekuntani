@@ -1,0 +1,12 @@
+.workspace {
+  display: grid;
+  gap: 1rem;
+}
+
+.panel {
+  overflow: auto;
+}
+
+.panel code {
+  font-size: 0.8rem;
+}

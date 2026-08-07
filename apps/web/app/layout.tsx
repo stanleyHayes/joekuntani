@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { DM_Sans, Outfit } from "next/font/google";
+import { Knewave, Outfit } from "next/font/google";
 import { getPublicSettings } from "../lib/settings";
 import { canonicalURL, jsonLd } from "../lib/seo";
 import { Providers } from "../components/providers";
@@ -11,14 +11,14 @@ const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-outfit",
   display: "swap",
-  weight: ["500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const dmSans = DM_Sans({
+const knewave = Knewave({
   subsets: ["latin"],
-  variable: "--font-dm-sans",
+  variable: "--font-knewave",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  weight: "400",
 });
 
 const brandIcons: NonNullable<Metadata["icons"]> = {
@@ -69,7 +69,12 @@ export default async function RootLayout({
   const settings = await getPublicSettings();
   const website = canonicalURL("/", settings?.seo.canonical_base);
   return (
-    <html lang="en" data-theme="dark" className={`${outfit.variable} ${dmSans.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      data-theme="dark"
+      className={`${outfit.variable} ${knewave.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>

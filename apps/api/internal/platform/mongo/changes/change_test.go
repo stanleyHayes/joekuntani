@@ -128,8 +128,8 @@ func TestRegistryHasStableChecksum(t *testing.T) {
 	t.Parallel()
 
 	registry := Registry()
-	if len(registry) != 30 {
-		t.Fatalf("Registry() length = %d, want 30", len(registry))
+	if len(registry) != 32 {
+		t.Fatalf("Registry() length = %d, want 32", len(registry))
 	}
 	if registry[0].Name != bootstrapChangeName || len(registry[0].Checksum) != 64 {
 		t.Fatalf("unexpected registry entry: name=%q checksum=%q", registry[0].Name, registry[0].Checksum)
@@ -214,6 +214,9 @@ func TestRegistryHasStableChecksum(t *testing.T) {
 	}
 	if registry[29].Name != checkinChangeName || len(registry[29].Checksum) != 64 || !reflect.DeepEqual(registry[29].EvolvesCollections, []string{"ticket_check_ins"}) {
 		t.Fatalf("unexpected check-in registry entry: %#v", registry[29])
+	}
+	if registry[30].Name != staffAccountSurfacesChangeName || len(registry[30].Checksum) != 64 {
+		t.Fatalf("unexpected staff account surfaces registry entry: %#v", registry[30])
 	}
 }
 

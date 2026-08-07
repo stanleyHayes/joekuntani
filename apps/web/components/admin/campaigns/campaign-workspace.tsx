@@ -1,7 +1,10 @@
 "use client";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { DateField } from "../../ui/date-field";
+import { EmptyState } from "../../ui/empty-state";
 import { Select } from "../../ui/select";
+import { AdminDialog } from "../admin-dialog";
+import { AdminErrorState, AdminSkeleton } from "../admin-feedback";
 import styles from "./campaign-workspace.module.css";
 type Campaign = {
   id: string;
@@ -30,6 +33,28 @@ type Deliverable = {
   asset_ids: string[];
 };
 const statuses = ["draft", "active", "paused", "completed", "cancelled"];
+const campaignFieldLabels: Record<string, string> = {
+  enquiry_id: "Enquiry ID",
+  organization_id: "Organization ID",
+  title: "Campaign title",
+  objective: "Objective",
+  starts_on: "Start date",
+  ends_on: "End date",
+  fee: "Fee",
+  expenses: "Expenses",
+  platforms: "Platforms",
+  results: "Results",
+  asset_ids: "Asset IDs",
+};
+/* Free-text fields that hold lists or sentences get the full dialog width;
+   the rest pair up two-per-row. */
+const wideFields = new Set(["objective", "platforms", "results", "asset_ids"]);
+const campaignFieldHints: Record<string, string> = {
+  objective: "What Joe is being booked to achieve",
+  platforms: "Instagram, TikTok, YouTube",
+  results: "Reach=120000, Saves=4300",
+  asset_ids: "Comma separated",
+};
 const deliverableStatuses = [
   "pending",
   "in_progress",
@@ -40,6 +65,9 @@ const deliverableStatuses = [
 export function CampaignWorkspace() {
   const [items, setItems] = useState<Campaign[]>([]),
     [selected, setSelected] = useState<Campaign | null>(null),
+    [createOpen, setCreateOpen] = useState(false),
+    [detailOpen, setDetailOpen] = useState(false),
+    [deliverableOpen, setDeliverableOpen] = useState(false),
     [deliverables, setDeliverables] = useState<Deliverable[]>([]),
     [message, setMessage] = useState(""),
     [loading, setLoading] = useState(true);
@@ -85,6 +113,7 @@ export function CampaignWorkspace() {
         }),
       });
       form.reset();
+      setCreateOpen(false);
       await load();
       setMessage("Campaign created and audited.");
     } catch {
@@ -111,6 +140,8 @@ export function CampaignWorkspace() {
   }
   async function choose(item: Campaign) {
     setSelected(item);
+    setDetailOpen(true);
+    setDeliverableOpen(false);
     try {
       const detail = await request(`/api/admin/campaigns/${item.id}`);
       setDeliverables(detail.deliverables ?? []);
@@ -138,6 +169,7 @@ export function CampaignWorkspace() {
         }),
       });
       form.reset();
+      setDeliverableOpen(false);
       await choose(selected);
       setMessage("Deliverable added and audited.");
     } catch {
@@ -175,201 +207,327 @@ export function CampaignWorkspace() {
     );
   }
   return (
-    <div className={styles.grid}>
-      <div>
-        <h3>Campaign list</h3>
-        {loading ? (
-          <p role="status">Loading campaigns…</p>
-        ) : items.length ? (
-          <ul className={styles.list}>
-            {items.map((item) => (
-              <li key={item.id}>
-                <button type="button" onClick={() => void choose(item)}>
+    <section className={styles.workspace} aria-labelledby="campaign-heading">
+      <header className="stage-head">
+        <div className="stage-head__copy">
+          <p className="stage-head__eyebrow">Brand partnerships</p>
+          <h2 id="campaign-heading">Joe’s campaigns</h2>
+          <p className="stage-head__lede">
+            Every partnership Joe has signed — deliverables, assets, results,
+            and what each one paid against what it cost.
+          </p>
+        </div>
+        <div className="stage-head__actions">
+          <button
+            className="primary"
+            type="button"
+            onClick={() => setCreateOpen(true)}
+          >
+            Add campaign
+          </button>
+        </div>
+      </header>
+      {message === "Campaigns are unavailable." ? (
+        <AdminErrorState
+          title="Campaigns are unavailable"
+          message="Joe’s campaign records could not be loaded."
+        />
+      ) : message ? (
+        <p role="status">{message}</p>
+      ) : null}
+      {loading ? (
+        <AdminSkeleton label="Loading campaigns" variant="table" />
+      ) : message === "Campaigns are unavailable." ? null : items.length ? (
+        <ul className={styles.list}>
+          {items.map((item) => (
+            <li key={item.id}>
+              <button
+                className={styles.campaignCard}
+                type="button"
+                onClick={() => void choose(item)}
+              >
+                <span className={styles.titleRow}>
                   <strong>{item.title}</strong>
-                  <span>{item.status}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p role="status">No campaigns have been created.</p>
-        )}
-      </div>
-      <div>
-        <h3>Financial summary</h3>
-        {selected ? (
-          <article>
-            <h4>{selected.title}</h4>
-            <dl>
-              <dt>Fee</dt>
-              <dd>
-                {selected.fee.currency} {selected.fee.amount}
-              </dd>
-              <dt>Expenses</dt>
-              <dd>
-                {selected.expenses.currency} {selected.expenses.amount}
-              </dd>
-              <dt>Results</dt>
-              <dd>
-                {selected.results.length ? (
-                  <ul>
-                    {selected.results.map((result) => (
-                      <li key={`${result.label}-${result.value}`}>
-                        {result.label}: {result.value}
+                  <span className={styles.pill} data-status={item.status}>
+                    {item.status}
+                  </span>
+                </span>
+                <span className={styles.objective}>
+                  {item.objective || "No objective recorded"}
+                </span>
+                <span className={styles.meta}>
+                  <span>{formatRange(item.starts_on, item.ends_on)}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>
+                    {item.fee.currency} {item.fee.amount}
+                  </span>
+                  {item.platforms.length ? (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <span>{item.platforms.join(", ")}</span>
+                    </>
+                  ) : null}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <EmptyState
+          tone="media"
+          title="No campaigns for Joe yet"
+          description="When an enquiry becomes a signed partnership, build the campaign here to track Joe’s deliverables, assets, results and fee."
+          action={
+            <button type="button" onClick={() => setCreateOpen(true)}>
+              Add campaign
+            </button>
+          }
+        />
+      )}
+      {detailOpen && selected ? (
+        <AdminDialog
+          title={selected.title}
+          description="Review campaign performance and manage its deliverables."
+          onClose={() => setDetailOpen(false)}
+          wide
+        >
+          <div className={styles.detail}>
+            {selected ? (
+              <article className={styles.detailBody}>
+                <h3>Financial summary</h3>
+                <dl className={styles.summary}>
+                  <div>
+                    <dt>Fee</dt>
+                    <dd className={styles.figure}>
+                      {selected.fee.currency} {selected.fee.amount}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Expenses</dt>
+                    <dd className={styles.figure}>
+                      {selected.expenses.currency} {selected.expenses.amount}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Approved assets</dt>
+                    <dd className={styles.figure}>
+                      {selected.asset_ids.length}
+                    </dd>
+                  </div>
+                  <div className={styles.summaryWide}>
+                    <dt>Results</dt>
+                    <dd>
+                      {selected.results.length ? (
+                        <ul className={styles.results}>
+                          {selected.results.map((result) => (
+                            <li key={`${result.label}-${result.value}`}>
+                              <span>{result.label}</span>
+                              <strong>{result.value}</strong>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        "No performance results recorded"
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+                <label className={styles.statusField}>
+                  Status
+                  <Select
+                    value={selected.status}
+                    onChange={(value) => void transition(selected, value)}
+                    options={statuses.map((s) => ({ value: s, label: s }))}
+                    aria-label="Campaign status"
+                  />
+                </label>
+                <h3>Deliverables</h3>
+                {deliverables.length ? (
+                  <ul className={styles.deliverables}>
+                    {deliverables.map((item) => (
+                      <li className={styles.deliverable} key={item.id}>
+                        <strong>{item.title}</strong>
+                        <div className={styles.deliverableFields}>
+                        <label>
+                          Workflow status
+                          <Select
+                            aria-label={`${item.title} workflow status`}
+                            value={item.status}
+                            onChange={(value) =>
+                              replaceDeliverable(item.id, {
+                                status: value,
+                              })
+                            }
+                            options={deliverableStatuses.map((status) => ({
+                              value: status,
+                              label: status,
+                            }))}
+                          />
+                        </label>
+                        <label>
+                          Approval
+                          <Select
+                            aria-label={`${item.title} approval`}
+                            value={item.approval_status}
+                            onChange={(value) =>
+                              replaceDeliverable(item.id, {
+                                approval_status: value,
+                              })
+                            }
+                            options={["pending", "approved", "rejected"].map(
+                              (status) => ({ value: status, label: status }),
+                            )}
+                          />
+                        </label>
+                        <label>
+                          Published URL
+                          <input
+                            aria-label={`${item.title} published URL`}
+                            value={item.published_url}
+                            onChange={(event) =>
+                              replaceDeliverable(item.id, {
+                                published_url: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => void updateDeliverable(item)}
+                        >
+                          Save deliverable
+                        </button>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  "No performance results recorded"
+                  <EmptyState
+                    announce={false}
+                    tone="media"
+                    title="No deliverables yet"
+                    description="Add the first deliverable to track its platform, format, due date, approval and published URL."
+                  />
                 )}
-              </dd>
-              <dt>Approved assets</dt>
-              <dd>{selected.asset_ids.length}</dd>
-            </dl>
-            <label>
-              Status
-              <Select
-                value={selected.status}
-                onChange={(value) => void transition(selected, value)}
-                options={statuses.map((s) => ({ value: s, label: s }))}
-                aria-label="Campaign status"
-              />
-            </label>
-            <h4>Deliverables</h4>
-            {deliverables.length ? (
-              <ul>
-                {deliverables.map((item) => (
-                  <li key={item.id}>
-                    <strong>{item.title}</strong>
+                {!deliverableOpen ? (
+                  <button
+                    type="button"
+                    onClick={() => setDeliverableOpen(true)}
+                  >
+                    Add deliverable
+                  </button>
+                ) : (
+                  <form className={styles.form} onSubmit={addDeliverable}>
                     <label>
-                      Workflow status
-                      <Select
-                        aria-label={`${item.title} workflow status`}
-                        value={item.status}
-                        onChange={(value) =>
-                          replaceDeliverable(item.id, {
-                            status: value,
-                          })
-                        }
-                        options={deliverableStatuses.map((status) => ({
-                          value: status,
-                          label: status,
-                        }))}
-                      />
+                      Title
+                      <input name="title" required />
                     </label>
                     <label>
-                      Approval
-                      <Select
-                        aria-label={`${item.title} approval`}
-                        value={item.approval_status}
-                        onChange={(value) =>
-                          replaceDeliverable(item.id, {
-                            approval_status: value,
-                          })
-                        }
-                        options={["pending", "approved", "rejected"].map(
-                          (status) => ({ value: status, label: status }),
-                        )}
-                      />
+                      Platform
+                      <input name="platform" required />
                     </label>
                     <label>
-                      Published URL
-                      <input
-                        aria-label={`${item.title} published URL`}
-                        value={item.published_url}
-                        onChange={(event) =>
-                          replaceDeliverable(item.id, {
-                            published_url: event.target.value,
-                          })
-                        }
+                      Format
+                      <input name="format" required />
+                    </label>
+                    <label>
+                      Due at
+                      <DateField
+                        name="due_at"
+                        aria-label="Due at"
+                        mode="datetime"
+                        required
                       />
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => void updateDeliverable(item)}
-                    >
-                      Save deliverable
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                    <label className={styles.formWide}>
+                      Asset IDs (comma separated)
+                      <input name="asset_ids" />
+                    </label>
+                    <div className={styles.formActions}>
+                      <button type="submit">Add deliverable</button>
+                      <button
+                        type="button"
+                        onClick={() => setDeliverableOpen(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </article>
             ) : (
-              <p>No deliverables yet.</p>
+              <p>Select a campaign.</p>
             )}
-            <form onSubmit={addDeliverable}>
-              <label>
-                Title
-                <input name="title" required />
-              </label>
-              <label>
-                Platform
-                <input name="platform" required />
-              </label>
-              <label>
-                Format
-                <input name="format" required />
-              </label>
-              <label>
-                Due at
-                <DateField
-                  name="due_at"
-                  aria-label="Due at"
-                  mode="datetime"
-                  required
+          </div>
+        </AdminDialog>
+      ) : null}
+      {createOpen ? (
+        <AdminDialog
+          title="New campaign"
+          description="Create a private campaign record linked to CRM."
+          onClose={() => setCreateOpen(false)}
+          wide
+        >
+          <form className={styles.form} onSubmit={create}>
+            {[
+              "enquiry_id",
+              "organization_id",
+              "title",
+              "objective",
+              "starts_on",
+              "ends_on",
+              "fee",
+              "expenses",
+              "platforms",
+              "results",
+              "asset_ids",
+            ].map((name) => (
+              <label
+                key={name}
+                className={wideFields.has(name) ? styles.formWide : undefined}
+              >
+                {campaignFieldLabels[name] ?? name.replaceAll("_", " ")}
+                <input
+                  name={name}
+                  type={name.endsWith("_on") ? "date" : "text"}
+                  required={!["results", "asset_ids"].includes(name)}
+                  placeholder={campaignFieldHints[name]}
                 />
               </label>
-              <label>
-                Asset IDs (comma separated)
-                <input name="asset_ids" />
-              </label>
-              <button type="submit">Add deliverable</button>
-            </form>
-          </article>
-        ) : (
-          <p>Select a campaign.</p>
-        )}
-      </div>
-      <form onSubmit={create}>
-        <h3>New campaign</h3>
-        {[
-          "enquiry_id",
-          "organization_id",
-          "title",
-          "objective",
-          "starts_on",
-          "ends_on",
-          "fee",
-          "expenses",
-          "platforms",
-          "results",
-          "asset_ids",
-        ].map((name) => (
-          <label key={name}>
-            {name.replaceAll("_", " ")}
-            <input
-              name={name}
-              type={name.endsWith("_on") ? "date" : "text"}
-              required={!["results", "asset_ids"].includes(name)}
-            />
-          </label>
-        ))}
-        <label>
-          Currency
-          <Select
-            name="currency"
-            defaultValue="GHS"
-            options={["GHS", "USD", "EUR", "GBP"].map((currency) => ({
-              value: currency,
-              label: currency,
-            }))}
-            aria-label="Campaign currency"
-          />
-        </label>
-        <button type="submit">Create campaign</button>
-      </form>
-      {message ? <p role="status">{message}</p> : null}
-    </div>
+            ))}
+            <label>
+              Currency
+              <Select
+                name="currency"
+                defaultValue="GHS"
+                options={["GHS", "USD", "EUR", "GBP"].map((currency) => ({
+                  value: currency,
+                  label: currency,
+                }))}
+                aria-label="Campaign currency"
+              />
+            </label>
+            <div className={styles.formActions}>
+              <button type="submit">Create campaign</button>
+            </div>
+          </form>
+        </AdminDialog>
+      ) : null}
+    </section>
   );
+}
+function formatRange(startsOn: string, endsOn: string) {
+  const format = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+  const start = new Date(startsOn);
+  const end = new Date(endsOn);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()))
+    return "Dates not set";
+  return `${format.format(start)} – ${format.format(end)}`;
 }
 function splitValues(value: string) {
   return value

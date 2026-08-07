@@ -41,9 +41,10 @@ it("loads, filters and advances the audited enquiry pipeline", async () => {
   vi.stubGlobal("fetch", fetcher);
   render(<CRMWorkspace />);
   expect(await screen.findByText("JK-2026-ABC123")).toBeVisible();
-  fireEvent.change(screen.getByLabelText("Stage for JK-2026-ABC123"), {
-    target: { value: "reviewing" },
-  });
+  fireEvent.click(
+    screen.getByRole("button", { name: "Stage for JK-2026-ABC123" }),
+  );
+  fireEvent.click(screen.getByRole("option", { name: "Reviewing" }));
   await waitFor(() =>
     expect(fetcher).toHaveBeenCalledWith(
       expect.stringContaining("/stage"),
@@ -83,8 +84,12 @@ it("creates directory records and finds normalized contacts", async () => {
   });
   vi.stubGlobal("fetch", fetcher);
   render(<CRMWorkspace />);
-  await screen.findByText("No enquiries match these filters.");
+  await screen.findByText("Nobody has asked yet");
 
+  expect(
+    screen.queryByRole("dialog", { name: "CRM tools" }),
+  ).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Open CRM tools" }));
   const organizationForm = screen
     .getByRole("heading", { name: "Add organization" })
     .closest("form")!;
@@ -182,10 +187,13 @@ it("saves views, assigns owners, exports privacy data and soft deletes", async (
   render(<CRMWorkspace />);
   await screen.findByText("JK-PRIVACY");
 
+  expect(screen.queryByLabelText("Saved view name")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Open CRM tools" }));
   fireEvent.change(screen.getByLabelText("Saved view name"), {
     target: { value: "New enquiries" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Save current view" }));
+  fireEvent.click(screen.getByRole("button", { name: "Close dialog" }));
   fireEvent.change(screen.getByLabelText("Owner for JK-PRIVACY"), {
     target: { value: crypto.randomUUID() },
   });

@@ -34,7 +34,7 @@ func TestMongoConcurrentOverlapTimezoneLifecycleAndAuditRollback(t *testing.T) {
 	enquiryID, serviceID := "018f47f6-9f5d-4d3a-8d4e-45f0f7d4c201", "018f47f6-9f5d-4d3a-8d4e-45f0f7d4c202"
 	_, _ = db.Collection("crm_enquiries").InsertOne(t.Context(), bson.M{"public_id": enquiryID}, bypass)
 	_, _ = db.Collection("services").InsertOne(t.Context(), bson.M{"public_id": serviceID, "active": true}, bypass)
-	_, _ = db.Collection("site_settings").InsertOne(t.Context(), bson.M{"key": "global", "published": bson.M{"team": bson.M{"business_timezone": "Africa/Accra"}}}, bypass)
+	_, _ = db.Collection("global_settings").InsertOne(t.Context(), bson.M{"key": "global", "published": bson.M{"team": bson.M{"business_timezone": "Africa/Accra"}}}, bypass)
 	service := NewService(NewMongoStore(db), nil)
 	actor := Actor{InternalID: bson.NewObjectID().Hex(), Permissions: map[Permission]bool{Read: true, Write: true}}
 	start := time.Date(2026, 8, 20, 18, 0, 0, 0, time.UTC)

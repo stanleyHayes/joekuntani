@@ -1,0 +1,125 @@
+.stage {
+  display: grid;
+  gap: 1.15rem;
+  justify-items: start;
+  max-width: 46rem;
+  padding-block: clamp(4rem, 12vw, 9rem);
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  color: var(--eyebrow-color);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  width: 1.65rem;
+  height: 1px;
+  background: currentColor;
+  content: "";
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(3.25rem, 10vw, 6.5rem);
+  letter-spacing: -0.06em;
+  line-height: 0.92;
+}
+
+.lede {
+  max-width: 44ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  line-height: 1.6;
+}
+
+.receipt {
+  display: grid;
+  gap: 1rem 2.5rem;
+  width: 100%;
+  margin: 0.75rem 0 0;
+  padding-top: 1.35rem;
+  border-top: 1px solid var(--line);
+}
+
+.receipt div {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.receipt dt {
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.receipt dd {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.note {
+  max-width: 48ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.9rem;
+  border-radius: 999px;
+  padding-inline: 1.35rem;
+  font-size: 0.92rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.primary {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.secondary {
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.secondary:hover {
+  border-color: var(--accent);
+}
+
+.primary:focus-visible,
+.secondary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+@media (min-width: 44rem) {
+  .receipt {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

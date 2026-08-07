@@ -95,6 +95,13 @@ var (
 type Store interface {
 	FindUserByEmail(context.Context, string) (User, error)
 	FindUserByID(context.Context, string) (User, error)
+	ListUsers(context.Context) ([]StaffRecord, error)
+	ProvisionStaff(context.Context, string, string, string, Role, string) (string, error)
+	UpdateProfile(context.Context, string, string, time.Time, AuditEvent) error
+	ChangePassword(context.Context, string, string, string, time.Time, AuditEvent) error
+	UpdateRole(context.Context, string, Role, time.Time, AuditEvent) error
+	GetPreferences(context.Context, string) (Preferences, error)
+	SavePreferences(context.Context, string, Preferences, AuditEvent) error
 	SaveSessionWithAudit(context.Context, Session, AuditEvent) error
 	FindSessionByTokenHash(context.Context, string) (Session, error)
 	CompleteMFA(context.Context, string, string, int64, string, string, time.Time, AuditEvent) error

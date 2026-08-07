@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -31,10 +32,27 @@ var allowedEnvironments = map[string]struct{}{
 	"local": {}, "development": {}, "test": {}, "preview": {}, "staging": {},
 }
 
+// productionOptIn is the environment variable that permits seeding a production
+// database. It is separate from the environment name on purpose: seeding
+// production is occasionally legitimate (an empty launch database needs its
+// first content), but it must never happen because someone pointed a script at
+// the wrong URI. Requiring a second, explicit signal keeps the accident
+// impossible while leaving the deliberate act available.
+const productionOptIn = "SEED_ALLOW_PRODUCTION"
+
+// seedingAllowed reports whether this environment may be seeded. Split out from
+// Run so the gate can be tested without a live database.
+func seedingAllowed(normalizedEnvironment string) bool {
+	if _, allowed := allowedEnvironments[normalizedEnvironment]; allowed {
+		return true
+	}
+	return os.Getenv(productionOptIn) == "yes"
+}
+
 func Run(ctx context.Context, database *mongo.Database, environment string, registry []Seed) error {
 	normalizedEnvironment := strings.ToLower(strings.TrimSpace(environment))
-	if _, allowed := allowedEnvironments[normalizedEnvironment]; !allowed {
-		return fmt.Errorf("seed execution is forbidden in environment %q", environment)
+	if !seedingAllowed(normalizedEnvironment) {
+		return fmt.Errorf("seed execution is forbidden in environment %q; set %s=yes to override deliberately", environment, productionOptIn)
 	}
 	collection := database.Collection("seed_runs")
 	for _, item := range registry {
@@ -92,5 +110,5 @@ func Run(ctx context.Context, database *mongo.Database, environment string, regi
 // Registry intentionally contains no demo records. Feature slices may add
 // clearly labelled, non-sensitive placeholders after reserving a seed name.
 func Registry() []Seed {
-	return nil
+	return []Seed{initialContentSeed()}
 }

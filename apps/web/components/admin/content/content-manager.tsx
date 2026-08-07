@@ -7,9 +7,12 @@ import type {
   ContentItem,
   ContentKind,
 } from "../../content/types";
+import { AiAssist, type AiAssistField } from "../../ui/ai-assist";
 import { DateField } from "../../ui/date-field";
 import { EmptyState } from "../../ui/empty-state";
 import { Select } from "../../ui/select";
+import { AdminDialog } from "../admin-dialog";
+import { AdminErrorState, AdminSkeleton } from "../admin-feedback";
 import styles from "./content-manager.module.css";
 
 type StaffRole =
@@ -79,6 +82,7 @@ export function ContentManager({
 }: ContentManagerProps) {
   const [kind, setKind] = useState<ContentKind>("page");
   const [items, setItems] = useState<ContentItem[]>([]);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const [draft, setDraft] = useState<ContentDraft>(blank("page"));
   const [tags, setTags] = useState("");
@@ -188,6 +192,7 @@ export function ContentManager({
     setUnpublishAt(item.unpublish_at ? toLocal(item.unpublish_at) : "");
     setPreview(null);
     setMessage("");
+    setEditorOpen(true);
   }
   function newItem() {
     setSelectedID(null);
@@ -198,6 +203,7 @@ export function ContentManager({
     setPublishAt("");
     setUnpublishAt("");
     setPreview(null);
+    setEditorOpen(true);
   }
   async function save(event: FormEvent) {
     event.preventDefault();
@@ -321,19 +327,34 @@ export function ContentManager({
 
   return (
     <div className={styles.manager}>
-      <section className={styles.panel} aria-labelledby="content-list-title">
-        <h2 id="content-list-title">Content library</h2>
-        <p className={styles.help}>
-          Drafts never appear publicly. Approval and publication are separate
-          controls.
-        </p>
-        <nav
-          className={styles.workspaceLinks}
-          aria-label="Content workspace sections"
-        >
-          <Link href="/admin/services">Services</Link>
-          <Link href="/admin/media">Full media library</Link>
-        </nav>
+      <section className={styles.stack} aria-labelledby="content-list-title">
+        <header className={styles.header}>
+          <div className={styles.headerCopy}>
+            <p className={styles.eyebrow}>Content and media</p>
+            <h2 id="content-list-title">Content library</h2>
+            <p className={styles.help}>
+              Drafts never appear publicly. Approval and publication are
+              separate controls.
+            </p>
+          </div>
+          <div className={styles.headerActions}>
+            <nav
+              className={styles.quickLinks}
+              aria-label="Content workspace sections"
+            >
+              <Link href="/admin/services">Services</Link>
+              <Link href="/admin/media">Full media library</Link>
+            </nav>
+            <button
+              className="primary"
+              disabled={pending}
+              onClick={newItem}
+              type="button"
+            >
+              New draft
+            </button>
+          </div>
+        </header>
         <p className={styles.permission} role="status">
           {staffRole === "administrator"
             ? "Administrator: editing, approval, scheduling and publication are available. Every accepted mutation is audited."
@@ -341,75 +362,100 @@ export function ContentManager({
               ? "Content editor: create and edit drafts. Administrator approval and publication are required. Every accepted mutation is audited."
               : "Your permissions are being verified. The server authorizes every action."}
         </p>
-        <div className={styles.toolbar}>
-          <label className={styles.field}>
-            Content type
-            <Select
-              aria-label="Content type"
-              value={kind}
-              onChange={(value) => switchKind(value as ContentKind)}
-              options={kinds.map((item) => ({
-                value: item.value,
-                label: item.label,
-              }))}
+        <div className={styles.controls}>
+          <div className={styles.controlsHead}>
+            <p className={styles.controlsTitle}>Refine</p>
+            <p className={styles.controlsMeta}>
+              {visibleItems.length}{" "}
+              {visibleItems.length === 1 ? "item" : "items"}
+              {items.length !== visibleItems.length
+                ? ` of ${items.length}`
+                : ""}
+            </p>
+          </div>
+          <div className={styles.fieldGrid} aria-label="Content filters">
+            <Field
+              label="Search title, slug or tag"
+              value={query}
+              onChange={setQuery}
             />
-          </label>
-          <button disabled={pending} onClick={newItem} type="button">
-            New draft
-          </button>
-        </div>
-        <div className={styles.filters} aria-label="Content filters">
-          <Field
-            label="Search title, slug or tag"
-            value={query}
-            onChange={setQuery}
-          />
-          <label className={styles.field}>
-            Status
-            <Select
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={[
-                { value: "all", label: "All statuses" },
-                { value: "draft", label: "Draft" },
-                { value: "scheduled", label: "Scheduled" },
-                { value: "published", label: "Published" },
-                { value: "unpublished", label: "Unpublished" },
-              ]}
-              aria-label="Status filter"
-            />
-          </label>
-          <label className={styles.field}>
-            Filter by category
-            <Select
-              value={categoryFilter}
-              onChange={setCategoryFilter}
-              options={[
-                { value: "all", label: "All categories" },
-                ...categories.map((category) => ({
-                  value: category,
-                  label: category,
-                })),
-              ]}
-              aria-label="Category filter"
-            />
-          </label>
+            <label className={styles.field}>
+              Content type
+              <Select
+                aria-label="Content type"
+                value={kind}
+                onChange={(value) => switchKind(value as ContentKind)}
+                options={kinds.map((item) => ({
+                  value: item.value,
+                  label: item.label,
+                }))}
+              />
+            </label>
+            <label className={styles.field}>
+              Status
+              <Select
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={[
+                  { value: "all", label: "All statuses" },
+                  { value: "draft", label: "Draft" },
+                  { value: "scheduled", label: "Scheduled" },
+                  { value: "published", label: "Published" },
+                  { value: "unpublished", label: "Unpublished" },
+                ]}
+                aria-label="Status filter"
+              />
+            </label>
+            <label className={styles.field}>
+              Filter by category
+              <Select
+                value={categoryFilter}
+                onChange={setCategoryFilter}
+                options={[
+                  { value: "all", label: "All categories" },
+                  ...categories.map((category) => ({
+                    value: category,
+                    label: category,
+                  })),
+                ]}
+                aria-label="Category filter"
+              />
+            </label>
+          </div>
         </div>
         {loading ? (
-          <p role="status">Loading content…</p>
+          <AdminSkeleton label="Loading content" variant="table" />
         ) : visibleItems.length ? (
           <ul className={styles.list}>
             {visibleItems.map((item) => (
-              <li className={styles.item} key={item.id}>
-                <div>
-                  <strong>{item.title}</strong>
-                  <span>
-                    {item.status} ·{" "}
-                    {item.approved ? "approved" : "approval required"}
+              <li className={styles.row} key={item.id}>
+                <div className={styles.rowBody}>
+                  <strong className={styles.rowTitle}>{item.title}</strong>
+                  <span className={styles.rowMeta}>
+                    <span
+                      className={styles.badge}
+                      data-state={
+                        item.status === "published" ? "live" : undefined
+                      }
+                    >
+                      {item.status}
+                    </span>
+                    <span
+                      className={styles.badge}
+                      data-state={item.approved ? undefined : "pending"}
+                    >
+                      {item.approved ? "approved" : "approval required"}
+                    </span>
+                    {item.slug ? (
+                      <span className={styles.rowSlug}>/{item.slug}</span>
+                    ) : null}
                   </span>
-                  {item.slug ? <span>/{item.slug}</span> : null}
                 </div>
-                <button onClick={() => edit(item)} type="button">
+                <button
+                  className={styles.editButton}
+                  onClick={() => edit(item)}
+                  type="button"
+                >
                   Edit
                 </button>
               </li>
@@ -426,302 +472,316 @@ export function ContentManager({
             description={
               items.length
                 ? "Widen the filters or clear the search to see drafts and published items again."
-                : "Start a draft in the editor. Approval and publish keep unsupported claims out of the public site."
+                : `No ${kind} content exists yet.`
             }
           />
         )}
       </section>
-      <section className={styles.panel} aria-labelledby="content-editor-title">
-        <h2 id="content-editor-title">
-          {selected ? `Edit ${selected.title}` : `New ${kind} draft`}
-        </h2>
-        {missingFields.length ? (
-          <p className={styles.warning} role="status">
-            Content incomplete: add {missingFields.join(", ")} before requesting
-            approval.
-          </p>
-        ) : null}
-        <form className={styles.form} onSubmit={save}>
-          <div className={styles.fields}>
-            {(kind === "page" || kind === "portfolio") && !selected ? (
-              <Field
-                label="Immutable slug"
-                value={draft.slug ?? ""}
-                onChange={(slug) => setDraft({ ...draft, slug })}
-                required
-              />
+      {message ? (
+        <p className={styles.message} role="status">
+          {message}
+        </p>
+      ) : null}
+      {error === "Content could not be loaded. Try again." ? (
+        <AdminErrorState title="Content is unavailable" message={error} />
+      ) : error ? (
+        <p className={`${styles.message} ${styles.error}`} role="alert">
+          {error}
+        </p>
+      ) : null}
+      {editorOpen ? (
+        <AdminDialog
+          title={selected ? `Edit ${selected.title}` : `New ${kind} draft`}
+          description="Draft changes remain private until they are approved and published."
+          onClose={() => setEditorOpen(false)}
+          wide
+        >
+          <section className={styles.stack} aria-label="Content editor">
+            {missingFields.length ? (
+              <p className={styles.warning} role="status">
+                Content incomplete: add {missingFields.join(", ")} before
+                requesting approval.
+              </p>
             ) : null}
-            <Field
-              label="Title"
-              value={draft.title}
-              onChange={(title) => setDraft({ ...draft, title })}
-              required
-            />
-            <Field
-              label="Summary"
-              value={draft.summary ?? ""}
-              onChange={(summary) => setDraft({ ...draft, summary })}
-              multiline
-            />
-            <Field
-              label="Body"
-              value={draft.body ?? ""}
-              onChange={(body) => setDraft({ ...draft, body })}
-              multiline
-            />
-            <Field
-              label="Category"
-              value={draft.category ?? ""}
-              onChange={(category) => setDraft({ ...draft, category })}
-              required={kind === "portfolio"}
-            />
-            <Field
-              label="Tags, comma separated"
-              value={tags}
-              onChange={setTags}
-            />
-            <Field
-              label="Gallery asset UUIDs, one per line"
-              value={gallery}
-              onChange={setGallery}
-              multiline
-            />
-            {mediaOptions.some((asset) => asset.status === "ready") ? (
-              <label className={styles.field}>
-                Add approved media
-                <Select
-                  value=""
-                  placeholder="Choose a ready asset…"
-                  onChange={(id) => {
-                    if (id && !split(gallery, "\n").includes(id))
-                      setGallery(
-                        [gallery.trim(), id].filter(Boolean).join("\n"),
-                      );
-                  }}
-                  options={mediaOptions
-                    .filter((asset) => asset.status === "ready")
-                    .map((asset) => ({
-                      value: asset.id,
-                      label: `${asset.filename} — ${asset.alt_text}`,
-                    }))}
-                  aria-label="Add approved media"
-                />
-              </label>
-            ) : null}
-            <Field
-              label="Results JSON"
-              value={results}
-              onChange={setResults}
-              multiline
-            />
-            {kind === "video" || kind === "press" ? (
-              <Field
-                label="Verified external HTTPS URL"
-                value={draft.external_url ?? ""}
-                onChange={(external_url) =>
-                  setDraft({ ...draft, external_url })
-                }
-                required
-              />
-            ) : null}
-            {kind === "video" ? (
-              <Field
-                label="Approved HTTPS embed URL"
-                value={draft.embed_url ?? ""}
-                onChange={(embed_url) => setDraft({ ...draft, embed_url })}
-                required
-              />
-            ) : null}
-            {kind === "press" ? (
-              <Field
-                label="Outlet"
-                value={draft.outlet ?? ""}
-                onChange={(outlet) => setDraft({ ...draft, outlet })}
-                required
-              />
-            ) : null}
-            {kind === "testimonial" ? (
-              <>
+            <form className={styles.form} onSubmit={save}>
+              <div className={styles.fields}>
+                {(kind === "page" || kind === "portfolio") && !selected ? (
+                  <Field
+                    label="Immutable slug"
+                    value={draft.slug ?? ""}
+                    onChange={(slug) => setDraft({ ...draft, slug })}
+                    required
+                  />
+                ) : null}
                 <Field
-                  label="Person name"
-                  value={draft.person_name ?? ""}
-                  onChange={(person_name) =>
-                    setDraft({ ...draft, person_name })
-                  }
+                  label="Title"
+                  value={draft.title}
+                  onChange={(title) => setDraft({ ...draft, title })}
                   required
                 />
                 <Field
-                  label="Person title"
-                  value={draft.person_title ?? ""}
-                  onChange={(person_title) =>
-                    setDraft({ ...draft, person_title })
+                  assist="summary"
+                  label="Summary"
+                  value={draft.summary ?? ""}
+                  onChange={(summary) => setDraft({ ...draft, summary })}
+                  multiline
+                />
+                <Field
+                  assist="body"
+                  label="Body"
+                  value={draft.body ?? ""}
+                  onChange={(body) => setDraft({ ...draft, body })}
+                  multiline
+                />
+                <Field
+                  label="Category"
+                  value={draft.category ?? ""}
+                  onChange={(category) => setDraft({ ...draft, category })}
+                  required={kind === "portfolio"}
+                />
+                <Field
+                  label="Tags, comma separated"
+                  value={tags}
+                  onChange={setTags}
+                />
+                <Field
+                  label="Gallery asset UUIDs, one per line"
+                  value={gallery}
+                  onChange={setGallery}
+                  multiline
+                />
+                {mediaOptions.some((asset) => asset.status === "ready") ? (
+                  <label className={styles.field}>
+                    Add approved media
+                    <Select
+                      value=""
+                      placeholder="Choose a ready asset…"
+                      onChange={(id) => {
+                        if (id && !split(gallery, "\n").includes(id))
+                          setGallery(
+                            [gallery.trim(), id].filter(Boolean).join("\n"),
+                          );
+                      }}
+                      options={mediaOptions
+                        .filter((asset) => asset.status === "ready")
+                        .map((asset) => ({
+                          value: asset.id,
+                          label: `${asset.filename} — ${asset.alt_text}`,
+                        }))}
+                      aria-label="Add approved media"
+                    />
+                  </label>
+                ) : null}
+                <Field
+                  label="Results JSON"
+                  value={results}
+                  onChange={setResults}
+                  multiline
+                />
+                {kind === "video" || kind === "press" ? (
+                  <Field
+                    label="Verified external HTTPS URL"
+                    value={draft.external_url ?? ""}
+                    onChange={(external_url) =>
+                      setDraft({ ...draft, external_url })
+                    }
+                    required
+                  />
+                ) : null}
+                {kind === "video" ? (
+                  <Field
+                    label="Approved HTTPS embed URL"
+                    value={draft.embed_url ?? ""}
+                    onChange={(embed_url) => setDraft({ ...draft, embed_url })}
+                    required
+                  />
+                ) : null}
+                {kind === "press" ? (
+                  <Field
+                    label="Outlet"
+                    value={draft.outlet ?? ""}
+                    onChange={(outlet) => setDraft({ ...draft, outlet })}
+                    required
+                  />
+                ) : null}
+                {kind === "testimonial" ? (
+                  <>
+                    <Field
+                      label="Person name"
+                      value={draft.person_name ?? ""}
+                      onChange={(person_name) =>
+                        setDraft({ ...draft, person_name })
+                      }
+                      required
+                    />
+                    <Field
+                      label="Person title"
+                      value={draft.person_title ?? ""}
+                      onChange={(person_title) =>
+                        setDraft({ ...draft, person_title })
+                      }
+                    />
+                    <Field
+                      label="Organization"
+                      value={draft.organization ?? ""}
+                      onChange={(organization) =>
+                        setDraft({ ...draft, organization })
+                      }
+                    />
+                  </>
+                ) : null}
+                <label>
+                  <input
+                    checked={draft.featured}
+                    onChange={(event) =>
+                      setDraft({ ...draft, featured: event.target.checked })
+                    }
+                    type="checkbox"
+                  />{" "}
+                  Featured
+                </label>
+                <Field
+                  label="SEO title"
+                  value={draft.seo.title}
+                  onChange={(title) =>
+                    setDraft({ ...draft, seo: { ...draft.seo, title } })
                   }
                 />
                 <Field
-                  label="Organization"
-                  value={draft.organization ?? ""}
-                  onChange={(organization) =>
-                    setDraft({ ...draft, organization })
+                  label="SEO description"
+                  value={draft.seo.description}
+                  onChange={(description) =>
+                    setDraft({ ...draft, seo: { ...draft.seo, description } })
+                  }
+                  multiline
+                />
+                <Field
+                  label="Canonical HTTPS URL"
+                  value={draft.seo.canonical_url}
+                  onChange={(canonical_url) =>
+                    setDraft({ ...draft, seo: { ...draft.seo, canonical_url } })
                   }
                 />
-              </>
+                <Field
+                  label="Social image asset UUID"
+                  value={draft.seo.social_image_asset_id}
+                  onChange={(social_image_asset_id) =>
+                    setDraft({
+                      ...draft,
+                      seo: { ...draft.seo, social_image_asset_id },
+                    })
+                  }
+                />
+              </div>
+              <button disabled={pending} type="submit">
+                Save draft
+              </button>
+            </form>
+            {selected ? (
+              <div
+                className={styles.actions}
+                aria-label="Approval and publication controls"
+              >
+                <button
+                  disabled={pending || !canApprove || missingFields.length > 0}
+                  onClick={() => void approval(!selected.approved)}
+                  type="button"
+                >
+                  {selected.approved ? "Revoke approval" : "Approve"}
+                </button>
+                <button
+                  disabled={pending}
+                  onClick={() => void loadPreview()}
+                  type="button"
+                >
+                  Private preview
+                </button>
+                <button
+                  disabled={
+                    pending ||
+                    !canApprove ||
+                    !selected.approved ||
+                    missingFields.length > 0
+                  }
+                  onClick={() => void publication("publish")}
+                  type="button"
+                >
+                  Publish now
+                </button>
+                <button
+                  disabled={pending || !canApprove}
+                  onClick={() => void publication("unpublish")}
+                  type="button"
+                >
+                  Unpublish
+                </button>
+              </div>
             ) : null}
-            <label>
-              <input
-                checked={draft.featured}
-                onChange={(event) =>
-                  setDraft({ ...draft, featured: event.target.checked })
-                }
-                type="checkbox"
-              />{" "}
-              Featured
-            </label>
-            <Field
-              label="SEO title"
-              value={draft.seo.title}
-              onChange={(title) =>
-                setDraft({ ...draft, seo: { ...draft.seo, title } })
-              }
-            />
-            <Field
-              label="SEO description"
-              value={draft.seo.description}
-              onChange={(description) =>
-                setDraft({ ...draft, seo: { ...draft.seo, description } })
-              }
-              multiline
-            />
-            <Field
-              label="Canonical HTTPS URL"
-              value={draft.seo.canonical_url}
-              onChange={(canonical_url) =>
-                setDraft({ ...draft, seo: { ...draft.seo, canonical_url } })
-              }
-            />
-            <Field
-              label="Social image asset UUID"
-              value={draft.seo.social_image_asset_id}
-              onChange={(social_image_asset_id) =>
-                setDraft({
-                  ...draft,
-                  seo: { ...draft.seo, social_image_asset_id },
-                })
-              }
-            />
-          </div>
-          <button disabled={pending} type="submit">
-            Save draft
-          </button>
-        </form>
-        {selected ? (
-          <div
-            className={styles.actions}
-            aria-label="Approval and publication controls"
-          >
-            <button
-              disabled={pending || !canApprove || missingFields.length > 0}
-              onClick={() => void approval(!selected.approved)}
-              type="button"
-            >
-              {selected.approved ? "Revoke approval" : "Approve"}
-            </button>
-            <button
-              disabled={pending}
-              onClick={() => void loadPreview()}
-              type="button"
-            >
-              Private preview
-            </button>
-            <button
-              disabled={
-                pending ||
-                !canApprove ||
-                !selected.approved ||
-                missingFields.length > 0
-              }
-              onClick={() => void publication("publish")}
-              type="button"
-            >
-              Publish now
-            </button>
-            <button
-              disabled={pending || !canApprove}
-              onClick={() => void publication("unpublish")}
-              type="button"
-            >
-              Unpublish
-            </button>
-          </div>
-        ) : null}
-        {selected ? (
-          <div className={styles.schedule}>
-            <Field
-              label="Publish at"
-              type="datetime-local"
-              value={publishAt}
-              onChange={setPublishAt}
-            />
-            <Field
-              label="Optional unpublish at"
-              type="datetime-local"
-              value={unpublishAt}
-              onChange={setUnpublishAt}
-            />
-            <button
-              disabled={
-                pending ||
-                !canApprove ||
-                !selected.approved ||
-                !publishAt ||
-                missingFields.length > 0
-              }
-              onClick={() => void publication("schedule")}
-              type="button"
-            >
-              Schedule
-            </button>
-          </div>
-        ) : null}
-        {selected ? (
-          <dl className={styles.audit} aria-label="Content audit context">
-            <div>
-              <dt>Revision</dt>
-              <dd>{selected.revision}</dd>
-            </div>
-            <div>
-              <dt>Last recorded change</dt>
-              <dd>{new Date(selected.updated_at).toLocaleString()}</dd>
-            </div>
-            <div>
-              <dt>Approval</dt>
-              <dd>{selected.approved ? "Approved" : "Required"}</dd>
-            </div>
-          </dl>
-        ) : null}
-        {message ? (
-          <p className={styles.message} role="status">
-            {message}
-          </p>
-        ) : null}
-        {error ? (
-          <p className={`${styles.message} ${styles.error}`} role="alert">
-            {error}
-          </p>
-        ) : null}
-        {preview ? (
-          <article className={styles.preview} aria-labelledby="preview-title">
-            <p className="eyebrow">Private preview · not public</p>
-            <h3 id="preview-title">{preview.title}</h3>
-            <p>{preview.summary}</p>
-            <div>{preview.body}</div>
-          </article>
-        ) : null}
-      </section>
+            {selected ? (
+              <div className={styles.schedule}>
+                <Field
+                  label="Publish at"
+                  type="datetime-local"
+                  value={publishAt}
+                  onChange={setPublishAt}
+                />
+                <Field
+                  label="Optional unpublish at"
+                  type="datetime-local"
+                  value={unpublishAt}
+                  onChange={setUnpublishAt}
+                />
+                <button
+                  disabled={
+                    pending ||
+                    !canApprove ||
+                    !selected.approved ||
+                    !publishAt ||
+                    missingFields.length > 0
+                  }
+                  onClick={() => void publication("schedule")}
+                  type="button"
+                >
+                  Schedule
+                </button>
+              </div>
+            ) : null}
+            {selected ? (
+              <dl className={styles.audit} aria-label="Content audit context">
+                <div>
+                  <dt>Revision</dt>
+                  <dd>{selected.revision}</dd>
+                </div>
+                <div>
+                  <dt>Last recorded change</dt>
+                  <dd>{new Date(selected.updated_at).toLocaleString()}</dd>
+                </div>
+                <div>
+                  <dt>Approval</dt>
+                  <dd>{selected.approved ? "Approved" : "Required"}</dd>
+                </div>
+              </dl>
+            ) : null}
+            {preview ? (
+              <article
+                className={styles.preview}
+                aria-labelledby="preview-title"
+              >
+                <p className="eyebrow">Private preview · not public</p>
+                <h3 id="preview-title">{preview.title}</h3>
+                <p>{preview.summary}</p>
+                <div>{preview.body}</div>
+              </article>
+            ) : null}
+          </section>
+        </AdminDialog>
+      ) : null}
     </div>
   );
 }
 
 function Field({
+  assist,
   label,
   value,
   onChange,
@@ -729,6 +789,8 @@ function Field({
   required = false,
   type = "text",
 }: {
+  /** Attaches the AI copy bar. Multiline fields only — prose, not identifiers. */
+  assist?: AiAssistField;
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -750,7 +812,7 @@ function Field({
       </label>
     );
   }
-  return (
+  const field = (
     <label className={styles.field}>
       {label}
       {multiline ? (
@@ -768,6 +830,16 @@ function Field({
         />
       )}
     </label>
+  );
+  // Outside the <label>: a label's accessible name comes from its text
+  // content, so an AI bar nested inside would rename the control to
+  // "Summary AI Rewrite Expand Shorten…".
+  if (!assist || !multiline) return field;
+  return (
+    <div className={styles.fieldGroup}>
+      {field}
+      <AiAssist field={assist} label={label} value={value} onApply={onChange} />
+    </div>
   );
 }
 function split(value: string, separator: string) {

@@ -14,22 +14,25 @@ export function MFAQR({ otpauthUri }: MFAQRProps) {
 
   useEffect(() => {
     let cancelled = false;
-    setFailed(false);
-    setDataUrl("");
-    void QRCode.toDataURL(otpauthUri, {
-      errorCorrectionLevel: "M",
-      margin: 2,
-      width: 220,
-      color: { dark: "#14110c", light: "#ffffff" },
-    })
-      .then((url) => {
-        if (!cancelled) setDataUrl(url);
+    const timer = window.setTimeout(() => {
+      setFailed(false);
+      setDataUrl("");
+      void QRCode.toDataURL(otpauthUri, {
+        errorCorrectionLevel: "M",
+        margin: 2,
+        width: 220,
+        color: { dark: "#14110c", light: "#ffffff" },
       })
-      .catch(() => {
-        if (!cancelled) setFailed(true);
-      });
+        .then((url) => {
+          if (!cancelled) setDataUrl(url);
+        })
+        .catch(() => {
+          if (!cancelled) setFailed(true);
+        });
+    }, 0);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [otpauthUri]);
 

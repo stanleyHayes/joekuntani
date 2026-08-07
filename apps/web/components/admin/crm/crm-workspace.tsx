@@ -1,7 +1,10 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { EmptyState } from "../../ui/empty-state";
 import { Select } from "../../ui/select";
+import { AdminDialog } from "../admin-dialog";
+import { AdminErrorState, AdminSkeleton } from "../admin-feedback";
 import { EnquiryWorkflow } from "../crm-workflow/enquiry-workflow";
 import styles from "./crm-workspace.module.css";
 
@@ -67,11 +70,14 @@ export function CRMWorkspace() {
     [stage, setStage] = useState(""),
     [owner, setOwner] = useState("");
   const [message, setMessage] = useState(""),
+    [error, setError] = useState(""),
     [loading, setLoading] = useState(true);
   const [foundContact, setFoundContact] = useState<Contact | null>(null);
   const [foundOrganization, setFoundOrganization] =
     useState<Organization | null>(null);
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const activeFilters = [query, stage, owner].filter(Boolean).length;
   const load = useCallback(async () => {
     setLoading(true);
     setMessage("");
@@ -86,8 +92,12 @@ export function CRMWorkspace() {
       ]);
       setItems(enquiries.items ?? []);
       setViews(saved.items ?? []);
+      setError("");
     } catch {
-      setMessage("CRM records are unavailable.");
+      // Drop stale rows so the failure banner is never contradicted by a
+      // "no results" message describing data we could not actually read.
+      setItems([]);
+      setError("CRM records are unavailable.");
     } finally {
       setLoading(false);
     }
@@ -197,139 +207,211 @@ export function CRMWorkspace() {
   }
   return (
     <section className={styles.workspace} aria-labelledby="crm-heading">
-      <header>
-        <p>Booking operations</p>
-        <h2 id="crm-heading">Enquiry pipeline</h2>
-        <p className={styles.muted}>
-          Search and qualify enquiries without exposing private contact data
-          outside authorized staff workflows.
-        </p>
+      <header className="stage-head">
+        <div className="stage-head__copy">
+          <p className="stage-head__eyebrow">Who wants to book Joe</p>
+          <h2 id="crm-heading">Enquiry pipeline</h2>
+          <p className="stage-head__lede">
+            Qualify the people asking for Joe, without exposing their contact
+            details outside authorized staff workflows.
+          </p>
+        </div>
+        <div className="stage-head__actions">
+          <button type="button" onClick={() => setToolsOpen(true)}>
+            Open CRM tools
+          </button>
+        </div>
       </header>
-      <div className={styles.toolbar}>
-        <label>
-          Search
-          <input value={query} onChange={(e) => setQuery(e.target.value)} />
-        </label>
-        <label>
-          Stage
-          <Select
-            value={stage}
-            onChange={setStage}
-            placeholder="All stages"
-            options={stages.map((value) => ({
-              value,
-              label: stageLabels[value],
-            }))}
-            aria-label="Stage filter"
-          />
-        </label>
-        <label>
-          Owner ID
-          <input value={owner} onChange={(e) => setOwner(e.target.value)} />
-        </label>
-        <button onClick={() => void load()} type="button">
-          Apply filters
-        </button>
-      </div>
-      <form className={styles.actions} onSubmit={saveView}>
-        <label>
-          Saved view name
-          <input name="name" required />
-        </label>
-        <button type="submit">Save current view</button>
-        <span>{views.length} saved views</span>
-      </form>
-      <div className={styles.grid}>
-        <form className={styles.panel} onSubmit={createOrganization}>
-          <h3>Add organization</h3>
-          <label>
-            Name
-            <input name="name" required minLength={2} />
-          </label>
-          <label>
-            HTTPS website
-            <input name="website" type="url" />
-          </label>
-          <label>
-            Country code
-            <input name="country_code" maxLength={2} />
-          </label>
-          <button type="submit">Create organization</button>
-        </form>
-        <form className={styles.panel} onSubmit={createContact}>
-          <h3>Add contact</h3>
-          <label>
-            Name
-            <input name="name" required minLength={2} />
-          </label>
-          <label>
-            Email
-            <input name="email" type="email" />
-          </label>
-          <label>
-            Phone
-            <input name="phone" type="tel" />
-          </label>
-          <label>
-            Organization ID
-            <input name="organization_id" />
-          </label>
-          <label>
-            Role
-            <input name="role" />
-          </label>
-          <label>
-            Country code
-            <input name="country_code" maxLength={2} />
-          </label>
-          <button type="submit">Create contact</button>
-        </form>
-        <form className={styles.panel} onSubmit={lookupOrganization}>
-          <h3>Find organization</h3>
-          <p className={styles.muted}>
-            Spacing and letter case are normalized before matching.
+      <div className="stage-filters">
+        <div className="stage-filters__head">
+          <p className="stage-filters__title">Refine</p>
+          <p className="stage-filters__meta">
+            {loading
+              ? "Loading…"
+              : error
+                ? "Count unavailable"
+                : `${items.length} ${items.length === 1 ? "enquiry" : "enquiries"}`}
+            {activeFilters ? ` · ${activeFilters} active` : ""}
           </p>
+        </div>
+        <div className="stage-filters__fields">
           <label>
-            Organization name
-            <input name="name" required minLength={2} />
+            Search
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Reference or summary"
+            />
           </label>
-          <button type="submit">Find canonical match</button>
-          {foundOrganization ? (
-            <p>
-              <strong>{foundOrganization.name}</strong>
-              <br />
-              {foundOrganization.website}
-            </p>
+          <label>
+            Stage
+            <Select
+              value={stage}
+              onChange={setStage}
+              placeholder="All stages"
+              options={stages.map((value) => ({
+                value,
+                label: stageLabels[value],
+              }))}
+              aria-label="Stage filter"
+            />
+          </label>
+          <label>
+            Owner ID
+            <input value={owner} onChange={(e) => setOwner(e.target.value)} />
+          </label>
+        </div>
+        <div className="stage-filters__actions">
+          <button className="primary" onClick={() => void load()} type="button">
+            Apply filters
+          </button>
+          {activeFilters ? (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setStage("");
+                setOwner("");
+              }}
+            >
+              Clear filters
+            </button>
           ) : null}
-        </form>
-        <form className={styles.panel} onSubmit={lookupContact}>
-          <h3>Find contact</h3>
-          <p className={styles.muted}>
-            Email and phone are normalized before matching.
-          </p>
-          <label>
-            Email
-            <input name="email" type="email" />
-          </label>
-          <label>
-            Phone
-            <input name="phone" type="tel" />
-          </label>
-          <button type="submit">Find normalized match</button>
-          {foundContact ? (
-            <p>
-              <strong>{foundContact.name}</strong>
-              <br />
-              {foundContact.email || foundContact.phone}
-            </p>
-          ) : null}
-        </form>
+        </div>
       </div>
+      {toolsOpen ? (
+        <AdminDialog
+          title="CRM tools"
+          description="Create or locate contacts and organizations, or save this filtered view."
+          onClose={() => setToolsOpen(false)}
+          wide
+        >
+          <form className={styles.actions} onSubmit={saveView}>
+            <label>
+              Saved view name
+              <input name="name" required />
+            </label>
+            <button type="submit">Save current view</button>
+            <span>{views.length} saved views</span>
+          </form>
+          <div className={styles.grid}>
+            <form className={styles.panel} onSubmit={createOrganization}>
+              <h3>Add organization</h3>
+              <label>
+                Name
+                <input name="name" required minLength={2} />
+              </label>
+              <label>
+                HTTPS website
+                <input name="website" type="url" />
+              </label>
+              <label>
+                Country code
+                <input name="country_code" maxLength={2} />
+              </label>
+              <button type="submit">Create organization</button>
+            </form>
+            <form className={styles.panel} onSubmit={createContact}>
+              <h3>Add contact</h3>
+              <label>
+                Name
+                <input name="name" required minLength={2} />
+              </label>
+              <label>
+                Email
+                <input name="email" type="email" />
+              </label>
+              <label>
+                Phone
+                <input name="phone" type="tel" />
+              </label>
+              <label>
+                Organization ID
+                <input name="organization_id" />
+              </label>
+              <label>
+                Role
+                <input name="role" />
+              </label>
+              <label>
+                Country code
+                <input name="country_code" maxLength={2} />
+              </label>
+              <button type="submit">Create contact</button>
+            </form>
+            <form className={styles.panel} onSubmit={lookupOrganization}>
+              <h3>Find organization</h3>
+              <p className={styles.muted}>
+                Spacing and letter case are normalized before matching.
+              </p>
+              <label>
+                Organization name
+                <input name="name" required minLength={2} />
+              </label>
+              <button type="submit">Find canonical match</button>
+              {foundOrganization ? (
+                <p>
+                  <strong>{foundOrganization.name}</strong>
+                  <br />
+                  {foundOrganization.website}
+                </p>
+              ) : null}
+            </form>
+            <form className={styles.panel} onSubmit={lookupContact}>
+              <h3>Find contact</h3>
+              <p className={styles.muted}>
+                Email and phone are normalized before matching.
+              </p>
+              <label>
+                Email
+                <input name="email" type="email" />
+              </label>
+              <label>
+                Phone
+                <input name="phone" type="tel" />
+              </label>
+              <button type="submit">Find normalized match</button>
+              {foundContact ? (
+                <p>
+                  <strong>{foundContact.name}</strong>
+                  <br />
+                  {foundContact.email || foundContact.phone}
+                </p>
+              ) : null}
+            </form>
+          </div>
+        </AdminDialog>
+      ) : null}
+      {error ? <AdminErrorState title="CRM is unavailable" message={error} /> : null}
       {message ? <p role="status">{message}</p> : null}
       {loading ? (
-        <p role="status">Loading CRM records…</p>
-      ) : items.length === 0 ? (
-        <p role="status">No enquiries match these filters.</p>
+        <AdminSkeleton label="Loading CRM records" variant="table" />
+      ) : error ? null : items.length === 0 ? (
+        <EmptyState
+          tone={activeFilters ? "search" : "inbox"}
+          title={
+            activeFilters ? "No matching enquiries" : "Nobody has asked yet"
+          }
+          description={
+            activeFilters
+              ? "No enquiries match these filters."
+              : "Every booking request for Joe lands here the moment it is submitted."
+          }
+          action={
+            activeFilters ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setStage("");
+                  setOwner("");
+                }}
+              >
+                Clear filters
+              </button>
+            ) : null
+          }
+        />
       ) : (
         <table className={styles.table}>
           <thead>
@@ -344,17 +426,17 @@ export function CRMWorkspace() {
             {items.map((item) => (
               <tr key={item.id}>
                 <td>
-                  <strong>{item.reference}</strong>
-                  <br />
-                  {item.summary || "No internal summary"}
+                  <span className={styles.reference}>{item.reference}</span>
+                  <span className={styles.summary}>
+                    {item.summary || "No internal summary"}
+                  </span>
                 </td>
                 <td>
-                  {item.source}
-                  <br />
-                  {item.enquiry_type}
+                  <span className={styles.source}>{item.source}</span>
+                  <span className={styles.summary}>{item.enquiry_type}</span>
                 </td>
                 <td>
-                  <div className={styles.actions}>
+                  <div className={styles.rowFields}>
                     <label>
                       Stage
                       <Select
@@ -391,7 +473,7 @@ export function CRMWorkspace() {
                   </div>
                 </td>
                 <td>
-                  <div className={styles.actions}>
+                  <div className={styles.rowButtons}>
                     <button
                       type="button"
                       onClick={() => setSelectedEnquiry(item)}
@@ -443,10 +525,17 @@ export function CRMWorkspace() {
         </table>
       )}
       {selectedEnquiry ? (
-        <EnquiryWorkflow
-          key={selectedEnquiry.id}
-          enquiryId={selectedEnquiry.id}
-        />
+        <AdminDialog
+          title={`Enquiry ${selectedEnquiry.reference}`}
+          description="Manage notes, tasks, attachments, and proposals."
+          onClose={() => setSelectedEnquiry(null)}
+          wide
+        >
+          <EnquiryWorkflow
+            key={selectedEnquiry.id}
+            enquiryId={selectedEnquiry.id}
+          />
+        </AdminDialog>
       ) : null}
     </section>
   );

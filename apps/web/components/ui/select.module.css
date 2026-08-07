@@ -66,7 +66,12 @@
   position: fixed;
   z-index: 80;
   margin: 0;
-  overflow: auto;
+  /* Sizes to its longest option (bounded by `maxWidth` from the placement
+     hook) instead of inheriting the trigger's width, which used to crop
+     labels like "payment_failed" down to "payme…". */
+  width: max-content;
+  overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
@@ -76,11 +81,19 @@
   list-style: none;
 }
 
+/* Concentric radius: the popover is 1px border + 0.35rem padding inside its
+   own `--radius-control`, so the option has to come in by that whole inset —
+   the old 0.15rem left the rows visibly rounder than the corners around them. */
 .option {
-  border-radius: calc(var(--radius-control) - 0.15rem);
+  border-radius: calc(var(--radius-control) - 0.35rem - 1px);
   padding: 0.65rem 0.75rem;
   color: var(--ink);
   cursor: pointer;
+  /* One line per option so the list can size to the longest label. The
+     ellipsis only ever shows when the viewport itself is too narrow. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .option[data-active="true"],

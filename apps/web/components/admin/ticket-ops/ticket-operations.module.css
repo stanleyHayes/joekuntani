@@ -1,63 +1,180 @@
-.workspace,
-.filters,
-.summary,
-.actions {
+.workspace {
   display: grid;
-  gap: 1rem;
+  gap: 1.35rem;
+  min-width: 0;
 }
-.filters {
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-  align-items: end;
-}
+
+/* ---- Revenue summary ---- */
+
 .summary {
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-}
-.summary article {
   display: grid;
-  gap: 0.35rem;
-  padding: 1rem;
-  border: 1px solid var(--border);
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+}
+
+.summary article {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 0.3rem;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 1.1rem;
   background: var(--surface);
 }
-.summary span {
-  color: var(--muted);
+
+.summaryCurrency {
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 58%, transparent);
 }
-.actions {
-  grid-template-columns: repeat(auto-fit, minmax(10rem, max-content));
-  align-items: center;
+
+.summaryNet {
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(1.75rem, 4vw, 2.4rem);
+  font-weight: 750;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
-.workspace table {
-  width: 100%;
-  border-collapse: collapse;
+
+.summaryOrders {
+  margin: 0;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  font-size: 0.84rem;
 }
-.workspace th,
-.workspace td {
-  text-align: left;
-  vertical-align: top;
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--border);
+
+.summaryBreakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  margin: 0.45rem 0 0;
+  padding-top: 0.7rem;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
 }
-.workspace form {
+
+.summaryBreakdown div {
   display: grid;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: 0.1rem;
+  min-width: 5rem;
 }
-@media (max-width: 44rem) {
-  .workspace table,
-  .workspace tbody,
-  .workspace tr,
-  .workspace td {
-    display: block;
-  }
-  .workspace thead {
-    position: absolute;
-    clip: rect(0 0 0 0);
-  }
-  .workspace tr {
-    padding: 0.75rem 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .workspace td {
-    border: 0;
-  }
+
+.summaryBreakdown dt {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+.summaryBreakdown dd {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Bulk actions ---- */
+
+.opsBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface) 65%, transparent);
+}
+
+.opsLabel {
+  margin: 0 0.35rem 0 0;
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 58%, transparent);
+}
+
+.danger.danger {
+  border-color: color-mix(in srgb, var(--warning-line) 60%, transparent);
+  color: var(--warning);
+}
+
+.danger.danger:hover {
+  border-color: var(--warning-line);
+  background: color-mix(in srgb, var(--warning-surface) 45%, transparent);
+}
+
+/* ---- Orders table ---- */
+
+.orderRef {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.orderRef strong {
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0.18rem 0.6rem;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge[data-status="paid"] {
+  background: color-mix(in srgb, #3ecf8e 22%, transparent);
+}
+
+.badge[data-status="refunded"],
+.badge[data-status="partially_refunded"],
+.badge[data-status="payment_failed"],
+.badge[data-status="cancelled"] {
+  background: color-mix(in srgb, var(--warning-line) 26%, transparent);
+}
+
+.money {
+  display: grid;
+  gap: 0.2rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.moneyTotal {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.moneyRefunded {
+  color: color-mix(in srgb, var(--ink) 58%, transparent);
+  font-size: 0.8rem;
+}
+
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dialogForm {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.dialogForm label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
 }

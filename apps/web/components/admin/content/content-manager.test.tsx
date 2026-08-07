@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import type { ContentItem } from "../../content/types";
 import { ContentManager } from "./content-manager";
@@ -47,6 +53,9 @@ it("loads drafts, edits without exposing immutable slug, and saves with CSRF", a
   vi.stubGlobal("fetch", fetcher);
   render(<ContentManager requestCacheInvalidation={noCacheInvalidation} />);
   expect(await screen.findByText("Approved about")).toBeVisible();
+  expect(
+    screen.queryByRole("dialog", { name: "Edit Approved about" }),
+  ).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Edit" }));
   expect(screen.queryByLabelText("Immutable slug")).toBeNull();
   fireEvent.change(screen.getByLabelText("Title"), {
@@ -141,10 +150,11 @@ it("shows kind-specific accessible fields and creates a portfolio draft", async 
   vi.stubGlobal("fetch", fetcher);
   render(<ContentManager requestCacheInvalidation={noCacheInvalidation} />);
   await screen.findByText("No page content exists yet.");
-  fireEvent.change(screen.getByLabelText("Content type"), {
-    target: { value: "portfolio" },
-  });
+  fireEvent.click(screen.getByRole("button", { name: "Content type" }));
+  fireEvent.click(screen.getByRole("option", { name: "Portfolio" }));
   await screen.findByText("No portfolio content exists yet.");
+  expect(screen.queryByLabelText("Immutable slug")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "New draft" }));
   fireEvent.change(screen.getByLabelText("Immutable slug"), {
     target: { value: "approved-work" },
   });
@@ -170,19 +180,20 @@ it("reveals the correct fields when switching video, press, and testimonial", as
   );
   render(<ContentManager requestCacheInvalidation={noCacheInvalidation} />);
   await screen.findByText("No page content exists yet.");
-  fireEvent.change(screen.getByLabelText("Content type"), {
-    target: { value: "video" },
-  });
+  fireEvent.click(screen.getByRole("button", { name: "Content type" }));
+  fireEvent.click(screen.getByRole("option", { name: "Videos" }));
+  expect(
+    screen.queryByLabelText("Approved HTTPS embed URL"),
+  ).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "New draft" }));
   expect(
     await screen.findByLabelText("Approved HTTPS embed URL"),
   ).toBeVisible();
-  fireEvent.change(screen.getByLabelText("Content type"), {
-    target: { value: "press" },
-  });
+  fireEvent.click(screen.getByRole("button", { name: "Content type" }));
+  fireEvent.click(screen.getByRole("option", { name: "Press" }));
   expect(await screen.findByLabelText("Outlet")).toBeVisible();
-  fireEvent.change(screen.getByLabelText("Content type"), {
-    target: { value: "testimonial" },
-  });
+  fireEvent.click(screen.getByRole("button", { name: "Content type" }));
+  fireEvent.click(screen.getByRole("option", { name: "Testimonials" }));
   expect(await screen.findByLabelText("Person name")).toBeVisible();
   expect(screen.getByLabelText("Organization")).toBeVisible();
 });
@@ -225,9 +236,19 @@ it("supports approval revocation, scheduled publishing, and unpublishing", async
   expect(await screen.findByText("Approval revoked.")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Approve" }));
   expect(await screen.findByText("Content approved.")).toBeVisible();
-  fireEvent.change(screen.getByLabelText("Publish at"), {
-    target: { value: "2026-08-06T10:00" },
+  fireEvent.click(screen.getByRole("button", { name: "Publish at" }));
+  const publishDialog = screen.getByRole("dialog", { name: "Publish at" });
+  fireEvent.change(within(publishDialog).getByLabelText("Hour"), {
+    target: { value: "10" },
   });
+  fireEvent.change(within(publishDialog).getByLabelText("Minute"), {
+    target: { value: "0" },
+  });
+  fireEvent.click(
+    within(publishDialog)
+      .getAllByRole("button", { name: "6" })
+      .find((button) => button.dataset.inMonth === "true")!,
+  );
   fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
   expect(
     await screen.findByText(
@@ -337,9 +358,12 @@ it("makes administrator approval boundaries explicit and selects only ready medi
   fireEvent.click(screen.getByRole("button", { name: "Edit" }));
   expect(screen.getByRole("button", { name: "Approve" })).toBeDisabled();
   expect(screen.queryByRole("option", { name: /draft\.webp/ })).toBeNull();
-  fireEvent.change(screen.getByLabelText("Add approved media"), {
-    target: { value: "ready-id" },
-  });
+  fireEvent.click(screen.getByRole("button", { name: "Add approved media" }));
+  fireEvent.click(
+    screen.getByRole("option", {
+      name: "portrait.webp — Approved portrait",
+    }),
+  );
   expect(
     screen.getByLabelText("Gallery asset UUIDs, one per line"),
   ).toHaveValue("ready-id");
@@ -380,4 +404,54 @@ it("prepares deterministic cache invalidation after publication and reports queu
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "cache refresh request could not be queued",
   );
+});
+
+it("rewrites body copy through the assistant without renaming the field", async () => {
+  Object.defineProperty(document, "cookie", {
+    configurable: true,
+    value: "jk_admin_csrf=content-csrf",
+  });
+  const encoder = new TextEncoder();
+  const fetcher = vi
+    .fn()
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ items: [page] }), { status: 200 }),
+    )
+    .mockResolvedValueOnce({
+      ok: true,
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(encoder.encode("A sharper opening paragraph."));
+          controller.close();
+        },
+      }),
+    });
+  vi.stubGlobal("fetch", fetcher);
+  render(<ContentManager requestCacheInvalidation={noCacheInvalidation} />);
+
+  expect(await screen.findByText("Approved about")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+
+  const body = screen.getByLabelText("Body");
+  fireEvent.change(body, { target: { value: "some rough body copy" } });
+  fireEvent.click(
+    within(body.closest("div") as HTMLElement).getByRole("button", {
+      name: /Expand/,
+    }),
+  );
+  fireEvent.click(await screen.findByRole("button", { name: /Use this/ }));
+
+  await waitFor(() =>
+    expect(screen.getByLabelText("Body")).toHaveValue(
+      "A sharper opening paragraph.",
+    ),
+  );
+  // The bar lives outside the <label>, so the control keeps its own name.
+  expect(screen.getByLabelText("Summary")).toBeInTheDocument();
+  const [url, init] = fetcher.mock.calls.at(-1)!;
+  expect(url).toBe("/api/admin/ai/assist");
+  expect(JSON.parse(String((init as RequestInit).body))).toMatchObject({
+    action: "expand",
+    field: "body",
+  });
 });

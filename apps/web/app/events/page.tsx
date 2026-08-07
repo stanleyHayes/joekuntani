@@ -24,7 +24,9 @@ export async function generateMetadata(): Promise<Metadata> {
     description: "Published upcoming and past Joe Kuntani events.",
     path: "/events",
   };
-  return hasEvents ? pageMetadata(input) : unavailableMetadata(input.title, input.description);
+  return hasEvents
+    ? pageMetadata(input)
+    : unavailableMetadata(input.title, input.description);
 }
 
 type Filters = {
@@ -59,23 +61,34 @@ export default async function EventsPage({
       }}
     >
       {usingDemo ? <DemoBanner /> : null}
-      <main id="main-content">
+      <main id="main-content" className={styles.eventStage}>
         <header className={`${styles.hero} shell-container`}>
-          <p className="eyebrow">
-            {usingDemo ? "Demo preview" : "Live events"}
-          </p>
-          <h1>Events</h1>
-          <p className={styles.lede}>
-            {usingDemo
-              ? "Demo ticketed nights for layout review — Accra and Kumasi rooms with sample ticket states. Replace via Events admin before marketing."
-              : "Published event dates, venues, access information and live ticket status."}
-          </p>
+          <div className={styles.heroTop}>
+            <p className={styles.heroKicker}>
+              {usingDemo ? "Demo programme" : "Live programme"}
+            </p>
+            <p className={styles.heroCount}>
+              {String(events.length).padStart(2, "0")} dates listed
+            </p>
+          </div>
+          <div className={styles.heroTitle}>
+            <h1>See Joe live.</h1>
+            <p className={styles.lede}>
+              {usingDemo
+                ? "Demo ticketed nights for layout review — sample dates and ticket states only."
+                : "Published dates, venue information, accessibility notes and current ticket status."}
+            </p>
+          </div>
         </header>
         <section
           className={`${styles.section} shell-container`}
           aria-labelledby="event-list"
         >
-          <h2 id="event-list">Find an event</h2>
+          <div className={styles.sectionHead}>
+            <span>01</span>
+            <h2 id="event-list">Find an event</h2>
+            <p>Filter the programme by city, date or ticket availability.</p>
+          </div>
           <EventFilters
             cities={cities}
             filters={filters}
@@ -92,9 +105,7 @@ export default async function EventsPage({
                 <EventCard
                   event={event}
                   key={event.id}
-                  coverSrc={
-                    usingDemo ? demoEventCovers[event.slug] : undefined
-                  }
+                  coverSrc={usingDemo ? demoEventCovers[event.slug] : undefined}
                 />
               ))}
             </div>

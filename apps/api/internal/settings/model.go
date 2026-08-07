@@ -104,6 +104,65 @@ func EmptyValues() Values {
 	return Values{Navigation: []Link{}, Footer: []Link{}, CTAs: []CTA{}, Social: []SocialLink{}, Team: Team{NotificationRecipients: []string{}}}
 }
 
+// StarterValues is the first draft an administrator sees on an installation
+// that has never saved settings. Every field carries a valid, editable example
+// so the console opens on a working reference instead of empty inputs, and the
+// links point at routes the site actually serves. It is never written to the
+// database on its own: it stays an unsaved draft with ContentComplete false, so
+// nothing reaches the public site until an administrator edits, confirms and
+// publishes it. Contact details deliberately use reserved placeholder values so
+// an unreviewed draft cannot publish a working address by accident.
+func StarterValues() Values {
+	return Values{
+		Navigation: []Link{
+			{Label: "Work", Href: "/work"},
+			{Label: "Services", Href: "/services"},
+			{Label: "Events", Href: "/events"},
+			{Label: "Videos", Href: "/videos"},
+			{Label: "About", Href: "/about"},
+			{Label: "Contact", Href: "/contact"},
+		},
+		Footer: []Link{
+			{Label: "Book a date", Href: "/book"},
+			{Label: "Press", Href: "/press"},
+			{Label: "Media kit", Href: "/media-kit"},
+			{Label: "Privacy", Href: "/privacy"},
+			{Label: "Terms", Href: "/terms"},
+		},
+		CTAs: []CTA{
+			{Key: "book", Title: "Book a date", Description: "Check availability for live, corporate and wedding bookings.", Label: "Check availability", Href: "/book"},
+			{Key: "tickets", Title: "Upcoming shows", Description: "Dates on sale now, with tickets issued straight to the buyer's phone.", Label: "See upcoming events", Href: "/events"},
+			{Key: "press_kit", Title: "Press and partners", Description: "Biography, approved photography and stage requirements in one pack.", Label: "Open the media kit", Href: "/media-kit"},
+		},
+		Contact: Contact{PublicEmail: "bookings@example.com", Phone: "+233 00 000 0000", Location: "Accra, Ghana"},
+		Social: []SocialLink{
+			{Platform: "Instagram", URL: "https://www.instagram.com/"},
+			{Platform: "YouTube", URL: "https://www.youtube.com/"},
+			{Platform: "TikTok", URL: "https://www.tiktok.com/"},
+			{Platform: "LinkedIn", URL: "https://www.linkedin.com/"},
+		},
+		Brand: Brand{Name: "Joe Kuntani", Tagline: "Live comedy and guitar for stages, corporate events and weddings."},
+		SEO: SEO{
+			TitleTemplate: "%s | Joe Kuntani",
+			DefaultTitle:  "Joe Kuntani",
+			Description:   "Live comedy and guitar from Joe Kuntani. Show dates, booking enquiries and press resources in one place.",
+		},
+		Consent: Consent{
+			Version:        "consent-2026-08-06",
+			PrivacyLabel:   "I agree to the privacy policy and to my enquiry details being stored so the team can reply.",
+			MarketingLabel: "Send me occasional updates about upcoming shows. Unsubscribe at any time.",
+			PrivacyURL:     "/privacy",
+		},
+		// Provider names match the environment keys the console reports on:
+		// RESEND_API_KEY, CLOUDINARY_API_SECRET, NEXT_PUBLIC_POSTHOG_KEY and
+		// PAYMENT_PROVIDER_SECRET.
+		Integrations: Integration{EmailProvider: "resend", MediaProvider: "cloudinary", AnalyticsProvider: "posthog", PaymentProvider: "paystack"},
+		// Left empty on purpose: internal alert recipients must be real staff
+		// addresses an administrator adds, never seeded ones.
+		Team: Team{NotificationRecipients: []string{}, BusinessTimezone: "Africa/Accra"},
+	}
+}
+
 var keyPattern = regexp.MustCompile(`^[a-z][a-z0-9_-]{1,47}$`)
 var publicIDPattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`)
 

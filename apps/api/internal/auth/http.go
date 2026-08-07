@@ -65,8 +65,16 @@ func (handler *HTTPHandler) Routes() http.Handler {
 	router.Group(func(protected chi.Router) {
 		protected.Use(handler.authenticate)
 		protected.Get("/me", handler.me)
+		protected.Get("/permissions", handler.permissions)
 		protected.With(handler.csrf).Post("/logout", handler.logout)
+		protected.With(handler.csrf).Patch("/me/profile", handler.updateProfile)
+		protected.With(handler.csrf).Post("/me/password", handler.changePassword)
+		protected.Get("/me/preferences", handler.getPreferences)
+		protected.With(handler.csrf).Put("/me/preferences", handler.savePreferences)
+		protected.With(handler.require(PermissionUsersManage)).Get("/users", handler.listUsers)
+		protected.With(handler.csrf, handler.require(PermissionUsersManage)).Post("/users", handler.provisionUser)
 		protected.With(handler.csrf, handler.require(PermissionUsersManage)).Post("/users/{userID}/disable", handler.disableUser)
+		protected.With(handler.csrf, handler.require(PermissionUsersManage)).Patch("/users/{userID}/role", handler.updateRole)
 	})
 	return router
 }
@@ -140,11 +148,11 @@ func (handler *HTTPHandler) mfaSetup(response http.ResponseWriter, request *http
 		return
 	}
 	jsonResponse(response, http.StatusOK, map[string]any{
-		"email":        setup.Email,
-		"secret":       setup.Secret,
-		"otpauth_uri":  setup.OTPAuthURI,
-		"issuer":       "Joe Kuntani",
-		"digits":       6,
+		"email":          setup.Email,
+		"secret":         setup.Secret,
+		"otpauth_uri":    setup.OTPAuthURI,
+		"issuer":         "Joe Kuntani",
+		"digits":         6,
 		"period_seconds": 30,
 	})
 }
@@ -234,8 +242,127 @@ func (handler *HTTPHandler) require(permission Permission) func(http.Handler) ht
 
 func (handler *HTTPHandler) me(response http.ResponseWriter, request *http.Request) {
 	principal := request.Context().Value(principalKey{}).(Principal)
-	jsonResponse(response, http.StatusOK, map[string]any{"id": principal.UserID, "name": principal.Name, "role": principal.Role, "mfa_verified": principal.MFAVerified})
+	body, err := handler.service.CurrentPrincipal(request.Context(), principal)
+	if err != nil {
+		problem(response, http.StatusUnauthorized, "Authentication required")
+		return
+	}
+	jsonResponse(response, http.StatusOK, body)
 }
+
+func (handler *HTTPHandler) permissions(response http.ResponseWriter, request *http.Request) {
+	jsonResponse(response, http.StatusOK, map[string]any{
+		"permissions": PermissionCatalog(),
+		"roles":       RoleCatalog(),
+	})
+}
+
+func (handler *HTTPHandler) listUsers(response http.ResponseWriter, request *http.Request) {
+	principal := request.Context().Value(principalKey{}).(Principal)
+	users, err := handler.service.ListStaff(request.Context(), principal)
+	if err != nil {
+		problem(response, http.StatusForbidden, "Access denied")
+		return
+	}
+	jsonResponse(response, http.StatusOK, map[string]any{"users": users})
+}
+
+func (handler *HTTPHandler) provisionUser(response http.ResponseWriter, request *http.Request) {
+	var input ProvisionInput
+	if !decodeJSON(response, request, &input) {
+		return
+	}
+	principal := request.Context().Value(principalKey{}).(Principal)
+	id, err := handler.service.ProvisionStaff(request.Context(), principal, input)
+	if err != nil {
+		status := http.StatusBadRequest
+		if errors.Is(err, ErrForbidden) {
+			status = http.StatusForbidden
+		} else if errors.Is(err, ErrConflict) {
+			status = http.StatusConflict
+		}
+		problem(response, status, "Unable to provision staff user")
+		return
+	}
+	jsonResponse(response, http.StatusCreated, map[string]any{"id": id})
+}
+
+func (handler *HTTPHandler) updateProfile(response http.ResponseWriter, request *http.Request) {
+	var input struct {
+		Name string `json:"name"`
+	}
+	if !decodeJSON(response, request, &input) {
+		return
+	}
+	principal := request.Context().Value(principalKey{}).(Principal)
+	if err := handler.service.UpdateOwnProfile(request.Context(), principal, input.Name); err != nil {
+		problem(response, http.StatusBadRequest, "Unable to update profile")
+		return
+	}
+	response.WriteHeader(http.StatusNoContent)
+}
+
+func (handler *HTTPHandler) changePassword(response http.ResponseWriter, request *http.Request) {
+	var input struct {
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
+	}
+	if !decodeJSON(response, request, &input) {
+		return
+	}
+	principal := request.Context().Value(principalKey{}).(Principal)
+	session := request.Context().Value(sessionKey{}).(Session)
+	if err := handler.service.ChangeOwnPassword(request.Context(), principal, session, input.CurrentPassword, input.NewPassword); err != nil {
+		problem(response, http.StatusBadRequest, "Unable to change password")
+		return
+	}
+	response.WriteHeader(http.StatusNoContent)
+}
+
+func (handler *HTTPHandler) getPreferences(response http.ResponseWriter, request *http.Request) {
+	principal := request.Context().Value(principalKey{}).(Principal)
+	prefs, err := handler.service.GetOwnPreferences(request.Context(), principal)
+	if err != nil {
+		problem(response, http.StatusInternalServerError, "Unable to load preferences")
+		return
+	}
+	jsonResponse(response, http.StatusOK, prefs)
+}
+
+func (handler *HTTPHandler) savePreferences(response http.ResponseWriter, request *http.Request) {
+	var input Preferences
+	if !decodeJSON(response, request, &input) {
+		return
+	}
+	principal := request.Context().Value(principalKey{}).(Principal)
+	if err := handler.service.SaveOwnPreferences(request.Context(), principal, input); err != nil {
+		problem(response, http.StatusBadRequest, "Unable to save preferences")
+		return
+	}
+	response.WriteHeader(http.StatusNoContent)
+}
+
+func (handler *HTTPHandler) updateRole(response http.ResponseWriter, request *http.Request) {
+	var input struct {
+		Role Role `json:"role"`
+	}
+	if !decodeJSON(response, request, &input) {
+		return
+	}
+	principal := request.Context().Value(principalKey{}).(Principal)
+	if err := handler.service.UpdateStaffRole(request.Context(), principal, chi.URLParam(request, "userID"), input.Role); err != nil {
+		status := http.StatusBadRequest
+		if errors.Is(err, ErrForbidden) {
+			status = http.StatusForbidden
+		} else if errors.Is(err, ErrUserNotFound) {
+			status = http.StatusNotFound
+		}
+		problem(response, status, "Unable to update role")
+		return
+	}
+	response.WriteHeader(http.StatusNoContent)
+}
+
 func (handler *HTTPHandler) logout(response http.ResponseWriter, request *http.Request) {
 	session := request.Context().Value(sessionKey{}).(Session)
 	if err := handler.service.Logout(request.Context(), session); err != nil {

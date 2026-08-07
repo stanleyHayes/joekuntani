@@ -1,14 +1,14 @@
 .manager {
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(15rem, 0.75fr) minmax(20rem, 1.25fr);
+  grid-template-columns: minmax(0, 1fr);
 }
 .panel {
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   padding: clamp(1rem, 2vw, 1.5rem);
 }
-.panel:last-of-type {
+.ticketPanel {
   grid-column: 1 / -1;
 }
 .list {
@@ -91,4 +91,13 @@
   .manager * {
     scroll-behavior: auto;
   }
+}
+
+/* Wraps a labelled control together with its AI assist bar, which must sit
+   outside the <label> so its buttons do not become part of the control name. */
+.fieldGroup {
+  display: grid;
+  gap: 0;
+  align-content: start;
+  min-width: 0;
 }

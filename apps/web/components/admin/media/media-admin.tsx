@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { AdminErrorState, AdminSkeleton } from "../admin-feedback";
 import { MediaAsset, MediaLibrary } from "./media-library";
 type SafeAsset = {
   id: string;
@@ -44,8 +45,12 @@ export function MediaAdmin() {
       })
       .catch(() => setError("Media assets could not be loaded. Try again."));
   }, []);
-  if (error) return <p role="alert">{error}</p>;
-  if (!assets) return <p role="status">Loading media assets…</p>;
+  if (error)
+    return (
+      <AdminErrorState title="Media assets are unavailable" message={error} />
+    );
+  if (!assets)
+    return <AdminSkeleton label="Loading media assets" variant="cards" />;
   return (
     <MediaLibrary
       key={assets.map((asset) => asset.id + asset.status).join(":")}

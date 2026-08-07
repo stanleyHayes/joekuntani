@@ -94,7 +94,7 @@ it("loads and selects service management inside the unified workspace", async ()
   expect(await screen.findByText("Approved service")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Edit" }));
   expect(
-    screen.getByRole("heading", { name: "Edit Approved service" }),
+    screen.getByRole("dialog", { name: "Edit Approved service" }),
   ).toBeVisible();
   expect(fetcher).toHaveBeenCalledWith(
     "/api/admin/services",

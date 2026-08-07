@@ -1,4 +1,10 @@
-import { render, screen, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 
 import { AdminShell } from "./admin-shell";
 import { PublicShell } from "./public-shell";
@@ -128,7 +134,6 @@ describe("AdminShell", () => {
       <AdminShell
         currentPath="/admin/content"
         missingContentCount={4}
-        navigation={[{ href: "/admin/content", label: "Content" }]}
         title="Content workspace"
       >
         <p>Workspace content</p>
@@ -154,7 +159,7 @@ describe("AdminShell", () => {
 
   it("keeps the blocking warning explicit when an item count is unavailable", () => {
     render(
-      <AdminShell navigation={[]} title="Overview">
+      <AdminShell title="Overview">
         <p>No content yet</p>
       </AdminShell>,
     );
@@ -165,30 +170,95 @@ describe("AdminShell", () => {
     expect(screen.getByRole("status")).not.toHaveTextContent("items remain");
   });
 
-  it("preserves an already complete operations navigation without duplicates", () => {
-    const navigation = [
-      { href: "/admin/services", label: "Services" },
-      { href: "/admin/events", label: "Events" },
-      { href: "/admin/crm", label: "CRM" },
-      { href: "/admin/bookings", label: "Bookings" },
-      { href: "/admin/campaigns", label: "Campaigns" },
-    ];
+  it("renders collapsible grouped navigation with connectors and collapse control", () => {
     render(
-      <AdminShell
-        currentPath="/admin/campaigns"
-        navigation={navigation}
-        title="Campaigns"
-      >
+      <AdminShell currentPath="/admin/campaigns" title="Campaigns">
         <p>Campaign workspace</p>
       </AdminShell>,
     );
 
-    for (const item of navigation) {
-      expect(screen.getAllByRole("link", { name: item.label })).toHaveLength(1);
-    }
+    const publishToggle = screen.getByRole("button", { name: /Publish/i });
+    expect(publishToggle).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("link", { name: "Campaigns" })).toHaveAttribute(
       "aria-current",
       "page",
+    );
+    expect(
+      screen.getAllByRole("button", {
+        name: /Collapse sidebar|Expand sidebar/,
+      }),
+    ).not.toHaveLength(0);
+    expect(document.querySelector("[class*='connector']")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Newsletter" })).toHaveAttribute(
+      "href",
+      "/admin/newsletter",
+    );
+    expect(screen.getByRole("link", { name: "Users & roles" })).toHaveAttribute(
+      "href",
+      "/admin/team",
+    );
+  });
+
+  it("collapses a nav group when its heading is toggled", () => {
+    render(
+      <AdminShell currentPath="/admin" title="Overview">
+        <p>Overview body</p>
+      </AdminShell>,
+    );
+
+    const governance = screen.getByRole("button", { name: /Governance/i });
+    expect(governance).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(governance);
+    expect(governance).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("hydrates saved rail state and controls the mobile drawer", async () => {
+    localStorage.setItem("jk.admin.nav.collapsed", "true");
+    localStorage.setItem("jk.admin.tour.done", "1");
+    const { container } = render(
+      <AdminShell currentPath="/admin" title="Overview">
+        <p>Overview body</p>
+      </AdminShell>,
+    );
+    const frame = container.querySelector("[data-admin-frame]");
+    await waitFor(() =>
+      expect(frame).toHaveAttribute("data-collapsed", "true"),
+    );
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Expand sidebar" })[0],
+    );
+    expect(frame).toHaveAttribute("data-collapsed", "false");
+    expect(localStorage.getItem("jk.admin.nav.collapsed")).toBe("false");
+
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+    expect(frame).toHaveAttribute("data-mobile-nav", "open");
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(frame).toHaveAttribute("data-mobile-nav", "closed");
+
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close navigation" }));
+    expect(frame).toHaveAttribute("data-mobile-nav", "closed");
+  });
+
+  it("falls back safely when persisted navigation state is corrupt", async () => {
+    localStorage.setItem("jk.admin.nav.collapsed", "{");
+    localStorage.setItem("jk.admin.nav.groups", "{");
+    localStorage.setItem("jk.admin.tour.done", "1");
+    const { container } = render(
+      <AdminShell title="Overview">
+        <p>Overview body</p>
+      </AdminShell>,
+    );
+    await waitFor(() =>
+      expect(container.querySelector("[data-admin-frame]")).toHaveAttribute(
+        "data-collapsed",
+        "false",
+      ),
+    );
+    expect(screen.getByRole("button", { name: /Publish/i })).toHaveAttribute(
+      "aria-expanded",
+      "true",
     );
   });
 });

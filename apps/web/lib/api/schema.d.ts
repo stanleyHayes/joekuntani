@@ -725,6 +725,99 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/auth/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read the role and permission catalog */
+        get: operations["getStaffPermissionCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/auth/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update the signed-in staff display name */
+        patch: operations["updateStaffProfile"];
+        trace?: never;
+    };
+    "/api/admin/auth/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change the signed-in staff password */
+        post: operations["changeStaffPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/auth/me/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read signed-in staff preferences */
+        get: operations["getStaffPreferences"];
+        /** Save signed-in staff preferences */
+        put: operations["saveStaffPreferences"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/auth/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List staff users
+         * @description Requires users:manage (Administrator only).
+         */
+        get: operations["listStaffUsers"];
+        put?: never;
+        /**
+         * Provision a staff user
+         * @description Requires users:manage (Administrator only).
+         */
+        post: operations["provisionStaffUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/auth/users/{userID}/disable": {
         parameters: {
             query?: never;
@@ -739,6 +832,77 @@ export interface paths {
          * @description Requires the server-side users:manage permission (Administrator only).
          */
         post: operations["disableStaffUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/auth/users/{userID}/role": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update a staff user's role
+         * @description Requires users:manage (Administrator only). Revokes the target user's sessions.
+         */
+        patch: operations["updateStaffRole"];
+        trace?: never;
+    };
+    "/api/public/newsletter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Subscribe an email to the public newsletter with consent */
+        post: operations["subscribeNewsletter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/newsletter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List newsletter subscribers */
+        get: operations["listNewsletterSubscribers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/newsletter/{id}/unsubscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a newsletter subscriber as unsubscribed */
+        post: operations["unsubscribeNewsletterSubscriber"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2859,9 +3023,49 @@ export interface components {
         StaffPrincipal: {
             id: string;
             name: string;
+            /** Format: email */
+            email: string;
             /** @enum {string} */
             role: "administrator" | "booking_manager" | "content_editor" | "analyst";
             mfa_verified: boolean;
+            mfa_enabled: boolean;
+            permissions: string[];
+            preferences: components["schemas"]["StaffPreferences"];
+        };
+        StaffPreferences: {
+            email_product_updates: boolean;
+            email_security_alerts: boolean;
+            dense_ui: boolean;
+            timezone: string;
+        };
+        StaffUser: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: email */
+            email: string;
+            /** @enum {string} */
+            role: "administrator" | "booking_manager" | "content_editor" | "analyst";
+            status: string;
+            mfa_enabled: boolean;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        NewsletterSubscriber: {
+            /** Format: uuid */
+            id: string;
+            /** Format: email */
+            email: string;
+            name?: string;
+            source: string;
+            status: string;
+            consent_version: string;
+            /** Format: date-time */
+            consent_at: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            unsubscribed_at?: string | null;
         };
         HealthResponse: {
             /** @enum {string} */
@@ -4131,6 +4335,197 @@ export interface operations {
             403: components["responses"]["Problem"];
         };
     };
+    getStaffPermissionCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Role permission matrix */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        permissions: string[];
+                        roles: {
+                            role: string;
+                            label: string;
+                            permissions: string[];
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    updateStaffProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Profile updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    changeStaffPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    current_password: string;
+                    new_password: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Password changed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    getStaffPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Preferences */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPreferences"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    saveStaffPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffPreferences"];
+            };
+        };
+        responses: {
+            /** @description Preferences saved */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    listStaffUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Staff directory */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        users: components["schemas"]["StaffUser"][];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    provisionStaffUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    /** Format: email */
+                    email: string;
+                    password: string;
+                    /** @enum {string} */
+                    role: "administrator" | "booking_manager" | "content_editor" | "analyst";
+                };
+            };
+        };
+        responses: {
+            /** @description Staff user created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                    };
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
     disableStaffUser: {
         parameters: {
             query?: never;
@@ -4143,6 +4538,117 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description User disabled and sessions revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    updateStaffRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userID: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    role: "administrator" | "booking_manager" | "content_editor" | "analyst";
+                };
+            };
+        };
+        responses: {
+            /** @description Role updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    subscribeNewsletter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: email */
+                    email: string;
+                    name?: string;
+                    source?: string;
+                    consent: boolean;
+                    consent_version: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Subscriber created or reactivated */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewsletterSubscriber"];
+                };
+            };
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    listNewsletterSubscribers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Subscribers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        subscribers: components["schemas"]["NewsletterSubscriber"][];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    unsubscribeNewsletterSubscriber: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unsubscribed */
             204: {
                 headers: {
                     [name: string]: unknown;

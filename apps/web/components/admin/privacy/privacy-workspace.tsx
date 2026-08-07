@@ -1,6 +1,12 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import {
+  AdminErrorState,
+  AdminSkeleton,
+  ButtonPending,
+} from "../admin-feedback";
+import { MetricWatermark } from "../metric-watermark";
 import styles from "./privacy-workspace.module.css";
 
 type Status = {
@@ -17,6 +23,10 @@ type Hold = {
   created_at: string;
   cleared_at?: string;
 };
+
+function countLabel(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
 
 function csrfToken(): string {
   return (
@@ -35,7 +45,12 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     cache: "no-store",
     headers: {
       Accept: "application/json",
-      ...(method !== "GET" ? { "Content-Type": "application/json", "X-CSRF-Token": decodeURIComponent(csrfToken()) } : {}),
+      ...(method !== "GET"
+        ? {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": decodeURIComponent(csrfToken()),
+          }
+        : {}),
       ...(init?.headers ?? {}),
     },
   });
@@ -50,6 +65,10 @@ export function PrivacyWorkspace() {
   const [holds, setHolds] = useState<Hold[]>([]);
   const [message, setMessage] = useState("Loading privacy controls…");
   const [busy, setBusy] = useState(false);
+  const [busyTarget, setBusyTarget] = useState("");
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
 
   const refresh = useCallback(async () => {
     const nextStatus = await api<Status>("/api/admin/privacy");
@@ -57,7 +76,7 @@ export function PrivacyWorkspace() {
     setStatus(nextStatus);
     setHolds(Array.isArray(nextHolds.items) ? nextHolds.items : []);
     setMessage(
-      `Default enquiry retention is ${nextStatus.retention_months} months. ${nextStatus.eligible_count} enquiry(s) eligible; ${nextStatus.active_holds} active hold(s).`,
+      `Default enquiry retention is ${countLabel(nextStatus.retention_months, "month")}. ${countLabel(nextStatus.eligible_count, "enquiry", "enquiries")} eligible; ${countLabel(nextStatus.active_holds, "active hold")}.`,
     );
   }, []);
 
@@ -66,11 +85,13 @@ export function PrivacyWorkspace() {
     void (async () => {
       try {
         await refresh();
+        if (!cancelled) setLoadState("ready");
       } catch {
         if (!cancelled) {
           setStatus(null);
           setHolds([]);
           setMessage("Privacy controls are unavailable.");
+          setLoadState("error");
         }
       }
     })();
@@ -84,6 +105,7 @@ export function PrivacyWorkspace() {
     const form = event.currentTarget;
     const data = new FormData(form);
     setBusy(true);
+    setBusyTarget("hold");
     try {
       await api("/api/admin/privacy/holds", {
         method: "POST",
@@ -94,16 +116,20 @@ export function PrivacyWorkspace() {
       });
       form.reset();
       await refresh();
-      setMessage("Legal hold placed. Privacy deletion is blocked for that contact.");
+      setMessage(
+        "Legal hold placed. Privacy deletion is blocked for that contact.",
+      );
     } catch {
       setMessage("Could not place the legal hold.");
     } finally {
       setBusy(false);
+      setBusyTarget("");
     }
   }
 
   async function clearHold(contactID: string) {
     setBusy(true);
+    setBusyTarget(`clear:${contactID}`);
     try {
       await api(`/api/admin/privacy/holds/${contactID}`, { method: "DELETE" });
       await refresh();
@@ -112,24 +138,42 @@ export function PrivacyWorkspace() {
       setMessage("Could not clear the legal hold.");
     } finally {
       setBusy(false);
+      setBusyTarget("");
     }
   }
 
   async function runRetention() {
     setBusy(true);
+    setBusyTarget("retention");
     try {
-      const result = await api<{ purged: number; skipped: number }>("/api/admin/privacy/retention?limit=25", {
-        method: "POST",
-        body: "{}",
-      });
+      const result = await api<{ purged: number; skipped: number }>(
+        "/api/admin/privacy/retention?limit=25",
+        {
+          method: "POST",
+          body: "{}",
+        },
+      );
       await refresh();
-      setMessage(`Retention run complete. Purged ${result.purged}; skipped ${result.skipped} held contact(s).`);
+      setMessage(
+        `Retention run complete. Purged ${result.purged}; skipped ${result.skipped} held contact(s).`,
+      );
     } catch {
       setMessage("Retention run failed.");
     } finally {
       setBusy(false);
+      setBusyTarget("");
     }
   }
+
+  if (loadState === "loading")
+    return <AdminSkeleton label="Loading privacy controls" variant="page" />;
+  if (loadState === "error")
+    return (
+      <AdminErrorState
+        message={message}
+        title="Privacy controls are unavailable"
+      />
+    );
 
   return (
     <section className={styles.workspace} aria-labelledby="privacy-heading">
@@ -137,8 +181,9 @@ export function PrivacyWorkspace() {
         <p className={styles.eyebrow}>Governance</p>
         <h2 id="privacy-heading">Privacy and retention</h2>
         <p>
-          Consent is versioned at enquiry intake with a hashed source IP. Administrators manage legal holds and the
-          default 24-month enquiry retention purge.
+          Consent is versioned at enquiry intake with a hashed source IP.
+          Administrators manage legal holds and the default 24-month enquiry
+          retention purge.
         </p>
       </header>
 
@@ -149,14 +194,17 @@ export function PrivacyWorkspace() {
       {status ? (
         <dl className={styles.metrics}>
           <div>
+            <MetricWatermark variant="orbit" />
             <dt>Retention months</dt>
             <dd>{status.retention_months}</dd>
           </div>
           <div>
+            <MetricWatermark variant="wave" />
             <dt>Eligible enquiries</dt>
             <dd>{status.eligible_count}</dd>
           </div>
           <div>
+            <MetricWatermark variant="spark" />
             <dt>Active holds</dt>
             <dd>{status.active_holds}</dd>
           </div>
@@ -166,19 +214,49 @@ export function PrivacyWorkspace() {
       <form className={styles.form} onSubmit={placeHold}>
         <h3>Place legal hold</h3>
         <label htmlFor="privacy-contact-id">Contact ID</label>
-        <input id="privacy-contact-id" name="contact_id" required minLength={36} maxLength={36} disabled={busy} />
+        <input
+          id="privacy-contact-id"
+          name="contact_id"
+          required
+          minLength={36}
+          maxLength={36}
+          disabled={busy}
+        />
         <label htmlFor="privacy-reason">Reason</label>
-        <textarea id="privacy-reason" name="reason" required minLength={8} maxLength={500} rows={3} disabled={busy} />
+        <textarea
+          id="privacy-reason"
+          name="reason"
+          required
+          minLength={8}
+          maxLength={500}
+          rows={3}
+          disabled={busy}
+        />
         <button type="submit" disabled={busy}>
-          Place hold
+          {busyTarget === "hold" ? (
+            <ButtonPending label="Placing legal hold" />
+          ) : (
+            "Place hold"
+          )}
         </button>
       </form>
 
       <div className={styles.form}>
         <h3>Retention job</h3>
-        <p>Anonymizes enquiry personal data older than the default retention window unless a legal hold applies.</p>
-        <button type="button" onClick={() => void runRetention()} disabled={busy || !status}>
-          Run retention batch
+        <p>
+          Anonymizes enquiry personal data older than the default retention
+          window unless a legal hold applies.
+        </p>
+        <button
+          type="button"
+          onClick={() => void runRetention()}
+          disabled={busy || !status}
+        >
+          {busyTarget === "retention" ? (
+            <ButtonPending label="Running retention batch" />
+          ) : (
+            "Run retention batch"
+          )}
         </button>
       </div>
 
@@ -194,8 +272,16 @@ export function PrivacyWorkspace() {
                   <strong>{hold.contact_id}</strong>
                   <p>{hold.reason}</p>
                 </div>
-                <button type="button" onClick={() => void clearHold(hold.contact_id)} disabled={busy}>
-                  Clear hold
+                <button
+                  type="button"
+                  onClick={() => void clearHold(hold.contact_id)}
+                  disabled={busy}
+                >
+                  {busyTarget === `clear:${hold.contact_id}` ? (
+                    <ButtonPending label="Clearing legal hold" />
+                  ) : (
+                    "Clear hold"
+                  )}
                 </button>
               </li>
             ))}

@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import { ThemeToggle } from "../theme/theme-toggle";
+import { SupportButton } from "../support/support-button";
 import { ButtonLink } from "../ui/button-link";
 import { BrandMark } from "./brand-mark";
 import { MobileMenu } from "./mobile-menu";
@@ -225,6 +226,7 @@ export function PublicHeader({
           </nav>
 
           <div className={styles.actions}>
+            <SupportButton className={styles.support} label="Support" />
             <ButtonLink className={styles.cta} href={safeCTA.href}>
               {safeCTA.label}
             </ButtonLink>

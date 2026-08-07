@@ -2,6 +2,11 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { Select } from "../../ui/select";
+import {
+  AdminErrorState,
+  AdminSkeleton,
+  ButtonPending,
+} from "../admin-feedback";
 import styles from "./exports-workspace.module.css";
 
 type Resource = "enquiries" | "contacts" | "bookings" | "campaigns";
@@ -15,8 +20,12 @@ const labels: Record<Resource, string> = {
 
 export function ExportsWorkspace() {
   const [resources, setResources] = useState<Resource[]>([]);
-  const [state, setState] = useState<"loading" | "ready" | "error" | "exporting">("loading");
-  const [message, setMessage] = useState("Loading authorized export resources…");
+  const [state, setState] = useState<
+    "loading" | "ready" | "error" | "exporting"
+  >("loading");
+  const [message, setMessage] = useState(
+    "Loading authorized export resources…",
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -49,7 +58,9 @@ export function ExportsWorkspace() {
 
   async function download(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const resource = String(new FormData(event.currentTarget).get("resource") ?? "") as Resource;
+    const resource = String(
+      new FormData(event.currentTarget).get("resource") ?? "",
+    ) as Resource;
     if (!resources.includes(resource)) {
       setState("error");
       setMessage("That export is not available for your role.");
@@ -84,35 +95,61 @@ export function ExportsWorkspace() {
       <header className={styles.header}>
         <p className={styles.eyebrow}>Governance</p>
         <h2 id="exports-heading">Role-filtered CSV exports</h2>
-        <p>Downloads are limited to the operational records your role may access and are written to the audit log.</p>
+        <p>
+          Downloads are limited to the operational records your role may access
+          and are written to the audit log.
+        </p>
       </header>
 
-      <form className={styles.form} onSubmit={download}>
-        <label htmlFor="export-resource">Resource</label>
-        <div className={styles.controls}>
-          <Select
-            id="export-resource"
-            name="resource"
-            required
-            disabled={state === "loading" || resources.length === 0}
-            placeholder={
-              resources.length === 0 ? "No exports available" : "Choose resource"
-            }
-            options={resources.map((resource) => ({
-              value: resource,
-              label: labels[resource],
-            }))}
-            aria-label="Export resource"
-          />
-          <button type="submit" disabled={state === "loading" || state === "exporting" || resources.length === 0}>
-            {state === "exporting" ? "Exporting…" : "Download CSV"}
-          </button>
-        </div>
-      </form>
+      {state === "loading" ? (
+        <AdminSkeleton
+          label="Loading authorized export resources"
+          variant="form"
+        />
+      ) : null}
+      {state === "error" && resources.length === 0 ? (
+        <AdminErrorState title="Exports are unavailable" message={message} />
+      ) : null}
 
-      <p className={styles.status} role="status" aria-live="polite">
-        {message}
-      </p>
+      {state !== "loading" ? (
+        <form className={styles.form} onSubmit={download}>
+          <label htmlFor="export-resource">Resource</label>
+          <div className={styles.controls}>
+            <Select
+              id="export-resource"
+              name="resource"
+              required
+              disabled={resources.length === 0}
+              placeholder={
+                resources.length === 0
+                  ? "No exports available"
+                  : "Choose resource"
+              }
+              options={resources.map((resource) => ({
+                value: resource,
+                label: labels[resource],
+              }))}
+              aria-label="Export resource"
+            />
+            <button
+              type="submit"
+              disabled={state === "exporting" || resources.length === 0}
+            >
+              {state === "exporting" ? (
+                <ButtonPending label="Preparing CSV export" />
+              ) : (
+                "Download CSV"
+              )}
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {state !== "loading" ? (
+        <p className={styles.status} role="status" aria-live="polite">
+          {message}
+        </p>
+      ) : null}
     </section>
   );
 }

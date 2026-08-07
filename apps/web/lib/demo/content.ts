@@ -227,8 +227,11 @@ export const demoTestimonials: ContentItem[] = [
     id: "00000000-0000-4000-8000-000000000021",
     kind: "testimonial",
     title: "Demo positioning note A",
+    // Quote text only. Provenance and the not-approved warning live in
+    // person_name/person_title/organization, which the section renders as the
+    // attribution — keeping them out of the quotation itself.
     summary:
-      "“Where every message becomes music… and every performance becomes a memory.” — motto attributed in public profile coverage; replace with CMS-approved endorsements only.",
+      "Where every message becomes music… and every performance becomes a memory.",
     body: "",
     category: "Demo",
     featured: true,
@@ -241,7 +244,7 @@ export const demoTestimonials: ContentItem[] = [
     kind: "testimonial",
     title: "Demo positioning note B",
     summary:
-      "Public write-ups describe a lane between stand-up and conventional music: guitar, original comedy songs, and audience interaction. This is a demo paraphrase for spacing — not an endorsement.",
+      "A lane between stand-up and conventional music: guitar, original comedy songs, and audience interaction.",
     body: "",
     category: "Demo",
     featured: true,

@@ -1,24 +1,114 @@
+.eventStage {
+  overflow: clip;
+}
 .hero,
 .section {
-  padding-block: clamp(2.5rem, 7vw, 6rem);
+  padding-block: clamp(4rem, 9vw, 8rem);
 }
 .hero {
   display: grid;
-  gap: 1.25rem;
-  border-bottom: 1px solid var(--border-subtle);
+  min-height: calc(88dvh - var(--header-height));
+  align-content: space-between;
+  gap: 4rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+}
+.heroTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.heroKicker,
+.heroCount {
+  margin: 0;
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+.heroKicker {
+  color: var(--eyebrow-color);
+}
+.heroCount {
+  color: var(--ink-soft);
+}
+.heroTitle {
+  display: grid;
+  align-items: end;
+  gap: clamp(2rem, 7vw, 7rem);
+}
+.hero h1 {
+  max-width: 8ch;
+  margin: 0;
+  font-size: clamp(4.5rem, 13vw, 11rem);
+  letter-spacing: -0.08em;
+  line-height: 0.82;
 }
 .lede {
-  max-width: 48rem;
+  max-width: 30rem;
+  margin: 0;
   color: var(--text-muted);
-  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  line-height: 1.6;
+}
+.sectionHead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  margin-bottom: clamp(2rem, 5vw, 4rem);
+}
+.sectionHead > span {
+  color: var(--eyebrow-color);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+.sectionHead h2 {
+  margin: 0;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  letter-spacing: -0.06em;
+}
+.sectionHead p {
+  grid-column: 2;
+  max-width: 34rem;
+  margin: 0;
+  color: var(--ink-soft);
 }
 .banner {
   display: grid;
-  gap: 1rem;
-  padding: clamp(1rem, 4vw, 2.5rem);
+  justify-items: start;
+  gap: 0.8rem;
+  padding: clamp(1.5rem, 4vw, 2.75rem);
   color: var(--text-primary);
   border: 1px solid var(--border-subtle);
   background: var(--surface-muted, var(--surface-canvas));
+}
+
+/* globals.css resets only margin-block-start on h2/p, so every child kept its
+   UA bottom margin — roughly 3.3rem under a 4rem h2 — and stacked it on top of
+   the grid gap. The gap is the only spacing in this block. */
+.banner > * {
+  margin-block: 0;
+}
+
+/* Down from the global h2 clamp (up to 4rem), which was sized for page
+   headings, not a card sitting inside one. */
+.banner h2 {
+  max-width: 18ch;
+  font-size: clamp(1.85rem, 3.2vw, 2.9rem);
+  line-height: 1.03;
+}
+
+.banner p {
+  max-width: 54ch;
+  line-height: 1.55;
+}
+
+.banner .primary {
+  margin-top: 0.6rem;
 }
 .filters,
 .grid,
@@ -34,15 +124,14 @@
   gap: 1.15rem;
   margin-block: 1.35rem 1.75rem;
   padding: clamp(1rem, 2.5vw, 1.35rem);
-  border: 1px solid color-mix(in srgb, var(--line, var(--border-subtle)) 80%, var(--brand-k));
+  border: 1px solid
+    color-mix(in srgb, var(--line, var(--border-subtle)) 80%, var(--brand-k));
   border-radius: calc(var(--radius-panel, 1.25rem) - 0.15rem);
-  background:
-    linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--surface-raised, var(--surface-canvas)) 92%, var(--brand-j)) 0%,
-      var(--surface-canvas) 100%
-    );
-  box-shadow: var(--shadow, 0 18px 40px color-mix(in srgb, black 18%, transparent));
+  background: var(--surface-raised, var(--surface-canvas));
+  box-shadow: var(
+    --shadow,
+    0 18px 40px color-mix(in srgb, black 18%, transparent)
+  );
 }
 
 .filterBarHead {
@@ -101,7 +190,8 @@
   justify-content: flex-end;
   gap: 0.75rem 1rem;
   padding-top: 0.15rem;
-  border-top: 1px solid color-mix(in srgb, var(--line, var(--border-subtle)) 70%, transparent);
+  border-top: 1px solid
+    color-mix(in srgb, var(--line, var(--border-subtle)) 70%, transparent);
 }
 
 .filterClear {
@@ -122,13 +212,7 @@
   border: 0;
   border-radius: 999px;
   padding: 0.65rem 1.35rem;
-  background:
-    linear-gradient(
-      115deg,
-      var(--brand-j) 0%,
-      color-mix(in srgb, var(--brand-j) 55%, var(--brand-k)) 55%,
-      var(--brand-k) 120%
-    );
+  background: var(--brand-j);
   color: #14110c;
   font: inherit;
   font-size: 0.92rem;
@@ -174,8 +258,7 @@
 
 .card,
 .ticket,
-.notice,
-.policy {
+.notice {
   min-width: 0;
   padding: 1rem;
   border: 1px solid var(--border-subtle);
@@ -187,19 +270,15 @@
   gap: 0;
   padding: 0;
   overflow: hidden;
-  border-radius: calc(var(--radius-panel, 1rem) - 0.2rem);
-  background:
-    linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--surface-raised, var(--surface-canvas)) 94%, var(--brand-j)) 0%,
-      var(--surface-canvas) 100%
-    );
+  border-radius: 0;
+  border-color: color-mix(in srgb, var(--ink) 16%, transparent);
+  background: var(--surface-raised, var(--surface-canvas));
 }
 
 .cardMedia {
   margin: 0;
   overflow: hidden;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 4 / 3;
   background: var(--surface-muted, var(--surface-canvas));
 }
 
@@ -213,7 +292,7 @@
 .cardBody {
   display: grid;
   gap: 0.85rem;
-  padding: clamp(1rem, 3vw, 1.35rem);
+  padding: clamp(1.25rem, 3vw, 2rem);
 }
 
 .cardTop {
@@ -241,7 +320,11 @@
   font-weight: 750;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  background: color-mix(in srgb, var(--surface-raised, var(--surface-canvas)) 70%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--surface-raised, var(--surface-canvas)) 70%,
+    transparent
+  );
   color: var(--text-muted, var(--ink-soft));
 }
 
@@ -258,7 +341,7 @@
 .cardTitle {
   margin: 0;
   font-family: var(--font-display), var(--font-sans);
-  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  font-size: clamp(1.8rem, 4vw, 3rem);
   font-weight: 750;
   letter-spacing: -0.03em;
   line-height: 1.15;
@@ -276,7 +359,8 @@
   gap: 0.7rem;
   margin: 0.15rem 0 0;
   padding: 0.85rem 0 0;
-  border-top: 1px solid color-mix(in srgb, var(--border-subtle) 80%, transparent);
+  border-top: 1px solid
+    color-mix(in srgb, var(--border-subtle) 80%, transparent);
 }
 
 .cardFacts div {
@@ -313,14 +397,9 @@
   align-items: center;
   gap: 0.55rem;
   margin-top: 0.15rem;
-  border-radius: 999px;
+  border-radius: 0;
   padding: 0.55rem 1.1rem;
-  background:
-    linear-gradient(
-      115deg,
-      var(--brand-j) 0%,
-      color-mix(in srgb, var(--brand-j) 55%, var(--brand-k)) 100%
-    );
+  background: var(--brand-j);
   color: #14110c;
   font-size: 0.9rem;
   font-weight: 800;
@@ -360,37 +439,168 @@
   color: var(--text-muted);
 }
 
+/* Matches the pill CTA language the rest of the site uses (globals .button-link)
+   instead of rendering as an unstyled black rectangle. */
 .primary {
   display: inline-flex;
   width: fit-content;
-  min-height: 2.75rem;
+  min-height: 2.85rem;
   align-items: center;
-  padding-inline: 1rem;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding-inline: 1.35rem;
   color: var(--surface-canvas);
   background: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   text-decoration: none;
+  transition: transform 140ms ease;
 }
 
-.disabled {
+.primary:hover {
+  transform: translateY(-1px);
+}
+
+.disabled,
+.disabled:hover {
   opacity: 0.65;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary,
+  .primary:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+.detailBody {
+  display: grid;
+  align-items: start;
+  gap: clamp(1.75rem, 4vw, 3rem);
+}
+
+.detailProse {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--text-muted, var(--ink-soft));
+  font-size: clamp(1.02rem, 1.4vw, 1.18rem);
+  line-height: 1.65;
+}
+
+.factPanel {
+  display: grid;
+  gap: 1.35rem;
+  min-width: 0;
+  padding: clamp(1.35rem, 3vw, 2.15rem);
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  background: var(--surface-raised, var(--surface-canvas));
 }
 
 .facts {
   margin: 0;
+  gap: 1.15rem;
 }
 
 .facts div {
+  display: grid;
+  gap: 0.3rem;
   min-width: 0;
 }
 
 .facts dt {
-  color: var(--text-muted);
-  font-size: 0.85rem;
+  color: var(--text-muted, var(--ink-soft));
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .facts dd {
-  margin: 0.25rem 0 0;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.45;
   overflow-wrap: anywhere;
+}
+
+.mapLink {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 0.1rem;
+}
+
+.mapLink:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.accessNote {
+  display: grid;
+  gap: 0.4rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+}
+
+.accessNote h3 {
+  margin: 0;
+  color: var(--accent-2, var(--brand-k));
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.accessNote p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.policyGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+}
+
+.policy {
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: clamp(1.15rem, 2.5vw, 1.75rem);
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--surface-raised, var(--surface-canvas)) 80%,
+    transparent
+  );
+}
+
+.policy h3 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.policy p {
+  margin: 0;
+  color: var(--text-muted, var(--ink-soft));
+  font-size: 0.98rem;
+  line-height: 1.6;
 }
 
 @media (min-width: 44rem) {
@@ -409,12 +619,32 @@
 
   .facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 1.75rem;
   }
 }
 
 @media (min-width: 64rem) {
+  .heroTitle {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.34fr);
+  }
   .filterFields {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .detailBody {
+    grid-template-columns: minmax(0, 1.05fr) minmax(21rem, 0.75fr);
+  }
+  .facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.15rem;
+  }
+}
+
+@media (max-width: 44rem) {
+  .hero {
+    min-height: auto;
+  }
+  .hero h1 {
+    font-size: clamp(4.1rem, 22vw, 7rem);
   }
 }
 

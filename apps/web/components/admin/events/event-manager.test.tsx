@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { EventManager } from "./event-manager";
@@ -43,6 +49,9 @@ describe("EventManager", () => {
       await screen.findByText("No approved event content exists yet."),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add event" })).toBeEnabled();
+    expect(
+      screen.queryByRole("dialog", { name: "Add event" }),
+    ).not.toBeInTheDocument();
   });
 
   it("loads an authorized preview and exposes explicit lifecycle controls", async () => {
@@ -52,6 +61,9 @@ describe("EventManager", () => {
       .mockResolvedValueOnce(response({ tickets: [] }));
     vi.stubGlobal("fetch", fetchMock);
     render(<EventManager />);
+    expect(
+      screen.queryByRole("dialog", { name: "Edit Approved event" }),
+    ).not.toBeInTheDocument();
     fireEvent.click(
       await screen.findByRole("button", {
         name: "Edit and preview Approved event",
@@ -128,6 +140,10 @@ describe("EventManager", () => {
         name: "Edit and preview Approved event",
       }),
     );
+    expect(
+      screen.queryByRole("textbox", { name: "Ticket name" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Add ticket type" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Ticket name" }), {
       target: { value: "General admission" },
     });
@@ -186,6 +202,8 @@ describe("EventManager", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<EventManager />);
     await screen.findByText("No approved event content exists yet.");
+    expect(screen.queryByLabelText("Title")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Add event" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Title" }), {
       target: { value: "Approved event" },
     });
@@ -222,6 +240,48 @@ describe("EventManager", () => {
     ).toBeInTheDocument();
     const request = fetchMock.mock.calls.at(-1)?.[1] as RequestInit;
     expect(JSON.parse(String(request.body))).not.toHaveProperty("status");
+  });
+
+  it("rewrites summary copy through the assistant without renaming the field", async () => {
+    const encoder = new TextEncoder();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response({ items: [] }))
+      .mockResolvedValueOnce({
+        ok: true,
+        body: new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(encoder.encode("A night of comedy and guitar."));
+            controller.close();
+          },
+        }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<EventManager />);
+    await screen.findByText("No approved event content exists yet.");
+    fireEvent.click(screen.getByRole("button", { name: "Add event" }));
+
+    const summary = screen.getByRole("textbox", { name: "Summary" });
+    fireEvent.change(summary, { target: { value: "joe does a funny show" } });
+
+    fireEvent.click(
+      within(summary.closest("div") as HTMLElement).getByRole("button", {
+        name: /Rewrite/,
+      }),
+    );
+    fireEvent.click(await screen.findByRole("button", { name: /Use this/ }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: "Summary" })).toHaveValue(
+        "A night of comedy and guitar.",
+      ),
+    );
+    // The assist bar must stay outside the <label>, or its button text would
+    // be folded into the textarea's accessible name.
+    expect(
+      screen.getByRole("textbox", { name: "Description" }),
+    ).toBeInTheDocument();
+    expect(fetchMock.mock.calls.at(-1)?.[0]).toBe("/api/admin/ai/assist");
   });
 
   it("uses explicit server actions for published ticket pause and event cancellation", async () => {
@@ -270,6 +330,12 @@ describe("EventManager", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response({ items: [] })));
     render(<EventManager />);
     await screen.findByText("No approved event content exists yet.");
+    expect(
+      screen.queryByRole("checkbox", {
+        name: "Feature this event in a scheduled banner",
+      }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Add event" }));
     fireEvent.click(
       screen.getByRole("checkbox", {
         name: "Feature this event in a scheduled banner",
@@ -280,12 +346,36 @@ describe("EventManager", () => {
     fireEvent.change(asset, {
       target: { value: "00000000-0000-4000-8000-000000000099" },
     });
-    fireEvent.change(screen.getByLabelText("Banner starts at"), {
-      target: { value: "2026-08-06T10:00" },
+    fireEvent.click(screen.getByRole("button", { name: "Banner starts at" }));
+    const startsDialog = screen.getByRole("dialog", {
+      name: "Banner starts at",
     });
-    fireEvent.change(screen.getByLabelText("Banner ends at"), {
-      target: { value: "2026-08-07T10:00" },
+    fireEvent.change(within(startsDialog).getByLabelText("Hour"), {
+      target: { value: "10" },
     });
+    fireEvent.change(within(startsDialog).getByLabelText("Minute"), {
+      target: { value: "0" },
+    });
+    fireEvent.click(
+      within(startsDialog)
+        .getAllByRole("button", { name: "6" })
+        .find((button) => button.dataset.inMonth === "true")!,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Banner starts at" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Banner ends at" }));
+    const endsDialog = screen.getByRole("dialog", { name: "Banner ends at" });
+    fireEvent.change(within(endsDialog).getByLabelText("Hour"), {
+      target: { value: "10" },
+    });
+    fireEvent.change(within(endsDialog).getByLabelText("Minute"), {
+      target: { value: "0" },
+    });
+    fireEvent.click(
+      within(endsDialog)
+        .getAllByRole("button", { name: "7" })
+        .find((button) => button.dataset.inMonth === "true")!,
+    );
     expect(
       screen.getByText(/Banner preview: asset 00000000/),
     ).toHaveTextContent("2026-08-06T10:00");

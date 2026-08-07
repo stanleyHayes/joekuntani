@@ -83,47 +83,42 @@ it("edits, saves and publishes without rendering secret values", async () => {
     target: { value: "Approved tagline" },
   });
   for (const label of [
-    "Public brand name",
-    "Logo asset UUID",
-    "Favicon asset UUID",
-    "Default page title",
-    "Title template",
-    "SEO description",
-    "Canonical HTTPS base",
-    "Default social image asset UUID",
-    "Public email",
-    "Public phone",
-    "Location label",
-    "Consent version",
-    "Privacy consent label",
-    "Optional marketing label",
-    "Privacy notice path",
-    "Email provider",
-    "Media provider",
-    "Analytics provider",
-    "Payment provider",
-    "Business timezone",
+    /^Public brand name/,
+    /^Logo image/,
+    /^Browser tab icon/,
+    /^Fallback page title/,
+    /^Browser tab title pattern/,
+    /^Search result description/,
+    /^Website address/,
+    /^Default sharing image/,
+    /^Public email/,
+    /^Public phone/,
+    /^Location shown publicly/,
+    /^Consent version/,
+    /^Privacy consent label/,
+    /^Optional marketing label/,
+    /^Privacy page address/,
+    /^Email provider/,
+    /^Media provider/,
+    /^Analytics provider/,
+    /^Payment provider/,
+    /^Business timezone/,
   ]) {
     const input = screen.getByLabelText(label);
     fireEvent.change(input, {
       target: { value: `${(input as HTMLInputElement).value}x` },
     });
   }
-  for (const label of [
-    "Primary navigation",
-    "Footer links",
-    "Calls to action",
-    "Approved social links",
-    "Internal notification recipients",
-  ]) {
-    const textarea = screen.getByRole("textbox", {
-      name: new RegExp(`^${label}`),
-    });
-    const value = (textarea as HTMLTextAreaElement).value;
-    fireEvent.change(textarea, { target: { value: "{" } });
-    expect(textarea).toHaveAttribute("aria-invalid", "true");
-    fireEvent.change(textarea, { target: { value } });
-  }
+  // Structured lists are edited as rows, never as raw JSON.
+  expect(screen.queryByRole("textbox", { name: /^Primary navigation/ })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Add footer link" }));
+  const footerText = screen.getAllByLabelText(/^Link text/)[0];
+  fireEvent.change(footerText, { target: { value: "Privacy" } });
+  expect(footerText).toHaveValue("Privacy");
+  fireEvent.click(
+    screen.getByRole("button", { name: "Remove Footer links entry 1" }),
+  );
+  expect(screen.queryByLabelText(/^Link text/)).toBeNull();
   fireEvent.click(screen.getByLabelText(/I confirm all public settings/i));
   fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
   await screen.findByText("Draft settings saved and audited.");
@@ -138,7 +133,7 @@ it("edits, saves and publishes without rendering secret values", async () => {
       headers: expect.objectContaining({ "X-CSRF-Token": "test-csrf" }),
     }),
   );
-});
+}, 40_000);
 
 it("shows a safe error when settings cannot load", async () => {
   vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));

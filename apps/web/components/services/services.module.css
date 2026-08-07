@@ -1,25 +1,79 @@
+.page {
+  overflow: clip;
+}
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.6fr);
-  gap: clamp(2rem, 8vw, 8rem);
+  min-height: calc(92dvh - var(--header-height));
+  align-content: space-between;
+  gap: 4rem;
   padding-block: clamp(4rem, 10vw, 8rem);
 }
-
+.kicker {
+  margin: 0;
+  color: var(--eyebrow-color);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+.heroGrid {
+  display: grid;
+  align-items: end;
+  gap: clamp(2.5rem, 8vw, 8rem);
+}
 .hero h1 {
   max-width: 9ch;
-  margin-bottom: 1.25rem;
+  margin: 0;
+  font-size: clamp(4rem, 11vw, 9rem);
+  letter-spacing: -0.075em;
+  line-height: 0.84;
 }
-
-.hero p {
-  max-width: 54ch;
+.heroCopy {
+  display: grid;
+  gap: 1.5rem;
+}
+.heroCopy p {
+  max-width: 32rem;
+  margin: 0;
   color: var(--ink-soft);
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  line-height: 1.6;
 }
-
-.heroAside {
-  align-self: end;
-  border-top: 0.35rem solid var(--accent);
-  padding-top: 1.25rem;
-  font-weight: 700;
+.heroCopy a {
+  width: fit-content;
+  color: inherit;
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.heroCopy a span {
+  color: var(--accent);
+}
+.sectionHead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  margin-bottom: clamp(2.5rem, 6vw, 5rem);
+}
+.sectionHead > span {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+.sectionHead h2 {
+  margin: 0;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  letter-spacing: -0.06em;
+}
+.sectionHead p {
+  grid-column: 2;
+  max-width: 34rem;
+  margin: 0;
+  color: var(--ink-soft);
 }
 
 .list {
@@ -34,7 +88,7 @@
 
 .card {
   display: flex;
-  min-height: 22rem;
+  min-height: 26rem;
   flex-direction: column;
   background: var(--surface-raised);
   padding: clamp(1.4rem, 4vw, 3rem);
@@ -44,9 +98,21 @@
 .card:nth-child(4n + 3) {
   background: var(--surface);
 }
+.cardTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: auto;
+}
+.cardTop > span {
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
 
 .category {
-  margin-bottom: auto;
+  margin: 0;
   color: var(--accent-strong);
   font-size: 0.75rem;
   font-weight: 800;
@@ -93,22 +159,69 @@
   padding-bottom: clamp(4rem, 10vw, 8rem);
 }
 
-.sectionTitle {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+.process {
+  padding-block: clamp(5rem, 11vw, 10rem);
+  border-top: 1px solid var(--line);
+}
+.process ol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+.process li {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border-right: 1px solid var(--line);
+}
+.process li:last-child {
+  border-right: 0;
+}
+.process li > span {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+.process h3 {
+  margin: clamp(2rem, 5vw, 5rem) 0 0;
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  letter-spacing: -0.045em;
+}
+.process p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+@media (min-width: 58rem) {
+  .heroGrid {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.36fr);
+  }
 }
 
 @media (max-width: 44rem) {
-  .hero,
-  .list {
+  .hero {
+    min-height: auto;
+  }
+  .hero h1 {
+    font-size: clamp(4rem, 20vw, 6.5rem);
+  }
+  .list,
+  .process ol {
     grid-template-columns: 1fr;
   }
-
   .card {
-    min-height: 19rem;
+    min-height: 21rem;
+  }
+  .process li {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .process li:last-child {
+    border-bottom: 0;
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
+import { AdminErrorState, ButtonPending } from "../admin-feedback";
 import styles from "./audit-workspace.module.css";
 
 type AuditEntry = {
@@ -19,7 +20,9 @@ type AuditResponse = {
 };
 
 export function AuditWorkspace() {
-  const [state, setState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [state, setState] = useState<"idle" | "loading" | "ready" | "error">(
+    "idle",
+  );
   const [response, setResponse] = useState<AuditResponse | null>(null);
   const controller = useRef<AbortController | null>(null);
 
@@ -60,35 +63,72 @@ export function AuditWorkspace() {
       <header className={styles.header}>
         <p className={styles.eyebrow}>Administrator only</p>
         <h2 id="audit-heading">Search the audit log</h2>
-        <p>Review sign-in, create, update, delete, publish, status and export events without exposing personal data payloads.</p>
+        <p>
+          Review sign-in, create, update, delete, publish, status and export
+          events without exposing personal data payloads.
+        </p>
       </header>
 
       <form className={styles.form} role="search" onSubmit={submit}>
         <div className={styles.fields}>
           <label htmlFor="audit-query">
             Free-text filter
-            <input id="audit-query" name="query" type="search" maxLength={100} autoComplete="off" placeholder="export, publish, sign_in" />
+            <input
+              id="audit-query"
+              name="query"
+              type="search"
+              maxLength={100}
+              autoComplete="off"
+              placeholder="export, publish, sign_in"
+            />
           </label>
           <label htmlFor="audit-action">
             Exact action
-            <input id="audit-action" name="action" type="text" maxLength={80} autoComplete="off" placeholder="export.bookings" />
+            <input
+              id="audit-action"
+              name="action"
+              type="text"
+              maxLength={80}
+              autoComplete="off"
+              placeholder="export.bookings"
+            />
           </label>
           <label htmlFor="audit-entity-type">
             Entity type
-            <input id="audit-entity-type" name="entity_type" type="text" maxLength={80} autoComplete="off" placeholder="export" />
+            <input
+              id="audit-entity-type"
+              name="entity_type"
+              type="text"
+              maxLength={80}
+              autoComplete="off"
+              placeholder="export"
+            />
           </label>
         </div>
         <button type="submit" disabled={state === "loading"}>
-          {state === "loading" ? "Searching…" : "Search audit log"}
+          {state === "loading" ? (
+            <ButtonPending label="Searching audit log" />
+          ) : (
+            "Search audit log"
+          )}
         </button>
       </form>
 
       <p className={styles.status} role="status" aria-live="polite">
         {state === "idle" && "Enter filters to inspect audited actions."}
-        {state === "loading" && "Searching audit events…"}
-        {state === "error" && "Audit search could not be completed."}
-        {state === "ready" && `${count} event${count === 1 ? "" : "s"} matched.`}
+        {state === "error" ? (
+          <span hidden>Audit search could not be completed.</span>
+        ) : null}
+        {state === "ready" &&
+          `${count} event${count === 1 ? "" : "s"} matched.`}
       </p>
+      {state === "error" ? (
+        <AdminErrorState
+          title="Audit search failed"
+          message="The audit log could not be queried. Check the filters and try again."
+          retry={false}
+        />
+      ) : null}
 
       {state === "ready" && count === 0 ? (
         <div className={styles.empty}>
@@ -112,7 +152,9 @@ export function AuditWorkspace() {
             {response?.items.map((item) => (
               <tr key={item.id}>
                 <td>
-                  <time dateTime={item.created_at}>{new Date(item.created_at).toUTCString()}</time>
+                  <time dateTime={item.created_at}>
+                    {new Date(item.created_at).toUTCString()}
+                  </time>
                 </td>
                 <td>{item.action}</td>
                 <td>
@@ -125,7 +167,11 @@ export function AuditWorkspace() {
           </tbody>
         </table>
       ) : null}
-      {response?.limited ? <p className={styles.notice}>Showing the first 50 matches. Narrow the filters to continue.</p> : null}
+      {response?.limited ? (
+        <p className={styles.notice}>
+          Showing the first 50 matches. Narrow the filters to continue.
+        </p>
+      ) : null}
     </section>
   );
 }

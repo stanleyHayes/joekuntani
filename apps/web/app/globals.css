@@ -4,8 +4,23 @@
  * Full production claims still gated by ADR-005 / CMS content.
  */
 :root {
-  --font-sans: var(--font-dm-sans), "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  --font-sans:
+    var(--font-outfit), "Avenir Next", Avenir, "Segoe UI", sans-serif;
   --font-display: var(--font-outfit), "Avenir Next", "Segoe UI", sans-serif;
+  --font-brand:
+    var(--font-knewave), var(--font-outfit), "Avenir Next", "Segoe UI",
+    sans-serif;
+  /* Compatibility aliases for older admin modules; keep every surface theme-aware. */
+  --color-text: var(--ink);
+  --color-text-muted: var(--ink-soft);
+  --color-background: var(--surface);
+  --color-surface: var(--surface-raised);
+  --color-surface-muted: var(--surface);
+  --color-border: var(--line);
+  --color-accent: var(--accent);
+  --color-focus: var(--focus);
+  --border: var(--line);
+  --muted: var(--ink-soft);
   --brand-j: #f5d400;
   --brand-k: #00c8f0;
   --brand-ring: #f800a0;
@@ -19,6 +34,18 @@
   --layer-header: 20;
   --theme-reveal-x: 50%;
   --theme-reveal-y: 50%;
+
+  /* Canonical eyebrow/kicker treatment. `.eyebrow` below is the ready-made
+     class; CSS modules whose kicker also owns layout read these tokens so the
+     typography stays in one place without fighting the cascade. */
+  --eyebrow-family: inherit;
+  --eyebrow-size: 0.72rem;
+  --eyebrow-weight: 750;
+  --eyebrow-tracking: 0.14em;
+  --eyebrow-color: var(--accent);
+  /* Panels that are near-black in BOTH themes (admin rail, auth brand side)
+     can't use --accent: light theme resolves it to #6b5800. */
+  --eyebrow-color-on-dark: color-mix(in srgb, var(--brand-j) 78%, white);
 }
 
 html,
@@ -83,7 +110,11 @@ body {
   background:
     radial-gradient(1200px 600px at 0% -10%, var(--glow-j), transparent 55%),
     radial-gradient(900px 500px at 100% 0%, var(--glow-k), transparent 50%),
-    radial-gradient(700px 400px at 50% 120%, color-mix(in srgb, var(--brand-ring) 12%, transparent), transparent 55%),
+    radial-gradient(
+      700px 400px at 50% 120%,
+      color-mix(in srgb, var(--brand-ring) 12%, transparent),
+      transparent 55%
+    ),
     var(--canvas);
   background-attachment: fixed;
   color: var(--ink);
@@ -91,7 +122,9 @@ body {
   font-size: 1rem;
   line-height: 1.6;
   text-rendering: optimizeLegibility;
-  transition: background-color 220ms ease, color 220ms ease;
+  transition:
+    background-color 220ms ease,
+    color 220ms ease;
 }
 
 a {
@@ -306,8 +339,7 @@ h2 {
 }
 
 .desktop-navigation ul,
-.mobile-navigation ul,
-.admin-sidebar ul {
+.mobile-navigation ul {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -429,13 +461,31 @@ h2 {
   content: "";
 }
 
+/* Canonical eyebrow. The bottom margin stays because this class is used bare
+   in flow contexts (page heroes) where nothing else supplies the gap; kickers
+   living in a grid/flex header zero it themselves. */
 .eyebrow {
-  margin-bottom: 1.25rem;
-  color: var(--accent-strong);
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.11em;
+  margin: 0 0 1.25rem;
+  color: var(--eyebrow-color);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
   text-transform: uppercase;
+}
+
+/* Opt-in variant: leading hairline. Used by dialog/confirmation headers. */
+.eyebrow--rule {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.eyebrow--rule::before {
+  width: 1.65rem;
+  height: 1px;
+  background: currentColor;
+  content: "";
 }
 
 .hero-title {
@@ -649,26 +699,156 @@ h2 {
   color: var(--ink-soft);
 }
 
-.footer-meta {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+.footer-support {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 2rem;
+  justify-content: space-between;
+  gap: 1.25rem 2rem;
+  border-top: 1px solid var(--line);
+  padding-block: clamp(1.5rem, 4vw, 2.25rem);
+}
+
+/* Approved social profiles, published from site settings. Typographic rather
+   than brand icons: the platform list is free text from the CMS, so any value
+   has to render correctly without a matching glyph. */
+.footer-social {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem 2rem;
+  border-top: 1px solid var(--line);
+  padding-block: clamp(1.25rem, 3vw, 1.85rem);
+}
+
+.footer-social__eyebrow {
+  margin: 0;
+  color: var(--eyebrow-color);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+
+.footer-social__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer-social__list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.4rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.35rem 0.95rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.footer-social__list a span {
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+}
+
+.footer-social__list a:hover {
+  border-color: var(--accent);
+}
+
+.footer-social__list a:hover span {
+  color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-social__list a {
+    transition: none;
+  }
+}
+
+.footer-support__eyebrow {
+  margin: 0 0 0.3rem;
+  color: var(--eyebrow-color);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+
+.footer-support__copy {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
   border-top: 1px solid var(--line);
   padding-block: 1.5rem;
 }
 
-.footer-meta nav {
+/* Legal links read as a quiet, evenly separated row rather than a centred
+   block competing with the wordmark. */
+.footer-legal {
   display: flex;
-  justify-content: center;
-  gap: 1.25rem;
-  font-size: 0.84rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.85rem;
+  font-size: 0.8rem;
 }
 
-.footer-meta p {
+.footer-legal a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  text-underline-offset: 0.2em;
+}
+
+.footer-legal a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.footer-legal a + a::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  margin-right: 0.85rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink-soft) 60%, transparent);
+  vertical-align: middle;
+}
+
+.footer-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
   margin: 0;
   color: var(--ink-soft);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 48rem) {
+  .footer-meta {
+    justify-content: flex-start;
+  }
 }
 
 .content-warning {
@@ -700,88 +880,14 @@ h2 {
   font-weight: 800;
 }
 
-.admin-shell {
-  display: grid;
-  min-height: 100dvh;
-  grid-template:
-    "topbar topbar" var(--header-height)
-    "sidebar main" minmax(0, 1fr) /
-    var(--admin-sidebar) minmax(0, 1fr);
-  background: var(--surface);
-}
-
-.admin-topbar {
-  position: relative;
-  z-index: var(--layer-header);
-  display: flex;
-  grid-area: topbar;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-raised);
-  padding-inline: var(--space-page);
-}
-
-.admin-topbar::after {
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: min(22vw, 12rem);
-  height: 0.25rem;
-  background: var(--accent);
-  content: "";
-  transform: skewX(-24deg);
-  transform-origin: left;
-}
-
-.admin-topbar > a:last-child {
-  color: var(--ink-soft);
-  font-size: 0.86rem;
-  font-weight: 700;
-}
-
-.admin-sidebar {
-  grid-area: sidebar;
-  border-right: 1px solid var(--line);
-  padding: 1.5rem 1rem;
-}
-
-.admin-sidebar a {
-  display: block;
-  min-height: 2.75rem;
-  border-radius: var(--radius-control);
-  padding: 0.6rem 0.75rem;
-  color: var(--ink-soft);
-  font-size: 0.88rem;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.admin-sidebar a:hover {
-  background: var(--surface-raised);
-  color: var(--ink);
-}
-
-.admin-sidebar a[aria-current="page"] {
-  background: var(--ink);
-  color: var(--canvas);
-}
-
-.admin-main {
-  min-width: 0;
-  grid-area: main;
-  background: var(--canvas);
-  padding: clamp(1rem, 3vw, 3rem);
-}
-
 .admin-page-header {
-  padding-block: clamp(2rem, 5vw, 4rem) 1.5rem;
+  padding-block: clamp(1rem, 3vw, 2rem) 1rem;
 }
 
 .admin-page-header h1 {
   margin: 0;
-  font-family: var(--font-sans);
-  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(1.4rem, 3vw, 2rem);
   letter-spacing: -0.035em;
 }
 
@@ -853,30 +959,6 @@ h2 {
     align-items: flex-start;
     flex-direction: column;
   }
-
-  .admin-shell {
-    grid-template:
-      "topbar" var(--header-height)
-      "sidebar" auto
-      "main" minmax(0, 1fr) /
-      minmax(0, 1fr);
-  }
-
-  .admin-sidebar {
-    overflow-x: auto;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-    padding: 0.65rem var(--space-page);
-  }
-
-  .admin-sidebar ul {
-    display: flex;
-    gap: 0.35rem;
-  }
-
-  .admin-sidebar a {
-    white-space: nowrap;
-  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -915,10 +997,6 @@ h2 {
 }
 
 @media (max-width: 24rem) {
-  .admin-topbar > a:last-child {
-    font-size: 0.75rem;
-  }
-
   .wordmark span {
     display: none;
   }
@@ -1009,17 +1087,21 @@ h2 {
 
 .desktop-navigation a[aria-current="page"]::after,
 .site-header::after {
-  background: linear-gradient(90deg, var(--brand-j), var(--brand-k), var(--brand-ring));
+  background: linear-gradient(
+    90deg,
+    var(--brand-j),
+    var(--brand-k),
+    var(--brand-ring)
+  );
 }
 
 .button-link--primary {
-  background:
-    linear-gradient(
-      115deg,
-      var(--brand-j) 0%,
-      color-mix(in srgb, var(--brand-j) 50%, var(--brand-k)) 58%,
-      var(--brand-k) 130%
-    );
+  background: linear-gradient(
+    115deg,
+    var(--brand-j) 0%,
+    color-mix(in srgb, var(--brand-j) 50%, var(--brand-k)) 58%,
+    var(--brand-k) 130%
+  );
   color: #14110c;
   border-color: transparent;
   box-shadow:
@@ -1028,12 +1110,11 @@ h2 {
 }
 
 .button-link--primary:hover {
-  background:
-    linear-gradient(
-      115deg,
-      color-mix(in srgb, var(--brand-j) 85%, white) 0%,
-      var(--brand-k) 100%
-    );
+  background: linear-gradient(
+    115deg,
+    color-mix(in srgb, var(--brand-j) 85%, white) 0%,
+    var(--brand-k) 100%
+  );
   color: #071018;
   transform: translateY(-2px);
   box-shadow:

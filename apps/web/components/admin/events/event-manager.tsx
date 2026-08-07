@@ -2,9 +2,16 @@
 
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 
+import { AiAssist } from "../../ui/ai-assist";
 import { DateField } from "../../ui/date-field";
 import { EmptyState } from "../../ui/empty-state";
 import { Select } from "../../ui/select";
+import { AdminDialog } from "../admin-dialog";
+import {
+  AdminErrorState,
+  AdminSkeleton,
+  ButtonPending,
+} from "../admin-feedback";
 import styles from "./event-manager.module.css";
 
 type Status = "draft" | "published" | "cancelled";
@@ -84,11 +91,13 @@ const emptyTicket = {
 
 export function EventManager() {
   const [events, setEvents] = useState<EventRecord[]>([]);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [selected, setSelected] = useState<EventRecord | null>(null);
   const [draft, setDraft] = useState<EventDraft>(emptyEvent);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketDraft, setTicketDraft] = useState(emptyTicket);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [ticketEditorOpen, setTicketEditorOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
@@ -113,11 +122,13 @@ export function EventManager() {
   }, []);
 
   async function choose(item: EventRecord) {
+    setEditorOpen(true);
     setSelected(item);
     setDraft(stripEvent(item));
     setMessage("");
     setError("");
     setSelectedTicket(null);
+    setTicketEditorOpen(false);
     setTicketDraft(emptyTicket);
     try {
       const response = await fetch(`/api/admin/events/${item.id}/preview`, {
@@ -220,6 +231,7 @@ export function EventManager() {
       );
       setTicketDraft({ ...emptyTicket, sort_order: tickets.length + 1 });
       setSelectedTicket(null);
+      setTicketEditorOpen(false);
       setMessage(
         selectedTicket
           ? "Ticket type updated and audited."
@@ -260,30 +272,42 @@ export function EventManager() {
   return (
     <div className={styles.manager}>
       <section className={styles.panel} aria-labelledby="events-title">
-        <h2 id="events-title">Events</h2>
-        <p>
-          Drafts remain private until an authorized publish action succeeds.
-        </p>
-        <button
-          disabled={pending}
-          onClick={() => {
-            setSelected(null);
-            setDraft(emptyEvent);
-            setTickets([]);
-            setSelectedTicket(null);
-            setTicketDraft(emptyTicket);
-          }}
-          type="button"
-        >
-          Add event
-        </button>
+        <header className="stage-head">
+          <div className="stage-head__copy">
+            <p className="stage-head__eyebrow">Ticketing operations</p>
+            <h2 id="events-title">Event workspace</h2>
+            <p className="stage-head__lede">
+              Create private drafts, verify the protected preview, then publish
+              through explicit audited actions. Drafts stay private until an
+              authorized publish succeeds.
+            </p>
+          </div>
+          <div className="stage-head__actions">
+            <button
+              className="primary"
+              disabled={pending}
+              onClick={() => {
+                setSelected(null);
+                setDraft(emptyEvent);
+                setTickets([]);
+                setSelectedTicket(null);
+                setTicketEditorOpen(false);
+                setTicketDraft(emptyTicket);
+                setEditorOpen(true);
+              }}
+              type="button"
+            >
+              Add event
+            </button>
+          </div>
+        </header>
         {loading ? (
-          <p role="status">Loading events…</p>
+          <AdminSkeleton label="Loading events" variant="table" />
         ) : events.length === 0 ? (
           <EmptyState
             tone="calendar"
             title="No events on the board"
-            description="Create a draft event to define venue, capacity, and ticket types. Nothing goes public until it is published."
+            description="No approved event content exists yet."
           />
         ) : (
           <ul className={styles.list}>
@@ -300,528 +324,444 @@ export function EventManager() {
         )}
       </section>
 
-      <section className={styles.panel} aria-labelledby="event-editor-title">
-        <h2 id="event-editor-title">{selected ? "Edit event" : "New event"}</h2>
-        <form className={styles.form} onSubmit={(event) => void save(event)}>
-          <Field label="Title">
-            <input
-              maxLength={160}
-              required
-              value={draft.title}
-              onChange={(event) =>
-                setDraft({ ...draft, title: event.target.value })
-              }
-            />
-          </Field>
-          <Field label="Summary">
-            <textarea
-              maxLength={320}
-              value={draft.summary}
-              onChange={(event) =>
-                setDraft({ ...draft, summary: event.target.value })
-              }
-            />
-          </Field>
-          <Field label="Description">
-            <textarea
-              maxLength={20000}
-              value={draft.description}
-              onChange={(event) =>
-                setDraft({ ...draft, description: event.target.value })
-              }
-            />
-          </Field>
-          <div className={styles.grid}>
-            <Field label="Starts at">
-              <DateField
-                required
-                aria-label="Starts at"
-                mode="datetime"
-                value={localDate(draft.starts_at)}
-                onChange={(value) =>
-                  setDraft({ ...draft, starts_at: isoDate(value) })
-                }
-              />
-            </Field>
-            <Field label="Ends at">
-              <DateField
-                required
-                aria-label="Ends at"
-                mode="datetime"
-                value={localDate(draft.ends_at)}
-                onChange={(value) =>
-                  setDraft({ ...draft, ends_at: isoDate(value) })
-                }
-              />
-            </Field>
-            <Field label="Timezone">
-              <input
-                maxLength={500}
-                required
-                value={draft.timezone}
-                onChange={(event) =>
-                  setDraft({ ...draft, timezone: event.target.value })
-                }
-              />
-            </Field>
-            <Field label="Capacity">
-              <input
-                maxLength={120}
-                min={1}
-                required
-                type="number"
-                value={draft.capacity}
-                onChange={(event) =>
-                  setDraft({ ...draft, capacity: Number(event.target.value) })
-                }
-              />
-            </Field>
-            <Field label="Venue">
-              <input
-                required
-                value={draft.venue.name}
-                onChange={(event) =>
-                  setDraft({
-                    ...draft,
-                    venue: { ...draft.venue, name: event.target.value },
-                  })
-                }
-              />
-            </Field>
-            <Field label="Address">
-              <input
-                required
-                value={draft.venue.address}
-                onChange={(event) =>
-                  setDraft({
-                    ...draft,
-                    venue: { ...draft.venue, address: event.target.value },
-                  })
-                }
-              />
-            </Field>
-            <Field label="City">
-              <input
-                required
-                value={draft.venue.city}
-                onChange={(event) =>
-                  setDraft({
-                    ...draft,
-                    venue: { ...draft.venue, city: event.target.value },
-                  })
-                }
-              />
-            </Field>
-            <Field label="Country code">
-              <input
-                aria-describedby="country-code-help"
-                maxLength={2}
-                pattern="[A-Za-z]{2}"
-                required
-                value={draft.venue.country_code}
-                onChange={(event) =>
-                  setDraft({
-                    ...draft,
-                    venue: {
-                      ...draft.venue,
-                      country_code: event.target.value.toUpperCase(),
-                    },
-                  })
-                }
-              />
-              <small id="country-code-help">Two-letter ISO country code.</small>
-            </Field>
-            <Field label="Map URL">
-              <input
-                maxLength={2048}
-                pattern="https://.*"
-                type="url"
-                value={draft.venue.map_url ?? ""}
-                onChange={(event) =>
-                  setDraft({
-                    ...draft,
-                    venue: { ...draft.venue, map_url: event.target.value },
-                  })
-                }
-              />
-            </Field>
-          </div>
-          <Field label="Venue accessibility">
-            <textarea
-              maxLength={2000}
-              value={draft.venue.accessibility ?? ""}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  venue: { ...draft.venue, accessibility: event.target.value },
-                })
-              }
-            />
-          </Field>
-          <Field label="Refund policy">
-            <textarea
-              maxLength={5000}
-              required
-              value={draft.policies.refunds}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  policies: { ...draft.policies, refunds: event.target.value },
-                })
-              }
-            />
-          </Field>
-          <Field label="Entry policy">
-            <textarea
-              maxLength={5000}
-              required
-              value={draft.policies.entry}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  policies: { ...draft.policies, entry: event.target.value },
-                })
-              }
-            />
-          </Field>
-          <Field label="Age guidance">
-            <textarea
-              maxLength={1000}
-              value={draft.policies.age_guidance ?? ""}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  policies: {
-                    ...draft.policies,
-                    age_guidance: event.target.value,
-                  },
-                })
-              }
-            />
-          </Field>
-          <Field label="Policy accessibility">
-            <textarea
-              maxLength={2000}
-              value={draft.policies.accessibility ?? ""}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  policies: {
-                    ...draft.policies,
-                    accessibility: event.target.value,
-                  },
-                })
-              }
-            />
-          </Field>
-          <Field label="Minimum age">
-            <input
-              min={0}
-              type="number"
-              value={draft.policies.age_limit}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  policies: {
-                    ...draft.policies,
-                    age_limit: Number(event.target.value),
-                  },
-                })
-              }
-            />
-          </Field>
-          <label className={styles.check}>
-            <input
-              checked={draft.banner.featured}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  banner: event.target.checked
-                    ? { featured: true }
-                    : { featured: false },
-                  banner_asset_id: event.target.checked
-                    ? draft.banner_asset_id
-                    : "",
-                })
-              }
-              type="checkbox"
-            />
-            Feature this event in a scheduled banner
-          </label>
-          {draft.banner.featured ? (
-            <fieldset className={styles.bannerFields}>
-              <legend>Featured banner schedule</legend>
-              <Field label="Banner asset UUID">
+      {editorOpen ? (
+        <AdminDialog
+          title={selected ? `Edit ${selected.title}` : "Add event"}
+          description="Manage event details and ticket types in this focused workspace."
+          onClose={() => setEditorOpen(false)}
+          wide
+        >
+          <section
+            className={styles.panel}
+            aria-labelledby="event-editor-title"
+          >
+            <h2 id="event-editor-title">
+              {selected ? "Edit event" : "New event"}
+            </h2>
+            <form
+              className={styles.form}
+              onSubmit={(event) => void save(event)}
+            >
+              <Field label="Title">
                 <input
-                  aria-describedby="banner-preview"
-                  pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"
+                  maxLength={160}
                   required
-                  value={draft.banner_asset_id ?? ""}
+                  value={draft.title}
                   onChange={(event) =>
-                    setDraft({ ...draft, banner_asset_id: event.target.value })
+                    setDraft({ ...draft, title: event.target.value })
+                  }
+                />
+              </Field>
+              <Field
+                label="Summary"
+                assist={
+                  <AiAssist
+                    field="summary"
+                    label="Summary"
+                    value={draft.summary}
+                    onApply={(summary) =>
+                      setDraft((current) => ({ ...current, summary }))
+                    }
+                  />
+                }
+              >
+                <textarea
+                  maxLength={320}
+                  value={draft.summary}
+                  onChange={(event) =>
+                    setDraft({ ...draft, summary: event.target.value })
+                  }
+                />
+              </Field>
+              <Field
+                label="Description"
+                assist={
+                  <AiAssist
+                    field="description"
+                    label="Description"
+                    value={draft.description}
+                    onApply={(description) =>
+                      setDraft((current) => ({ ...current, description }))
+                    }
+                  />
+                }
+              >
+                <textarea
+                  maxLength={20000}
+                  value={draft.description}
+                  onChange={(event) =>
+                    setDraft({ ...draft, description: event.target.value })
                   }
                 />
               </Field>
               <div className={styles.grid}>
-                <Field label="Banner starts at">
+                <Field label="Starts at">
                   <DateField
                     required
-                    aria-label="Banner starts at"
+                    aria-label="Starts at"
                     mode="datetime"
-                    value={localDate(draft.banner.starts_at ?? "")}
+                    value={localDate(draft.starts_at)}
                     onChange={(value) =>
-                      setDraft({
-                        ...draft,
-                        banner: {
-                          ...draft.banner,
-                          starts_at: isoDate(value),
-                        },
-                      })
+                      setDraft({ ...draft, starts_at: isoDate(value) })
                     }
                   />
                 </Field>
-                <Field label="Banner ends at">
+                <Field label="Ends at">
                   <DateField
                     required
-                    aria-label="Banner ends at"
+                    aria-label="Ends at"
                     mode="datetime"
-                    value={localDate(draft.banner.ends_at ?? "")}
+                    value={localDate(draft.ends_at)}
                     onChange={(value) =>
-                      setDraft({
-                        ...draft,
-                        banner: {
-                          ...draft.banner,
-                          ends_at: isoDate(value),
-                        },
-                      })
+                      setDraft({ ...draft, ends_at: isoDate(value) })
                     }
                   />
                 </Field>
-              </div>
-              <p id="banner-preview" className={styles.preview}>
-                Banner preview: asset {draft.banner_asset_id || "required"} runs{" "}
-                {draft.banner.starts_at
-                  ? localDate(draft.banner.starts_at)
-                  : "start required"}{" "}
-                to{" "}
-                {draft.banner.ends_at
-                  ? localDate(draft.banner.ends_at)
-                  : "end required"}
-                .
-              </p>
-            </fieldset>
-          ) : null}
-          <button disabled={pending} type="submit">
-            {pending ? "Saving…" : "Save draft"}
-          </button>
-        </form>
-        {selected?.status === "draft" ? (
-          <button
-            disabled={pending}
-            onClick={() => void transition("publish")}
-            type="button"
-          >
-            Publish event
-          </button>
-        ) : null}
-        {selected?.status === "published" ? (
-          <button
-            disabled={pending}
-            onClick={() => void transition("cancel")}
-            type="button"
-          >
-            Cancel event
-          </button>
-        ) : null}
-      </section>
-
-      {selected ? (
-        <section className={styles.panel} aria-labelledby="ticket-title">
-          <h2 id="ticket-title">Ticket types</h2>
-          <ul className={styles.list}>
-            {tickets.map((ticket) => (
-              <li key={ticket.id}>
-                <strong>{ticket.name}</strong>
-                <span>
-                  {ticket.currency} {ticket.price}
-                </span>
-                <span>
-                  {ticket.sold + ticket.reserved} / {ticket.capacity} committed
-                  · {ticket.status}
-                </span>
-                {selected.status === "published" ? (
-                  <button
-                    disabled={pending}
-                    onClick={() => void pause(ticket)}
-                    type="button"
-                  >
-                    {ticket.paused ? "Resume sales" : "Pause sales"}
-                  </button>
-                ) : null}
-                {selected.status === "draft" ? (
-                  <button
-                    onClick={() => {
-                      setSelectedTicket(ticket);
-                      setTicketDraft(stripTicket(ticket));
-                    }}
-                    type="button"
-                  >
-                    Edit ticket type {ticket.name}
-                  </button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-          {selected.status === "draft" ? (
-            <form
-              className={styles.form}
-              onSubmit={(event) => void addTicket(event)}
-            >
-              <h3>{selectedTicket ? "Edit ticket type" : "Add ticket type"}</h3>
-              <div className={styles.grid}>
-                <Field label="Ticket name">
+                <Field label="Timezone">
+                  <input
+                    maxLength={500}
+                    required
+                    value={draft.timezone}
+                    onChange={(event) =>
+                      setDraft({ ...draft, timezone: event.target.value })
+                    }
+                  />
+                </Field>
+                <Field label="Capacity">
                   <input
                     maxLength={120}
-                    required
-                    value={ticketDraft.name}
-                    onChange={(event) =>
-                      setTicketDraft({
-                        ...ticketDraft,
-                        name: event.target.value,
-                      })
-                    }
-                  />
-                </Field>
-                <Field label="Ticket description">
-                  <textarea
-                    maxLength={2000}
-                    value={ticketDraft.description}
-                    onChange={(event) =>
-                      setTicketDraft({
-                        ...ticketDraft,
-                        description: event.target.value,
-                      })
-                    }
-                  />
-                </Field>
-                <Field label="Price">
-                  <input
-                    inputMode="decimal"
-                    pattern="[0-9]+(\.[0-9]{1,2})?"
-                    required
-                    value={ticketDraft.price}
-                    onChange={(event) =>
-                      setTicketDraft({
-                        ...ticketDraft,
-                        price: event.target.value,
-                      })
-                    }
-                  />
-                </Field>
-                <Field label="Currency">
-                  <Select
-                    required
-                    value={ticketDraft.currency}
-                    onChange={(currency) =>
-                      setTicketDraft({
-                        ...ticketDraft,
-                        currency,
-                      })
-                    }
-                    options={["GHS", "USD", "EUR", "GBP"].map((currency) => ({
-                      value: currency,
-                      label: currency,
-                    }))}
-                    aria-label="Ticket currency"
-                  />
-                </Field>
-                <Field label="Sort order">
-                  <input
-                    min={0}
-                    max={10000}
-                    type="number"
-                    value={ticketDraft.sort_order}
-                    onChange={(event) =>
-                      setTicketDraft({
-                        ...ticketDraft,
-                        sort_order: Number(event.target.value),
-                      })
-                    }
-                  />
-                </Field>
-                <Field label="Ticket capacity">
-                  <input
                     min={1}
                     required
                     type="number"
-                    value={ticketDraft.capacity}
+                    value={draft.capacity}
                     onChange={(event) =>
-                      setTicketDraft({
-                        ...ticketDraft,
+                      setDraft({
+                        ...draft,
                         capacity: Number(event.target.value),
                       })
                     }
                   />
                 </Field>
-                <Field label="Minimum per order">
+                <Field label="Venue">
                   <input
-                    min={1}
-                    type="number"
-                    value={ticketDraft.min_per_order}
+                    required
+                    value={draft.venue.name}
                     onChange={(event) =>
-                      setTicketDraft({
-                        ...ticketDraft,
-                        min_per_order: Number(event.target.value),
+                      setDraft({
+                        ...draft,
+                        venue: { ...draft.venue, name: event.target.value },
                       })
                     }
                   />
                 </Field>
-                <Field label="Maximum per order">
+                <Field label="Address">
                   <input
-                    min={1}
-                    type="number"
-                    value={ticketDraft.max_per_order}
+                    required
+                    value={draft.venue.address}
                     onChange={(event) =>
-                      setTicketDraft({
-                        ...ticketDraft,
-                        max_per_order: Number(event.target.value),
+                      setDraft({
+                        ...draft,
+                        venue: { ...draft.venue, address: event.target.value },
                       })
                     }
                   />
                 </Field>
-                <Field label="Sales start">
-                  <DateField
+                <Field label="City">
+                  <input
                     required
-                    aria-label="Sales start"
-                    mode="datetime"
-                    value={localDate(ticketDraft.sales_start)}
-                    onChange={(value) =>
-                      setTicketDraft({
-                        ...ticketDraft,
-                        sales_start: isoDate(value),
+                    value={draft.venue.city}
+                    onChange={(event) =>
+                      setDraft({
+                        ...draft,
+                        venue: { ...draft.venue, city: event.target.value },
                       })
                     }
                   />
                 </Field>
-                <Field label="Sales end">
-                  <DateField
+                <Field label="Country code">
+                  <input
+                    aria-describedby="country-code-help"
+                    maxLength={2}
+                    pattern="[A-Za-z]{2}"
                     required
-                    aria-label="Sales end"
-                    mode="datetime"
-                    value={localDate(ticketDraft.sales_end)}
-                    onChange={(value) =>
-                      setTicketDraft({
-                        ...ticketDraft,
-                        sales_end: isoDate(value),
+                    value={draft.venue.country_code}
+                    onChange={(event) =>
+                      setDraft({
+                        ...draft,
+                        venue: {
+                          ...draft.venue,
+                          country_code: event.target.value.toUpperCase(),
+                        },
+                      })
+                    }
+                  />
+                  <small id="country-code-help">
+                    Two-letter ISO country code.
+                  </small>
+                </Field>
+                <Field label="Map URL">
+                  <input
+                    maxLength={2048}
+                    pattern="https://.*"
+                    type="url"
+                    value={draft.venue.map_url ?? ""}
+                    onChange={(event) =>
+                      setDraft({
+                        ...draft,
+                        venue: { ...draft.venue, map_url: event.target.value },
                       })
                     }
                   />
                 </Field>
               </div>
+              <Field label="Venue accessibility">
+                <textarea
+                  maxLength={2000}
+                  value={draft.venue.accessibility ?? ""}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      venue: {
+                        ...draft.venue,
+                        accessibility: event.target.value,
+                      },
+                    })
+                  }
+                />
+              </Field>
+              <Field label="Refund policy">
+                <textarea
+                  maxLength={5000}
+                  required
+                  value={draft.policies.refunds}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      policies: {
+                        ...draft.policies,
+                        refunds: event.target.value,
+                      },
+                    })
+                  }
+                />
+              </Field>
+              <Field label="Entry policy">
+                <textarea
+                  maxLength={5000}
+                  required
+                  value={draft.policies.entry}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      policies: {
+                        ...draft.policies,
+                        entry: event.target.value,
+                      },
+                    })
+                  }
+                />
+              </Field>
+              <Field label="Age guidance">
+                <textarea
+                  maxLength={1000}
+                  value={draft.policies.age_guidance ?? ""}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      policies: {
+                        ...draft.policies,
+                        age_guidance: event.target.value,
+                      },
+                    })
+                  }
+                />
+              </Field>
+              <Field label="Policy accessibility">
+                <textarea
+                  maxLength={2000}
+                  value={draft.policies.accessibility ?? ""}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      policies: {
+                        ...draft.policies,
+                        accessibility: event.target.value,
+                      },
+                    })
+                  }
+                />
+              </Field>
+              <Field label="Minimum age">
+                <input
+                  min={0}
+                  type="number"
+                  value={draft.policies.age_limit}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      policies: {
+                        ...draft.policies,
+                        age_limit: Number(event.target.value),
+                      },
+                    })
+                  }
+                />
+              </Field>
+              <label className={styles.check}>
+                <input
+                  checked={draft.banner.featured}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      banner: event.target.checked
+                        ? { featured: true }
+                        : { featured: false },
+                      banner_asset_id: event.target.checked
+                        ? draft.banner_asset_id
+                        : "",
+                    })
+                  }
+                  type="checkbox"
+                />
+                Feature this event in a scheduled banner
+              </label>
+              {draft.banner.featured ? (
+                <fieldset className={styles.bannerFields}>
+                  <legend>Featured banner schedule</legend>
+                  <Field label="Banner asset UUID">
+                    <input
+                      aria-describedby="banner-preview"
+                      pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"
+                      required
+                      value={draft.banner_asset_id ?? ""}
+                      onChange={(event) =>
+                        setDraft({
+                          ...draft,
+                          banner_asset_id: event.target.value,
+                        })
+                      }
+                    />
+                  </Field>
+                  <div className={styles.grid}>
+                    <Field label="Banner starts at">
+                      <DateField
+                        required
+                        aria-label="Banner starts at"
+                        mode="datetime"
+                        value={localDate(draft.banner.starts_at ?? "")}
+                        onChange={(value) =>
+                          setDraft({
+                            ...draft,
+                            banner: {
+                              ...draft.banner,
+                              starts_at: isoDate(value),
+                            },
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field label="Banner ends at">
+                      <DateField
+                        required
+                        aria-label="Banner ends at"
+                        mode="datetime"
+                        value={localDate(draft.banner.ends_at ?? "")}
+                        onChange={(value) =>
+                          setDraft({
+                            ...draft,
+                            banner: {
+                              ...draft.banner,
+                              ends_at: isoDate(value),
+                            },
+                          })
+                        }
+                      />
+                    </Field>
+                  </div>
+                  <p id="banner-preview" className={styles.preview}>
+                    Banner preview: asset {draft.banner_asset_id || "required"}{" "}
+                    runs{" "}
+                    {draft.banner.starts_at
+                      ? localDate(draft.banner.starts_at)
+                      : "start required"}{" "}
+                    to{" "}
+                    {draft.banner.ends_at
+                      ? localDate(draft.banner.ends_at)
+                      : "end required"}
+                    .
+                  </p>
+                </fieldset>
+              ) : null}
               <button disabled={pending} type="submit">
-                {selectedTicket ? "Update ticket type" : "Add ticket type"}
+                {pending ? (
+                  <ButtonPending label="Saving event draft" />
+                ) : (
+                  "Save draft"
+                )}
               </button>
-              {selectedTicket ? (
+            </form>
+            {selected?.status === "draft" ? (
+              <button
+                disabled={pending}
+                onClick={() => void transition("publish")}
+                type="button"
+              >
+                Publish event
+              </button>
+            ) : null}
+            {selected?.status === "published" ? (
+              <button
+                disabled={pending}
+                onClick={() => void transition("cancel")}
+                type="button"
+              >
+                Cancel event
+              </button>
+            ) : null}
+          </section>
+
+          {selected ? (
+            <section
+              className={`${styles.panel} ${styles.ticketPanel}`}
+              aria-labelledby="ticket-title"
+            >
+              <h2 id="ticket-title">Ticket types</h2>
+              <ul className={styles.list}>
+                {tickets.map((ticket) => (
+                  <li key={ticket.id}>
+                    <strong>{ticket.name}</strong>
+                    <span>
+                      {ticket.currency} {ticket.price}
+                    </span>
+                    <span>
+                      {ticket.sold + ticket.reserved} / {ticket.capacity}{" "}
+                      committed · {ticket.status}
+                    </span>
+                    {selected.status === "published" ? (
+                      <button
+                        disabled={pending}
+                        onClick={() => void pause(ticket)}
+                        type="button"
+                      >
+                        {ticket.paused ? "Resume sales" : "Pause sales"}
+                      </button>
+                    ) : null}
+                    {selected.status === "draft" ? (
+                      <button
+                        onClick={() => {
+                          setSelectedTicket(ticket);
+                          setTicketDraft(stripTicket(ticket));
+                          setTicketEditorOpen(true);
+                        }}
+                        type="button"
+                      >
+                        Edit ticket type {ticket.name}
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+              {selected.status === "draft" && !ticketEditorOpen ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -830,17 +770,190 @@ export function EventManager() {
                       ...emptyTicket,
                       sort_order: tickets.length + 1,
                     });
+                    setTicketEditorOpen(true);
                   }}
                 >
-                  Cancel ticket edit
+                  Add ticket type
                 </button>
               ) : null}
-            </form>
+              {selected.status === "draft" && ticketEditorOpen ? (
+                <form
+                  className={styles.form}
+                  onSubmit={(event) => void addTicket(event)}
+                >
+                  <h3>
+                    {selectedTicket ? "Edit ticket type" : "Add ticket type"}
+                  </h3>
+                  <div className={styles.grid}>
+                    <Field label="Ticket name">
+                      <input
+                        maxLength={120}
+                        required
+                        value={ticketDraft.name}
+                        onChange={(event) =>
+                          setTicketDraft({
+                            ...ticketDraft,
+                            name: event.target.value,
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field label="Ticket description">
+                      <textarea
+                        maxLength={2000}
+                        value={ticketDraft.description}
+                        onChange={(event) =>
+                          setTicketDraft({
+                            ...ticketDraft,
+                            description: event.target.value,
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field label="Price">
+                      <input
+                        inputMode="decimal"
+                        pattern="[0-9]+(\.[0-9]{1,2})?"
+                        required
+                        value={ticketDraft.price}
+                        onChange={(event) =>
+                          setTicketDraft({
+                            ...ticketDraft,
+                            price: event.target.value,
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field label="Currency">
+                      <Select
+                        required
+                        value={ticketDraft.currency}
+                        onChange={(currency) =>
+                          setTicketDraft({
+                            ...ticketDraft,
+                            currency,
+                          })
+                        }
+                        options={["GHS", "USD", "EUR", "GBP"].map(
+                          (currency) => ({
+                            value: currency,
+                            label: currency,
+                          }),
+                        )}
+                        aria-label="Ticket currency"
+                      />
+                    </Field>
+                    <Field label="Sort order">
+                      <input
+                        min={0}
+                        max={10000}
+                        type="number"
+                        value={ticketDraft.sort_order}
+                        onChange={(event) =>
+                          setTicketDraft({
+                            ...ticketDraft,
+                            sort_order: Number(event.target.value),
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field label="Ticket capacity">
+                      <input
+                        min={1}
+                        required
+                        type="number"
+                        value={ticketDraft.capacity}
+                        onChange={(event) =>
+                          setTicketDraft({
+                            ...ticketDraft,
+                            capacity: Number(event.target.value),
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field label="Minimum per order">
+                      <input
+                        min={1}
+                        type="number"
+                        value={ticketDraft.min_per_order}
+                        onChange={(event) =>
+                          setTicketDraft({
+                            ...ticketDraft,
+                            min_per_order: Number(event.target.value),
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field label="Maximum per order">
+                      <input
+                        min={1}
+                        type="number"
+                        value={ticketDraft.max_per_order}
+                        onChange={(event) =>
+                          setTicketDraft({
+                            ...ticketDraft,
+                            max_per_order: Number(event.target.value),
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field label="Sales start">
+                      <DateField
+                        required
+                        aria-label="Sales start"
+                        mode="datetime"
+                        value={localDate(ticketDraft.sales_start)}
+                        onChange={(value) =>
+                          setTicketDraft({
+                            ...ticketDraft,
+                            sales_start: isoDate(value),
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field label="Sales end">
+                      <DateField
+                        required
+                        aria-label="Sales end"
+                        mode="datetime"
+                        value={localDate(ticketDraft.sales_end)}
+                        onChange={(value) =>
+                          setTicketDraft({
+                            ...ticketDraft,
+                            sales_end: isoDate(value),
+                          })
+                        }
+                      />
+                    </Field>
+                  </div>
+                  <button disabled={pending} type="submit">
+                    {selectedTicket ? "Update ticket type" : "Add ticket type"}
+                  </button>
+                  {selectedTicket ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedTicket(null);
+                        setTicketEditorOpen(false);
+                        setTicketDraft({
+                          ...emptyTicket,
+                          sort_order: tickets.length + 1,
+                        });
+                      }}
+                    >
+                      Cancel ticket edit
+                    </button>
+                  ) : null}
+                </form>
+              ) : null}
+            </section>
           ) : null}
-        </section>
+        </AdminDialog>
       ) : null}
       <div aria-live="polite">{message}</div>
-      {error ? (
+      {error === "Events could not be loaded. Try again." ? (
+        <AdminErrorState title="Events are unavailable" message={error} />
+      ) : error ? (
         <p className={styles.error} role="alert">
           {error}
         </p>
@@ -849,12 +962,33 @@ export function EventManager() {
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
+/**
+ * `assist` renders OUTSIDE the `<label>` on purpose. A label's accessible name
+ * is computed from its text content, so an AI bar nested inside it appends
+ * every button's text to the control's name — the Summary box stops being
+ * "Summary" and becomes "Summary AI Rewrite Expand Shorten…".
+ */
+function Field({
+  label,
+  children,
+  assist,
+}: {
+  label: string;
+  children: ReactNode;
+  assist?: ReactNode;
+}) {
+  const field = (
     <label className={styles.field}>
       <span>{label}</span>
       {children}
     </label>
+  );
+  if (!assist) return field;
+  return (
+    <div className={styles.fieldGroup}>
+      {field}
+      {assist}
+    </div>
   );
 }
 function stripEvent(event: EventRecord): EventDraft {

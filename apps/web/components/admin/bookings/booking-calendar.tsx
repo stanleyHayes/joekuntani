@@ -1,8 +1,12 @@
 "use client";
 
+import { CalendarPlusIcon } from "@phosphor-icons/react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { DateField } from "../../ui/date-field";
+import { EmptyState } from "../../ui/empty-state";
 import { Select } from "../../ui/select";
+import { AdminDialog } from "../admin-dialog";
+import { AdminErrorState } from "../admin-feedback";
 import styles from "./booking-calendar.module.css";
 
 type Status = "tentative" | "confirmed" | "cancelled";
@@ -125,10 +129,12 @@ export function calendarRange(anchor: Date, view: View, timezone: string) {
 }
 export function BookingCalendar() {
   const [items, setItems] = useState<Booking[]>([]),
+    [createOpen, setCreateOpen] = useState(false),
     [timezone, setTimezone] = useState("Africa/Accra"),
     [view, setView] = useState<View>("month"),
     [anchor, setAnchor] = useState(() => new Date()),
     [message, setMessage] = useState(""),
+    [error, setError] = useState(""),
     [warnings, setWarnings] = useState<Warning[]>([]);
   const range = useMemo(
     () => calendarRange(anchor, view, timezone),
@@ -136,16 +142,31 @@ export function BookingCalendar() {
   );
   const rangeStart = range.start.toISOString();
   const rangeEnd = range.end.toISOString();
+  const rangeLabel = useMemo(() => {
+    const format = new Intl.DateTimeFormat(undefined, {
+      day: "numeric",
+      month: "short",
+      timeZone: timezone,
+    });
+    // `range.end` is the exclusive upper bound, so step back inside it before
+    // labelling — otherwise August reads as "1 Aug – 1 Sep".
+    const lastDay = new Date(range.end.getTime() - 1);
+    return `${format.format(range.start)} – ${format.format(lastDay)}`;
+  }, [range.end, range.start, timezone]);
   const load = useCallback(async () => {
     try {
       const data = await api(
         `/api/admin/bookings?from=${encodeURIComponent(rangeStart)}&to=${encodeURIComponent(rangeEnd)}`,
       );
-      setItems(data.items);
-      setTimezone(data.timezone);
+      setItems(data?.items ?? []);
+      if (data?.timezone) setTimezone(data.timezone);
       setMessage("");
+      setError("");
     } catch {
-      setMessage("Bookings could not be loaded.");
+      // Drop the stale range so the failure banner is never contradicted by
+      // "No bookings in this range" — that claim needs a successful read.
+      setItems([]);
+      setError("Bookings could not be loaded.");
     }
   }, [rangeEnd, rangeStart]);
   useEffect(() => {
@@ -177,14 +198,16 @@ export function BookingCalendar() {
       });
       setWarnings(result.warnings);
       form.reset();
+      setCreateOpen(false);
       await load();
       setMessage(
         result.warnings.length
           ? "Booking saved with schedule warnings."
           : "Booking saved.",
       );
+      setError("");
     } catch {
-      setMessage("Booking could not be saved.");
+      setError("Booking could not be saved.");
     }
   }
   async function status(item: Booking, next: Status) {
@@ -214,8 +237,9 @@ export function BookingCalendar() {
           ? "Status updated with schedule warnings."
           : "Status updated.",
       );
+      setError("");
     } catch {
-      setMessage("Status could not be updated.");
+      setError("Status could not be updated.");
     }
   }
   const grouped = useMemo(
@@ -236,21 +260,53 @@ export function BookingCalendar() {
   );
   return (
     <section className={styles.workspace} aria-live="polite">
-      <header>
-        <p>
-          Business timezone: <strong>{timezone}</strong>
-        </p>
-        <div className={styles.toolbar} role="group" aria-label="Calendar view">
-          {(["month", "week", "list"] as View[]).map((value) => (
-            <button
-              key={value}
-              aria-pressed={view === value}
-              onClick={() => setView(value)}
-            >
-              {value}
-            </button>
-          ))}
-          <label>
+      <header className="stage-head">
+        <div className="stage-head__copy">
+          <p className="stage-head__eyebrow">Joe’s diary</p>
+          <h2>Where Joe is playing</h2>
+          <p className="stage-head__lede">
+            Hold, confirm and cancel Joe’s dates. Times are read and written in
+            his business timezone, <strong>{timezone}</strong>.
+          </p>
+        </div>
+        <div className="stage-head__actions">
+          <button
+            className="primary"
+            type="button"
+            onClick={() => setCreateOpen(true)}
+          >
+            Add booking
+          </button>
+        </div>
+      </header>
+      <div className="stage-filters">
+        <div className="stage-filters__head">
+          <p className="stage-filters__title">Range</p>
+          <p className="stage-filters__meta">
+            {error
+              ? "Range unavailable"
+              : `${items.length} ${items.length === 1 ? "booking" : "bookings"} · ${rangeLabel}`}
+          </p>
+        </div>
+        <div className={styles.rangeRow}>
+          <div
+            className={styles.segmented}
+            role="group"
+            aria-label="Calendar view"
+          >
+            {(["month", "week", "list"] as View[]).map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={view === value}
+                onClick={() => setView(value)}
+              >
+                {value[0]?.toUpperCase()}
+                {value.slice(1)}
+              </button>
+            ))}
+          </div>
+          <label className={styles.dateField}>
             Calendar date
             <DateField
               aria-label="Calendar date"
@@ -262,13 +318,22 @@ export function BookingCalendar() {
             />
           </label>
           <a
+            className={styles.exportLink}
             href={`/api/admin/bookings/calendar.ics?from=${encodeURIComponent(range.start.toISOString())}&to=${encodeURIComponent(range.end.toISOString())}`}
           >
+            <CalendarPlusIcon size={15} aria-hidden="true" />
             Export iCal
           </a>
         </div>
-      </header>
+      </div>
       {message && <p role="status">{message}</p>}
+      {error ? (
+        <AdminErrorState
+          title="Bookings are unavailable"
+          message={error}
+          retry={error === "Bookings could not be loaded."}
+        />
+      ) : null}
       {warnings.length > 0 && (
         <aside className={styles.warning}>
           <h3>Schedule conflicts</h3>
@@ -282,100 +347,130 @@ export function BookingCalendar() {
           </ul>
         </aside>
       )}
-      <form className={styles.form} onSubmit={create}>
-        <h3>Add booking</h3>
-        <label>
-          Title
-          <input name="title" required minLength={2} />
-        </label>
-        <label>
-          CRM enquiry ID
-          <input name="enquiry_id" required pattern="[0-9a-f-]{36}" />
-        </label>
-        <label>
-          Service ID
-          <input name="service_id" required pattern="[0-9a-f-]{36}" />
-        </label>
-        <label>
-          Starts
-          <DateField
-            name="start_at"
-            aria-label="Starts"
-            mode="datetime"
-            required
-          />
-        </label>
-        <label>
-          Ends
-          <DateField name="end_at" aria-label="Ends" mode="datetime" required />
-        </label>
-        <label>
-          Venue
-          <input name="venue" maxLength={200} />
-        </label>
-        <label>
-          City
-          <input name="city" maxLength={100} />
-        </label>
-        <label>
-          Country
-          <input name="country" defaultValue="GH" maxLength={2} />
-        </label>
-        <label>
-          Status
-          <Select
-            name="status"
-            defaultValue="tentative"
-            options={[
-              { value: "tentative", label: "Tentative" },
-              { value: "confirmed", label: "Confirmed" },
-            ]}
-            aria-label="Booking status"
-          />
-        </label>
-        <label>
-          Fee
-          <input name="fee" defaultValue="0.00" inputMode="decimal" />
-        </label>
-        <label>
-          Currency
-          <input name="currency" defaultValue="GHS" maxLength={3} />
-        </label>
-        <label>
-          Requirements
-          <textarea name="requirements" maxLength={500} />
-        </label>
-        <button type="submit">Create booking</button>
-      </form>
-      <div
-        className={view === "list" ? styles.list : styles.calendar}
-        data-view={view}
-      >
-        {grouped.length === 0 ? (
-          <p>No bookings in this range.</p>
-        ) : (
-          grouped.map(([day, bookings]) => (
+      {createOpen ? (
+        <AdminDialog
+          title="Add booking"
+          description="Create a calendar booking from an existing CRM enquiry."
+          onClose={() => setCreateOpen(false)}
+          wide
+        >
+          <form className={styles.form} onSubmit={create}>
+            <label>
+              Title
+              <input name="title" required minLength={2} />
+            </label>
+            <label>
+              CRM enquiry ID
+              <input name="enquiry_id" required pattern="[0-9a-f-]{36}" />
+            </label>
+            <label>
+              Service ID
+              <input name="service_id" required pattern="[0-9a-f-]{36}" />
+            </label>
+            <label>
+              Starts
+              <DateField
+                name="start_at"
+                aria-label="Starts"
+                mode="datetime"
+                required
+              />
+            </label>
+            <label>
+              Ends
+              <DateField
+                name="end_at"
+                aria-label="Ends"
+                mode="datetime"
+                required
+              />
+            </label>
+            <label>
+              Venue
+              <input name="venue" maxLength={200} />
+            </label>
+            <label>
+              City
+              <input name="city" maxLength={100} />
+            </label>
+            <label>
+              Country
+              <input name="country" defaultValue="GH" maxLength={2} />
+            </label>
+            <label>
+              Status
+              <Select
+                name="status"
+                defaultValue="tentative"
+                options={[
+                  { value: "tentative", label: "Tentative" },
+                  { value: "confirmed", label: "Confirmed" },
+                ]}
+                aria-label="Booking status"
+              />
+            </label>
+            <label>
+              Fee
+              <input name="fee" defaultValue="0.00" inputMode="decimal" />
+            </label>
+            <label>
+              Currency
+              <input name="currency" defaultValue="GHS" maxLength={3} />
+            </label>
+            <label>
+              Requirements
+              <textarea name="requirements" maxLength={500} />
+            </label>
+            <button type="submit">Create booking</button>
+          </form>
+        </AdminDialog>
+      ) : null}
+      {error ? null : grouped.length === 0 ? (
+        <EmptyState
+          tone="calendar"
+          title="Joe’s diary is clear here"
+          description={`Nothing is booked between ${rangeLabel}. Widen the view, or put the first hold in the diary.`}
+          action={
+            <button type="button" onClick={() => setCreateOpen(true)}>
+              Add booking
+            </button>
+          }
+        />
+      ) : (
+        <div
+          className={view === "list" ? styles.list : styles.calendar}
+          data-view={view}
+        >
+          {grouped.map(([day, bookings]) => (
             <section className={styles.day} key={day}>
               <h3>{day}</h3>
               {bookings.map((item) => (
                 <article key={item.id}>
-                  <strong>{item.title}</strong>
-                  <p>
-                    {local(item.start_at, timezone)}–
+                  <div className={styles.bookingHead}>
+                    <strong>{item.title}</strong>
+                    <span className={styles.pill} data-status={item.status}>
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className={styles.time}>
+                    {local(item.start_at, timezone)} –{" "}
                     {local(item.end_at, timezone)}
                   </p>
-                  <p>
-                    {item.venue}, {item.city} ·{" "}
-                    <span className={styles[item.status]}>{item.status}</span>
+                  <p className={styles.place}>
+                    {[item.venue, item.city].filter(Boolean).join(", ") ||
+                      "Location to be confirmed"}
                   </p>
                   {item.status !== "cancelled" && (
-                    <div>
+                    <div className={styles.bookingActions}>
                       {item.status === "tentative" && (
                         <button onClick={() => status(item, "confirmed")}>
                           Confirm
                         </button>
                       )}
-                      <button onClick={() => status(item, "cancelled")}>
+                      <button
+                        className={styles.cancelAction}
+                        onClick={() => status(item, "cancelled")}
+                      >
                         Cancel
                       </button>
                     </div>
@@ -383,9 +478,9 @@ export function BookingCalendar() {
                 </article>
               ))}
             </section>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

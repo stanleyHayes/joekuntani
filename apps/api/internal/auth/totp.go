@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha1" // #nosec G505 -- TOTP HMAC-SHA1 is required by RFC 6238 and is not used as a password hash.
 	"crypto/subtle"
 	"encoding/base32"
@@ -10,6 +11,14 @@ import (
 	"strings"
 	"time"
 )
+
+func GenerateMFASecret() (string, error) {
+	raw := make([]byte, 20)
+	if _, err := rand.Read(raw); err != nil {
+		return "", err
+	}
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(raw), nil
+}
 
 func VerifyTOTP(secret, code string, now time.Time) (int64, bool) {
 	if len(code) != 6 {

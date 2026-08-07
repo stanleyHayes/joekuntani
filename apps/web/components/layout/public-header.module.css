@@ -64,6 +64,16 @@
   text-decoration: none;
 }
 
+.brand :global(.brand-mark__text) {
+  padding-top: 0.08em;
+  font-family: var(--font-brand);
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0.015em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .desktopNav {
   margin-inline: auto;
   min-width: 0;
@@ -186,6 +196,14 @@
   transition: transform 160ms ease;
 }
 
+/* Support sits beside the enquiry CTA and survives the mobile breakpoint,
+   because giving must stay one tap away on every page. */
+.support {
+  min-height: 2.5rem;
+  padding-inline: 0.95rem;
+  font-size: 0.82rem;
+}
+
 .cta:hover {
   transform: scale(1.04);
 }
@@ -233,6 +251,11 @@
 
   .cta {
     display: none;
+  }
+
+  .support {
+    padding-inline: 0.8rem;
+    font-size: 0.78rem;
   }
 
   .menuButton {

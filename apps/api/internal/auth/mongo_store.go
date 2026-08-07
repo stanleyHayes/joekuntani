@@ -14,6 +14,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type SecretBox struct{ aead cipher.AEAD }
@@ -298,6 +299,184 @@ func (store *MongoStore) DisableUserAndRevokeSessions(ctx context.Context, id st
 func (store *MongoStore) AppendAudit(ctx context.Context, event AuditEvent) error {
 	return store.appendAudit(ctx, event)
 }
+
+func (store *MongoStore) ListUsers(ctx context.Context) ([]StaffRecord, error) {
+	cursor, err := store.database.Collection("users").Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+	out := make([]StaffRecord, 0)
+	for cursor.Next(ctx) {
+		var doc userDocument
+		if err := cursor.Decode(&doc); err != nil {
+			return nil, err
+		}
+		out = append(out, StaffRecord{
+			ID: doc.PublicID, Name: doc.Name, Email: doc.Email, Role: doc.Role,
+			Status: doc.Status, MFAEnabled: doc.MFAEnabled, UpdatedAt: doc.UpdatedAt,
+		})
+	}
+	return out, cursor.Err()
+}
+
+func (store *MongoStore) ProvisionStaff(ctx context.Context, name, email, password string, role Role, mfaSecret string) (string, error) {
+	return store.ProvisionUser(ctx, name, email, password, role, mfaSecret)
+}
+
+func (store *MongoStore) UpdateProfile(ctx context.Context, id, name string, now time.Time, audit AuditEvent) error {
+	oid, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return ErrUserNotFound
+	}
+	session, err := store.database.Client().StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(ctx)
+	_, err = session.WithTransaction(ctx, func(transaction context.Context) (any, error) {
+		result, err := store.database.Collection("users").UpdateOne(transaction, bson.M{"_id": oid}, bson.M{"$set": bson.M{"name": name, "updated_at": now}})
+		if err != nil {
+			return nil, err
+		}
+		if result.MatchedCount != 1 {
+			return nil, ErrUserNotFound
+		}
+		_, err = store.database.Collection("auth_sessions").UpdateMany(transaction, bson.M{"user_id": oid, "revoked_at": nil}, bson.M{"$set": bson.M{"user_version": now}})
+		if err != nil {
+			return nil, err
+		}
+		return nil, store.appendAudit(transaction, audit)
+	})
+	return err
+}
+
+func (store *MongoStore) ChangePassword(ctx context.Context, id, sessionID, hash string, now time.Time, audit AuditEvent) error {
+	oid, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return ErrUserNotFound
+	}
+	sessionOID, err := bson.ObjectIDFromHex(sessionID)
+	if err != nil {
+		return ErrUnauthorized
+	}
+	session, err := store.database.Client().StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(ctx)
+	_, err = session.WithTransaction(ctx, func(transaction context.Context) (any, error) {
+		result, err := store.database.Collection("users").UpdateOne(transaction, bson.M{"_id": oid}, bson.M{"$set": bson.M{"password_hash": hash, "updated_at": now}})
+		if err != nil {
+			return nil, err
+		}
+		if result.MatchedCount != 1 {
+			return nil, ErrUserNotFound
+		}
+		_, err = store.database.Collection("auth_sessions").UpdateMany(transaction, bson.M{"user_id": oid, "_id": bson.M{"$ne": sessionOID}, "revoked_at": nil}, bson.M{"$set": bson.M{"revoked_at": now}})
+		if err != nil {
+			return nil, err
+		}
+		_, err = store.database.Collection("auth_sessions").UpdateOne(transaction, bson.M{"_id": sessionOID, "user_id": oid, "revoked_at": nil}, bson.M{"$set": bson.M{"user_version": now}})
+		if err != nil {
+			return nil, err
+		}
+		return nil, store.appendAudit(transaction, audit)
+	})
+	return err
+}
+
+func (store *MongoStore) UpdateRole(ctx context.Context, publicID string, role Role, now time.Time, audit AuditEvent) error {
+	session, err := store.database.Client().StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(ctx)
+	_, err = session.WithTransaction(ctx, func(transaction context.Context) (any, error) {
+		var user struct {
+			ID bson.ObjectID `bson:"_id"`
+		}
+		err := store.database.Collection("users").FindOne(transaction, bson.M{"public_id": publicID}).Decode(&user)
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, ErrUserNotFound
+		}
+		if err != nil {
+			return nil, err
+		}
+		result, err := store.database.Collection("users").UpdateOne(transaction, bson.M{"_id": user.ID}, bson.M{"$set": bson.M{"role": role, "updated_at": now}})
+		if err != nil {
+			return nil, err
+		}
+		if result.MatchedCount != 1 {
+			return nil, ErrUserNotFound
+		}
+		_, err = store.database.Collection("auth_sessions").UpdateMany(transaction, bson.M{"user_id": user.ID, "revoked_at": nil}, bson.M{"$set": bson.M{"revoked_at": now}})
+		if err != nil {
+			return nil, err
+		}
+		return nil, store.appendAudit(transaction, audit)
+	})
+	return err
+}
+
+func (store *MongoStore) GetPreferences(ctx context.Context, publicID string) (Preferences, error) {
+	var doc struct {
+		EmailProductUpdates bool   `bson:"email_product_updates"`
+		EmailSecurityAlerts bool   `bson:"email_security_alerts"`
+		DenseUI             bool   `bson:"dense_ui"`
+		Timezone            string `bson:"timezone"`
+	}
+	err := store.database.Collection("staff_preferences").FindOne(ctx, bson.M{"user_public_id": publicID}).Decode(&doc)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return DefaultPreferences(), nil
+	}
+	if err != nil {
+		return Preferences{}, err
+	}
+	prefs := Preferences{
+		EmailProductUpdates: doc.EmailProductUpdates,
+		EmailSecurityAlerts: doc.EmailSecurityAlerts,
+		DenseUI:             doc.DenseUI,
+		Timezone:            doc.Timezone,
+	}
+	if prefs.Timezone == "" {
+		prefs.Timezone = "Africa/Accra"
+	}
+	return prefs, nil
+}
+
+func (store *MongoStore) SavePreferences(ctx context.Context, publicID string, prefs Preferences, audit AuditEvent) error {
+	now := time.Now().UTC()
+	session, err := store.database.Client().StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(ctx)
+	_, err = session.WithTransaction(ctx, func(transaction context.Context) (any, error) {
+		_, err := store.database.Collection("staff_preferences").UpdateOne(
+			transaction,
+			bson.M{"user_public_id": publicID},
+			bson.M{
+				"$set": bson.M{
+					"user_public_id":        publicID,
+					"email_product_updates": prefs.EmailProductUpdates,
+					"email_security_alerts": prefs.EmailSecurityAlerts,
+					"dense_ui":              prefs.DenseUI,
+					"timezone":              prefs.Timezone,
+					"updated_at":            now,
+				},
+				"$setOnInsert": bson.M{"public_id": uuid(), "created_at": now},
+			},
+			options.UpdateOne().SetUpsert(true),
+		)
+		if err != nil {
+			return nil, err
+		}
+		return nil, store.appendAudit(transaction, audit)
+	})
+	return err
+}
+
 func (store *MongoStore) appendAudit(ctx context.Context, event AuditEvent) error {
 	actor := any(nil)
 	if event.ActorID != "" {

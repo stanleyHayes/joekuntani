@@ -1,0 +1,440 @@
+.page {
+  overflow: clip;
+}
+.hero {
+  min-height: calc(92dvh - var(--header-height));
+  padding-block: clamp(4rem, 9vw, 8rem);
+}
+.kicker {
+  margin: 0 0 clamp(3rem, 8vw, 6rem);
+  color: var(--eyebrow-color);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+.heroGrid {
+  display: grid;
+  align-items: end;
+  gap: clamp(2.5rem, 8vw, 8rem);
+}
+.hero h1 {
+  max-width: 9ch;
+  margin: 0;
+  font-size: clamp(4.2rem, 12vw, 10rem);
+  letter-spacing: -0.075em;
+  line-height: 0.82;
+  text-wrap: balance;
+}
+.pressHero h1 {
+  max-width: 11ch;
+}
+.intro {
+  max-width: 29rem;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+.feed {
+  padding-block: clamp(5rem, 11vw, 10rem);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+}
+.feedHead {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: clamp(3rem, 7vw, 6rem);
+}
+.feedHead > div {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+.feedHead > div > span {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+.feedHead h2 {
+  margin: 0;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  letter-spacing: -0.06em;
+}
+.issueCount {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+.filters a {
+  display: inline-flex;
+  min-height: 2.4rem;
+  align-items: center;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.filters a[aria-current="page"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.videoList,
+.pressList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.videoList {
+  display: grid;
+  gap: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 3vw, 2.5rem);
+}
+.videoCard {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  min-width: 0;
+}
+/* A trailing odd card would leave a half-empty row, so it takes the full width instead. */
+.videoCard:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+.videoMedia {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  background: color-mix(in srgb, var(--ink) 8%, var(--surface));
+}
+.videoMedia img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.videoMedia img,
+.pressMedia img {
+  transition:
+    transform 650ms cubic-bezier(0.23, 1, 0.32, 1),
+    filter 250ms ease;
+}
+.mediaFallback {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  background: color-mix(in srgb, var(--ink) 8%, var(--surface));
+  color: transparent;
+  font-size: clamp(4rem, 12vw, 11rem);
+  font-weight: 800;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--ink) 30%, transparent);
+}
+/* Decorative overlays must not intercept the stretched card link. */
+.play {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  display: grid;
+  pointer-events: none;
+  width: clamp(3rem, 5.5vw, 4rem);
+  height: clamp(3rem, 5.5vw, 4rem);
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--canvas) 62%, transparent);
+  color: var(--ink);
+  font-size: 0.85rem;
+  transform: translate(-50%, -50%);
+  backdrop-filter: blur(0.5rem);
+  transition:
+    border-color 220ms ease,
+    background-color 220ms ease,
+    color 220ms ease,
+    transform 220ms ease;
+}
+.videoCard:focus-within .play {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  transform: translate(-50%, -50%) scale(1.06);
+}
+.index,
+.pressIndex {
+  font-variant-numeric: tabular-nums;
+}
+.index {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0.55rem 0.7rem;
+  pointer-events: none;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+.videoCopy {
+  display: grid;
+  gap: 0.55rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+}
+.videoCopy > p,
+.pressCopy > p {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.videoCopy h3,
+.pressCopy h3 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 3.6rem);
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+.videoCopy > span,
+.pressCopy > span {
+  max-width: 48rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+/* Video titles sit inside a card, so they run smaller than the shared feed scale. */
+.videoCopy h3 {
+  font-size: clamp(1.45rem, 2.6vw, 2.3rem);
+  line-height: 1.02;
+  text-wrap: balance;
+}
+.videoCopy > span {
+  display: -webkit-box;
+  overflow: hidden;
+  max-width: 44rem;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  font-size: 0.95rem;
+}
+.videoCopy a,
+.pendingSource {
+  width: fit-content;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.videoCopy a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 35%, transparent);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    color 180ms ease;
+}
+/* Stretched link: the whole card is the target, but the list keeps one link per item. */
+.videoCopy a::after {
+  position: absolute;
+  content: "";
+  inset: 0;
+}
+@supports selector(:has(*)) {
+  .videoCard:has(a:focus-visible) {
+    outline: 0.2rem solid var(--focus);
+    outline-offset: 0.4rem;
+  }
+  .videoCard:has(a:focus-visible) a:focus-visible {
+    outline: none;
+  }
+}
+.pendingSource,
+.sourcePending {
+  color: var(--ink-soft);
+}
+.pressList {
+  border-top: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+}
+.pressRow {
+  display: grid;
+  grid-template-columns: 2rem minmax(8rem, 14rem) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  padding-block: clamp(1.5rem, 4vw, 3rem);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+}
+.pressIndex {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+.pressMedia {
+  overflow: hidden;
+  aspect-ratio: 3 / 2;
+  background: #080a0e;
+}
+.pressMedia img,
+.pressMedia .mediaFallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pressMedia .mediaFallback {
+  font-size: 4rem;
+}
+.pressCopy {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+}
+.pressCopy h3 {
+  font-size: clamp(1.5rem, 3.4vw, 3rem);
+}
+.sourceLink {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    transform 140ms ease;
+}
+.sourcePending {
+  max-width: 6rem;
+  font-size: 0.7rem;
+  text-align: right;
+}
+@media (min-width: 54rem) {
+  .videoList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 58rem) {
+  .heroGrid {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.36fr);
+  }
+}
+@media (min-width: 64rem) {
+  .videoCard:last-child:nth-child(odd) {
+    align-items: center;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: clamp(1.75rem, 3.5vw, 3.25rem);
+  }
+  .videoCard:last-child:nth-child(odd) .videoCopy {
+    padding-top: 0;
+    padding-left: clamp(1.5rem, 3vw, 2.5rem);
+    border-top: 0;
+    border-left: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+  }
+  .videoCard:last-child:nth-child(odd) .videoCopy h3 {
+    font-size: clamp(2rem, 3.2vw, 3rem);
+  }
+  .videoCard:last-child:nth-child(odd) .videoCopy > span {
+    -webkit-line-clamp: 5;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .videoCard:hover img,
+  .pressRow:hover .pressMedia img {
+    transform: scale(1.025);
+    filter: saturate(1.08);
+  }
+  .videoCard:hover .play {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-contrast);
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+  .videoCopy a:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .sourceLink:hover {
+    background: var(--accent);
+    color: var(--accent-contrast);
+    transform: translateY(-2px);
+  }
+  .filters a:hover:not([aria-current="page"]) {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+}
+@media (max-width: 48rem) {
+  .hero {
+    min-height: auto;
+  }
+  .feedHead {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .filters {
+    justify-content: flex-start;
+  }
+  .pressRow {
+    grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+    align-items: start;
+  }
+  .pressMedia {
+    grid-column: 2 / -1;
+    grid-row: 1;
+    margin-bottom: 0.5rem;
+  }
+  .pressIndex {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .pressCopy {
+    grid-column: 2;
+  }
+  .sourceLink,
+  .sourcePending {
+    grid-column: 3;
+  }
+}
+@media (max-width: 35rem) {
+  .hero h1 {
+    font-size: clamp(3.9rem, 20vw, 6rem);
+  }
+  .filters {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .filters a {
+    justify-content: center;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .videoMedia img,
+  .pressMedia img,
+  .play,
+  .sourceLink {
+    transition-duration: 0.01ms;
+  }
+  .videoCard:hover .play,
+  .videoCard:focus-within .play {
+    transform: translate(-50%, -50%);
+  }
+}

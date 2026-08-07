@@ -40,6 +40,7 @@ export function PublicShell({
         <PublicFooter
           cta={effectiveCTA}
           links={settings?.footer}
+          social={settings?.social}
           brandName={settings?.brand.name}
           statusText={settings ? settings.brand.tagline : undefined}
         />

@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BrandMark, BRAND_LOGO_SRC } from "../../layout/brand-mark";
 import { OTPInput } from "../../ui/otp-input";
+import { ButtonPending } from "../admin-feedback";
 import { MFAQR } from "./mfa-qr";
 import styles from "./auth-form.module.css";
 
@@ -95,21 +96,45 @@ export function MFAForm() {
   return (
     <main className={styles.split}>
       <aside className={styles.hero} aria-hidden="true">
-        <div className={styles.heroGlow} />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          alt=""
-          className={styles.heroLogo}
-          height={160}
-          src={BRAND_LOGO_SRC}
-          width={160}
-        />
-        <p className={styles.heroBrand}>Joe Kuntani</p>
-        <p className={styles.heroTag}>Second factor</p>
-        <p className={styles.heroCopy}>
-          Scan the QR once, then enter the rotating six-digit code to finish
-          sign-in.
-        </p>
+        <div className={styles.heroInner}>
+          <div className={styles.heroTop}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt=""
+              className={styles.heroLogo}
+              height={160}
+              src={BRAND_LOGO_SRC}
+              width={160}
+            />
+            <div>
+              <p className={styles.heroBrand}>Joe Kuntani</p>
+              <p className={styles.heroTag}>Second factor</p>
+            </div>
+          </div>
+          <div className={styles.heroStatement}>
+            <p className={styles.heroDisplay}>
+              One more <em>step</em>.
+            </p>
+            <p className={styles.heroCopy}>
+              Scan the QR once, then enter the rotating six-digit code to finish
+              sign-in.
+            </p>
+          </div>
+          <dl className={styles.heroRail}>
+            <div className={styles.heroRailItem}>
+              <dt>Code</dt>
+              <dd>Rotates every 30s</dd>
+            </div>
+            <div className={styles.heroRailItem}>
+              <dt>Setup</dt>
+              <dd>Scanned once per device</dd>
+            </div>
+            <div className={styles.heroRailItem}>
+              <dt>Attempts</dt>
+              <dd>Rate-limited and logged</dd>
+            </div>
+          </dl>
+        </div>
       </aside>
 
       <section className={styles.panel} aria-labelledby="mfa-title">
@@ -144,7 +169,10 @@ export function MFAForm() {
             <summary>Set up authenticator first</summary>
             <div className={styles.setupBody}>
               <ol className={styles.setupSteps}>
-                <li>Install an authenticator app (Google Authenticator, 1Password, Authy).</li>
+                <li>
+                  Install an authenticator app (Google Authenticator, 1Password,
+                  Authy).
+                </li>
                 <li>Scan the QR code below, or enter the secret manually.</li>
                 <li>Enter the rotating six-digit code in the boxes.</li>
               </ol>
@@ -199,7 +227,13 @@ export function MFAForm() {
             disabled={pending || code.length !== 6}
             type="submit"
           >
-            <span>{pending ? "Verifying…" : "Verify and continue"}</span>
+            <span>
+              {pending ? (
+                <ButtonPending label="Verifying access" />
+              ) : (
+                "Verify and continue"
+              )}
+            </span>
             <span className={styles.buttonArrow} aria-hidden="true">
               →
             </span>

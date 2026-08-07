@@ -50,8 +50,16 @@ afterEach(() => vi.unstubAllGlobals());
 
 it("fails closed without approved routing and consent", () => {
   render(<ContactForm services={[]} settings={null} />);
-  expect(screen.getByRole("status")).toHaveTextContent("not available yet");
+  // Still fails closed — no form is rendered — but the visitor is now given an
+  // explanation and a route onward instead of a bare notice.
   expect(screen.queryByRole("form")).toBeNull();
+  expect(
+    screen.getByRole("heading", { name: "The enquiry form isn't open yet" }),
+  ).toBeVisible();
+  expect(screen.getByRole("link", { name: /what's offered/i })).toHaveAttribute(
+    "href",
+    "/services",
+  );
 });
 
 it("submits approved routing, versioned consent, idempotency and spam hooks", async () => {

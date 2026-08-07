@@ -82,6 +82,10 @@ type Options struct {
 	AdminCheckin             http.Handler
 	AdminTicketAnalytics     http.Handler
 	PublicAnalyticsTrack     http.Handler
+	PublicNewsletter         http.Handler
+	AdminNewsletter          http.Handler
+	PublicSupport            http.Handler
+	AdminSupport             http.Handler
 }
 
 func NewHandler(options ...Options) http.Handler {
@@ -267,6 +271,18 @@ func NewHandler(options ...Options) http.Handler {
 	}
 	if configuration.PublicAnalyticsTrack != nil {
 		router.Method(http.MethodPost, "/api/public/analytics/events", configuration.PublicAnalyticsTrack)
+	}
+	if configuration.PublicNewsletter != nil {
+		router.Mount("/api/public/newsletter", configuration.PublicNewsletter)
+	}
+	if configuration.AdminNewsletter != nil {
+		router.Mount("/api/admin/newsletter", configuration.AdminNewsletter)
+	}
+	if configuration.PublicSupport != nil {
+		router.Mount("/api/public/support", configuration.PublicSupport)
+	}
+	if configuration.AdminSupport != nil {
+		router.Mount("/api/admin/support", configuration.AdminSupport)
 	}
 	return router
 }

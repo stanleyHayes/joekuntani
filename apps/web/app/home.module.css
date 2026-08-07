@@ -1,0 +1,371 @@
+.page {
+  overflow: clip;
+}
+.hero {
+  display: grid;
+  min-height: calc(100dvh - var(--header-height));
+  align-items: center;
+  gap: clamp(2.5rem, 6vw, 6rem);
+  padding-block: clamp(3rem, 7vw, 6rem);
+}
+.heroCopy {
+  position: relative;
+  z-index: 1;
+}
+.kicker,
+.sectionNumber {
+  margin: 0;
+  color: var(--eyebrow-color);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+.hero h1 {
+  max-width: 8ch;
+  margin: clamp(1.5rem, 3vw, 2.5rem) 0;
+  font-size: clamp(4.5rem, 12vw, 10rem);
+  letter-spacing: -0.085em;
+  line-height: 0.78;
+}
+.lede {
+  max-width: 35rem;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  line-height: 1.6;
+}
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  margin-top: 2rem;
+}
+.heroActions a {
+  color: inherit;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.heroActions a:first-child {
+  padding-bottom: 0.45rem;
+  border-bottom: 2px solid var(--accent);
+}
+.heroMedia {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+}
+.heroMedia > img {
+  display: block;
+  width: 100%;
+  min-height: 28rem;
+  max-height: 72dvh;
+  object-fit: cover;
+  filter: saturate(0.86) contrast(1.04);
+}
+.heroMedia figcaption {
+  margin-top: 0.45rem;
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.heroStamp {
+  position: absolute;
+  right: -0.03em;
+  bottom: -0.18em;
+  color: transparent;
+  font-size: clamp(7rem, 18vw, 16rem);
+  font-weight: 850;
+  line-height: 1;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+.signal {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  align-items: center;
+  justify-content: space-around;
+  gap: 2rem;
+  padding: 1.1rem 2rem;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+.signal i {
+  font-style: normal;
+}
+.intro {
+  display: grid;
+  gap: 2rem;
+  padding-block: clamp(7rem, 15vw, 14rem);
+}
+.intro h2 {
+  max-width: 12ch;
+  margin: 0;
+  font-size: clamp(3.4rem, 9vw, 8rem);
+  letter-spacing: -0.075em;
+  line-height: 0.9;
+}
+.intro > p:not(.sectionNumber) {
+  max-width: 40rem;
+  margin: 0 0 0 auto;
+  color: var(--ink-soft);
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  line-height: 1.65;
+}
+.intro > a {
+  width: fit-content;
+  margin-left: auto;
+  color: inherit;
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+.section,
+.services,
+.testimonials {
+  padding-block: clamp(6rem, 12vw, 11rem);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+}
+.sectionHead {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: clamp(3rem, 7vw, 6rem);
+}
+.sectionHead > div {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+.sectionHead span {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+.sectionHead h2,
+.testimonials h2 {
+  margin: 0;
+  font-size: clamp(2.8rem, 7vw, 6rem);
+  letter-spacing: -0.065em;
+}
+.sectionHead > a {
+  color: inherit;
+  font-size: 0.75rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+.workGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(3rem, 8vw, 7rem) clamp(1.25rem, 4vw, 3.5rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.workGrid li:nth-child(even) {
+  padding-top: clamp(3rem, 8vw, 8rem);
+}
+.workGrid a {
+  color: inherit;
+  text-decoration: none;
+}
+.workMedia {
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: #090d11;
+}
+.workMedia img,
+.workMedia > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 650ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.workMedia > span {
+  display: grid;
+  place-items: center;
+  color: transparent;
+  font-size: clamp(5rem, 15vw, 12rem);
+  font-weight: 850;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.35);
+}
+.workGrid p {
+  margin: 1.1rem 0 0.55rem;
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.workGrid h3 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 3.4rem);
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+.services ol {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+.services li {
+  display: grid;
+  grid-template-columns: 2rem minmax(10rem, 0.8fr) minmax(12rem, 1fr) auto;
+  align-items: baseline;
+  gap: clamp(1rem, 3vw, 3rem);
+  padding-block: clamp(1.5rem, 3vw, 2.5rem);
+  border-bottom: 1px solid var(--line);
+}
+.services li > span {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+.services h3 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3.4vw, 2.8rem);
+  letter-spacing: -0.05em;
+}
+.services li > p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.services li > a {
+  color: inherit;
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+.testimonials > h2 {
+  max-width: 10ch;
+  margin: 1.5rem 0 clamp(3rem, 7vw, 6rem);
+}
+/* auto-fit, not a fixed 3, so two approved quotes fill the row instead of
+   leaving a dead third column. */
+.quotes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  border-top: 1px solid var(--line);
+}
+.quotes blockquote {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  margin: 0;
+  padding: clamp(1.75rem, 3vw, 2.5rem);
+  border-right: 1px solid var(--line);
+}
+.quotes blockquote:last-child {
+  border-right: 0;
+}
+/* The section's one ornament, and the only thing marking these as quotations:
+   the copy itself carries no punctuation, because the CMS supplies it
+   inconsistently. */
+.quotes blockquote::before {
+  content: "\201C";
+  color: var(--brand-j);
+  font-family: var(--font-display), var(--font-sans);
+  font-size: 2.75rem;
+  font-weight: 750;
+  line-height: 0.55;
+}
+.quotes blockquote p {
+  flex: 1;
+  margin: 0;
+  font-size: clamp(1.05rem, 1.35vw, 1.35rem);
+  letter-spacing: -0.015em;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.quotes footer {
+  display: grid;
+  gap: 0.2rem;
+}
+.quoteName {
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+.quoteRole {
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+@media (min-width: 58rem) {
+  .hero {
+    grid-template-columns: minmax(0, 0.9fr) minmax(24rem, 1.1fr);
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .workGrid a:hover img {
+    transform: scale(1.025);
+  }
+  .sectionHead a:hover,
+  .services li > a:hover,
+  .intro > a:hover {
+    color: var(--accent);
+  }
+}
+@media (max-width: 48rem) {
+  .hero {
+    min-height: auto;
+  }
+  .hero h1 {
+    font-size: clamp(4.3rem, 22vw, 7rem);
+  }
+  .heroMedia > img {
+    min-height: 22rem;
+  }
+  .signal {
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+  .workGrid,
+  .quotes {
+    grid-template-columns: 1fr;
+  }
+  .workGrid li:nth-child(even) {
+    padding-top: 0;
+  }
+  .services li {
+    grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+  }
+  .services li > p {
+    grid-column: 2 / -1;
+  }
+  .quotes blockquote {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .quotes blockquote:last-child {
+    border-bottom: 0;
+  }
+}
+@media (max-width: 35rem) {
+  .sectionHead {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workMedia img {
+    transition-duration: 0.01ms;
+  }
+}

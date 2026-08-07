@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 
 import { ServiceManager } from "../services/service-manager";
+import { AdminErrorState, AdminSkeleton } from "../admin-feedback";
 import { ContentManager } from "./content-manager";
 import type { CacheInvalidationRequest } from "./content-manager";
+import styles from "./cms-workspace.module.css";
 
 type StaffRole =
   | "administrator"
@@ -60,22 +62,30 @@ export function CMSWorkspace() {
     };
   }, []);
 
-  if (error) return <p role="alert">{error}</p>;
-  if (!role) return <p role="status">Verifying content permissions…</p>;
+  if (error)
+    return (
+      <AdminErrorState
+        message={error}
+        title="Content access could not be verified"
+      />
+    );
+  if (!role)
+    return (
+      <AdminSkeleton label="Verifying content permissions" variant="page" />
+    );
   if (role !== "administrator" && role !== "content_editor")
     return (
-      <section aria-labelledby="content-access-denied">
-        <h2 id="content-access-denied">Content workspace unavailable</h2>
-        <p role="alert">
-          Your role does not include content-management permission. No content,
-          service or media records were loaded.
-        </p>
-      </section>
+      <AdminErrorState
+        title="Content workspace unavailable"
+        message="Your role does not include content-management permission. No content, service, or media records were loaded."
+        retry={false}
+      />
     );
   return (
-    <div>
-      <nav aria-label="Unified content workspace">
+    <div className={styles.workspace}>
+      <nav className={styles.tabs} aria-label="Unified content workspace">
         <button
+          className={styles.tab}
           aria-pressed={section === "content"}
           onClick={() => setSection("content")}
           type="button"
@@ -83,6 +93,7 @@ export function CMSWorkspace() {
           Content and media
         </button>
         <button
+          className={styles.tab}
           aria-pressed={section === "services"}
           onClick={() => setSection("services")}
           type="button"

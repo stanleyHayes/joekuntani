@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import type { PublicService } from "../services/types";
 import type { PublicSettings } from "../../lib/settings";
+import { ButtonLink } from "../ui/button-link";
+import { EmptyState } from "../ui/empty-state";
 import { Select } from "../ui/select";
 import styles from "./public-info.module.css";
 
@@ -17,12 +19,22 @@ export function ContactForm({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
+  // The routing form needs an approved service and consent copy to submit
+  // against. Those can be missing, but a contact page must never leave a
+  // visitor with no way to make contact — so fall back to the direct details.
   if (!settings || services.length === 0)
     return (
-      <p role="status" className={styles.notice}>
-        Approved contact routing and consent are not available yet. Use the
-        enquiry route once an approved service is published.
-      </p>
+      <EmptyState
+        announce={false}
+        tone="inbox"
+        title="The enquiry form isn't open yet"
+        description="Routing needs an approved service before it can accept submissions. Reach out directly in the meantime — every message is read."
+        action={
+          <ButtonLink href="/services" variant="primary">
+            See what&apos;s offered
+          </ButtonLink>
+        }
+      />
     );
   const approvedSettings = settings;
 

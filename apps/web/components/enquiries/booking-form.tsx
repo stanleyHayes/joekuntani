@@ -10,7 +10,9 @@ import {
   useState,
 } from "react";
 import type { PublicService, ServiceQuestion } from "../services/types";
+import { ButtonLink } from "../ui/button-link";
 import { DateField } from "../ui/date-field";
+import { EmptyState } from "../ui/empty-state";
 import { Select } from "../ui/select";
 import styles from "./booking-form.module.css";
 
@@ -181,7 +183,17 @@ export function BookingForm({
     return (
       <section className={styles.shell}>
         <h1>Start an enquiry</h1>
-        <p>No approved services are available yet. Please return soon.</p>
+        <EmptyState
+          announce={false}
+          tone="inbox"
+          title="Nothing is open for enquiry right now"
+          description="No approved services are available yet. Please return soon."
+          action={
+            <ButtonLink href="/contact" variant="primary">
+              Send a general enquiry
+            </ButtonLink>
+          }
+        />
       </section>
     );
   return (

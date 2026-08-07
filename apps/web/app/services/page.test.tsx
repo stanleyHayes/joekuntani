@@ -5,7 +5,10 @@ import * as data from "../../components/services/data";
 import type { PublicService } from "../../components/services/types";
 import ServicesPage from "./page";
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  delete process.env.NEXT_PUBLIC_DEMO_CONTENT;
+});
 
 it("shows a content-safe empty state without invented service claims", async () => {
   vi.spyOn(data, "getPublicServices").mockResolvedValue([]);
@@ -45,4 +48,21 @@ it("renders approved services with contextual booking CTAs", async () => {
     "href",
     "/book?service=approved-service",
   );
+});
+
+it("labels demo services and renders the enquiry process", async () => {
+  process.env.NEXT_PUBLIC_DEMO_CONTENT = "1";
+  vi.spyOn(data, "getPublicServices").mockResolvedValue([]);
+  render(await ServicesPage());
+
+  expect(screen.getAllByText("Services").length).toBeGreaterThan(0);
+  expect(
+    screen.getByRole("heading", { name: "Live delivery set" }),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("heading", { name: "From brief to booking" }),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("heading", { name: "Align the scope" }),
+  ).toBeVisible();
 });

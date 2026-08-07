@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { BookingCalendar, calendarRange } from "./booking-calendar";
 
@@ -55,12 +61,12 @@ beforeEach(() => {
 it("switches month week and list views and exposes private iCal", async () => {
   render(<BookingCalendar />);
   expect(await screen.findByText("Accra show")).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "week" }));
-  expect(screen.getByRole("button", { name: "week" })).toHaveAttribute(
+  fireEvent.click(screen.getByRole("button", { name: /week/i }));
+  expect(screen.getByRole("button", { name: /week/i })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  fireEvent.click(screen.getByRole("button", { name: "list" }));
+  fireEvent.click(screen.getByRole("button", { name: /list/i }));
   expect(screen.getByRole("link", { name: "Export iCal" })).toHaveAttribute(
     "href",
     expect.stringContaining("calendar.ics"),
@@ -69,8 +75,13 @@ it("switches month week and list views and exposes private iCal", async () => {
 it("creates in the configured timezone and surfaces confirmed conflicts", async () => {
   render(<BookingCalendar />);
   await screen.findByText("Accra show");
-  const form = screen
-    .getByRole("heading", { name: "Add booking" })
+  expect(
+    screen.queryByRole("dialog", { name: "Add booking" }),
+  ).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Add booking" }));
+  const dialog = screen.getByRole("dialog", { name: "Add booking" });
+  const form = within(dialog)
+    .getByRole("button", { name: "Create booking" })
     .closest("form")!;
   for (const [name, value] of Object.entries({
     title: "New show",

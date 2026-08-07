@@ -1,10 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { EmptyState } from "../../ui/empty-state";
+import {
+  AdminErrorState,
+  AdminSkeleton,
+  formatAdminTimestamp,
+} from "../admin-feedback";
+import { MetricWatermark } from "../metric-watermark";
 import styles from "./analytics-workspace.module.css";
 
 type NamedCount = { name: string; count: number };
-type AudienceMetric = { platform: string; metric_date: string; followers: number; reach: number; impressions: number };
+type AudienceMetric = {
+  platform: string;
+  metric_date: string;
+  followers: number;
+  reach: number;
+  impressions: number;
+};
 type Overview = {
   generated_at: string;
   conversion_total: number;
@@ -55,35 +68,99 @@ export function AnalyticsWorkspace() {
       <header className={styles.header}>
         <p className={styles.eyebrow}>Dashboards</p>
         <h2 id="analytics-heading">Operations overview</h2>
-        <p>Privacy-safe conversion totals and operational KPIs. Personal data never enters analytics payloads.</p>
+        <p>
+          Privacy-safe conversion totals and operational KPIs. Personal data
+          never enters analytics payloads.
+        </p>
       </header>
 
-      <p className={styles.status} role="status" aria-live="polite">
-        {state === "loading" && "Loading analytics overview…"}
-        {state === "error" && "Analytics are unavailable."}
-        {state === "ready" && overview ? `Updated ${new Date(overview.generated_at).toUTCString()}.` : null}
-      </p>
+      {state === "loading" ? (
+        <AdminSkeleton label="Loading analytics overview" variant="cards" />
+      ) : null}
+      {state === "error" ? (
+        <AdminErrorState
+          title="Analytics are unavailable"
+          message="The overview could not be retrieved. Refresh the page or try again shortly."
+        />
+      ) : null}
+      {state === "ready" && overview ? (
+        <p className={styles.status} role="status" aria-live="polite">
+          Updated {formatAdminTimestamp(overview.generated_at)}.
+        </p>
+      ) : null}
 
       {overview ? (
         <>
           <ul className={styles.kpis} aria-label="Overview KPIs">
-            <li><strong>{overview.conversion_total}</strong><span>Conversions (30d)</span></li>
-            <li><strong>{overview.booking_submitted}</strong><span>Enquiries submitted</span></li>
-            <li><strong>{overview.ticket_purchases}</strong><span>Ticket purchases</span></li>
-            <li><strong>{overview.content_published}</strong><span>Published content</span></li>
+            <li>
+              <MetricWatermark variant="orbit" />
+              <strong>{overview.conversion_total}</strong>
+              <span>Conversions (30 days)</span>
+            </li>
+            <li>
+              <MetricWatermark variant="wave" />
+              <strong>{overview.booking_submitted}</strong>
+              <span>Enquiries submitted</span>
+            </li>
+            <li>
+              <MetricWatermark variant="spark" />
+              <strong>{overview.ticket_purchases}</strong>
+              <span>Ticket purchases</span>
+            </li>
+            <li>
+              <MetricWatermark variant="grid" />
+              <strong>{overview.content_published}</strong>
+              <span>Published content</span>
+            </li>
           </ul>
 
           <div className={styles.grid}>
-            <MetricList title="Pipeline" items={toItems(overview.pipeline)} />
-            <MetricList title="Bookings" items={toItems(overview.bookings_by_status)} />
-            <MetricList title="Campaigns" items={toItems(overview.campaigns_by_status)} />
-            <MetricList title="Top sources" items={overview.top_sources.map((item) => ({ name: item.name, count: item.count }))} />
-            <MetricList title="Top paths" items={overview.top_paths.map((item) => ({ name: item.name, count: item.count }))} />
+            <MetricList
+              title="Pipeline"
+              empty="No enquiries have entered the pipeline."
+              items={toItems(overview.pipeline)}
+            />
+            <MetricList
+              title="Bookings"
+              empty="No bookings recorded in this window."
+              items={toItems(overview.bookings_by_status)}
+            />
+            <MetricList
+              title="Campaigns"
+              empty="No campaigns recorded in this window."
+              items={toItems(overview.campaigns_by_status)}
+            />
+            <MetricList
+              title="Top sources"
+              empty="No referral sources measured yet."
+              items={overview.top_sources.map((item) => ({
+                name: item.name,
+                count: item.count,
+              }))}
+            />
+            <MetricList
+              title="Top paths"
+              empty="No page views measured yet."
+              items={overview.top_paths.map((item) => ({
+                name: item.name,
+                count: item.count,
+              }))}
+            />
           </div>
 
-          <section className={styles.audience} aria-labelledby="audience-heading">
+          <section
+            className={styles.audience}
+            aria-labelledby="audience-heading"
+          >
             <h3 id="audience-heading">Audience metrics</h3>
-            {overview.audience.length === 0 ? <p>No approved audience metrics are available yet.</p> : (
+            {overview.audience.length === 0 ? (
+              <EmptyState
+                announce={false}
+                tone="calendar"
+                title="No approved audience metrics yet"
+                description="Follower, reach and impression rows appear once a platform connector is approved and its first daily snapshot is recorded."
+              />
+            ) : (
               <table>
                 <caption className={styles.caption}>Audience metrics</caption>
                 <thead>
@@ -119,14 +196,36 @@ function toItems(values: Record<string, number>) {
   return Object.entries(values).map(([name, count]) => ({ name, count }));
 }
 
-function MetricList({ title, items }: { title: string; items: NamedCount[] }) {
+function MetricList({
+  title,
+  items,
+  empty,
+}: {
+  title: string;
+  items: NamedCount[];
+  empty: string;
+}) {
+  const variant =
+    title === "Pipeline"
+      ? "wave"
+      : title === "Bookings"
+        ? "orbit"
+        : title === "Campaigns"
+          ? "spark"
+          : "grid";
   return (
     <section className={styles.panel} aria-label={title}>
+      <MetricWatermark variant={variant} />
       <h3>{title}</h3>
-      {items.length === 0 ? <p>No data yet.</p> : (
+      {items.length === 0 ? (
+        <p className={styles.blank}>{empty}</p>
+      ) : (
         <ul>
           {items.map((item) => (
-            <li key={item.name}><span>{item.name.replaceAll("_", " ")}</span><strong>{item.count}</strong></li>
+            <li key={item.name}>
+              <span>{item.name.replaceAll("_", " ")}</span>
+              <strong>{item.count}</strong>
+            </li>
           ))}
         </ul>
       )}

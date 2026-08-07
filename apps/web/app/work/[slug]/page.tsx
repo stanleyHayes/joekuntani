@@ -43,7 +43,7 @@ export default async function WorkDetailPage({ params }: Props) {
   const item = cmsItem || demoItem;
   if (!item) notFound();
   const usingDemo = Boolean(demoItem);
-  const cover = usingDemo ? demoCovers[item.slug] : undefined;
+  const cover = demoItem ? demoCovers[slug] : undefined;
   const url = canonicalURL(
     item.seo.canonical_url || `/work/${slug}`,
     settings?.seo.canonical_base,

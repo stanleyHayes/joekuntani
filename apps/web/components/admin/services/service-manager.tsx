@@ -9,6 +9,10 @@ import {
 } from "react";
 
 import type { PublicService, ServiceQuestion } from "../../services/types";
+import { AiAssist, type AiAssistField } from "../../ui/ai-assist";
+import { EmptyState } from "../../ui/empty-state";
+import { AdminDialog } from "../admin-dialog";
+import { AdminErrorState, AdminSkeleton } from "../admin-feedback";
 import styles from "./service-manager.module.css";
 
 type Draft = Omit<
@@ -35,6 +39,7 @@ const emptyDraft: Draft = {
 
 export function ServiceManager() {
   const [items, setItems] = useState<PublicService[]>([]);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [questionsJSON, setQuestionsJSON] = useState("[]");
@@ -83,6 +88,7 @@ export function ServiceManager() {
     setQuestionsValid(true);
     setMessage("");
     setError("");
+    setEditorOpen(true);
   }
 
   function reset() {
@@ -92,6 +98,12 @@ export function ServiceManager() {
     setQuestionsValid(true);
     setMessage("");
     setError("");
+    setEditorOpen(false);
+  }
+
+  function createService() {
+    reset();
+    setEditorOpen(true);
   }
 
   function updateQuestions(value: string) {
@@ -259,22 +271,35 @@ export function ServiceManager() {
   return (
     <div className={styles.manager}>
       <section className={styles.panel} aria-labelledby="service-list-title">
-        <h2 id="service-list-title">Services</h2>
-        <p>
-          Only active services appear publicly. Order changes apply to the
-          public services page.
-        </p>
-        <button disabled={pending} onClick={reset} type="button">
-          Add service
-        </button>
+        <header className="stage-head">
+          <div className="stage-head__copy">
+            <p className="stage-head__eyebrow">Public offering</p>
+            <h2 id="service-list-title">Services</h2>
+            <p className="stage-head__lede">
+              Only active services appear publicly. Order changes apply to the
+              public services page.
+            </p>
+          </div>
+          <div className="stage-head__actions">
+            <button
+              className="primary"
+              disabled={pending}
+              onClick={createService}
+              type="button"
+            >
+              Add service
+            </button>
+          </div>
+        </header>
         {loading ? (
-          <p className={styles.status} role="status">
-            Loading services…
-          </p>
+          <AdminSkeleton label="Loading services" variant="table" />
         ) : items.length === 0 ? (
-          <p className={styles.empty}>
-            No approved service content exists yet.
-          </p>
+          <EmptyState
+            announce={false}
+            tone="stage"
+            title="No services yet"
+            description="Create the first approved service, then publish it when the details are complete."
+          />
         ) : (
           <ol className={styles.list}>
             {items.map((item, index) => (
@@ -341,108 +366,122 @@ export function ServiceManager() {
         )}
       </section>
 
-      <section className={styles.panel} aria-labelledby="service-form-title">
-        <h2 id="service-form-title">
-          {selected ? `Edit ${selected.name}` : "Add a service"}
-        </h2>
-        <form className={styles.form} onSubmit={save}>
-          <Field
-            label="Service name"
-            maxLength={120}
-            required
-            value={draft.name}
-            onChange={(name) => setDraft((current) => ({ ...current, name }))}
-          />
-          <Field
-            label="Category"
-            maxLength={80}
-            value={draft.category}
-            onChange={(category) =>
-              setDraft((current) => ({ ...current, category }))
-            }
-          />
-          <Field
-            label="Summary"
-            maxLength={280}
-            multiline
-            value={draft.summary}
-            onChange={(summary) =>
-              setDraft((current) => ({ ...current, summary }))
-            }
-          />
-          <Field
-            label="Description"
-            maxLength={8000}
-            multiline
-            value={draft.description}
-            onChange={(description) =>
-              setDraft((current) => ({ ...current, description }))
-            }
-          />
-          <Field
-            label="Call-to-action label"
-            maxLength={80}
-            required
-            value={draft.cta.label}
-            onChange={(label) =>
-              setDraft((current) => ({
-                ...current,
-                cta: { ...current.cta, label },
-              }))
-            }
-          />
-          <label className={styles.field}>
-            <span>Service-specific questions (JSON)</span>
-            <textarea
-              aria-invalid={!questionsValid}
-              aria-describedby="questions-help"
-              onChange={(event) => updateQuestions(event.target.value)}
-              spellCheck={false}
-              value={questionsJSON}
-            />
-            <small id="questions-help">
-              Use unique keys and supported types: text, textarea, select,
-              multi_select, date, number or checkbox.
-            </small>
-          </label>
-          <label className={styles.checkbox}>
-            <input
-              checked={draft.active}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  active: event.target.checked,
-                }))
-              }
-              type="checkbox"
-            />
-            Publish immediately after save
-          </label>
-          <div className={styles.actions}>
-            <button disabled={pending || !questionsValid} type="submit">
-              {selected ? "Save service" : "Create service"}
-            </button>
-            {selected && (
-              <button disabled={pending} onClick={reset} type="button">
-                Cancel edit
-              </button>
-            )}
-          </div>
-          {(error || message) && (
-            <p
-              className={error ? styles.error : styles.status}
-              role={error ? "alert" : "status"}
-            >
-              {error || message}
-            </p>
-          )}
-        </form>
-      </section>
+      {error === "Services could not be loaded. Try again." ? (
+        <AdminErrorState title="Services are unavailable" message={error} />
+      ) : error || message ? (
+        <p
+          className={error ? styles.error : styles.status}
+          role={error ? "alert" : "status"}
+        >
+          {error || message}
+        </p>
+      ) : null}
+
+      {editorOpen ? (
+        <AdminDialog
+          title={selected ? `Edit ${selected.name}` : "Add a service"}
+          description="Service changes are saved only when you submit this form."
+          onClose={reset}
+          wide
+        >
+          <section className={styles.panel} aria-label="Service editor">
+            <form className={styles.form} onSubmit={save}>
+              <Field
+                label="Service name"
+                maxLength={120}
+                required
+                value={draft.name}
+                onChange={(name) =>
+                  setDraft((current) => ({ ...current, name }))
+                }
+              />
+              <Field
+                label="Category"
+                maxLength={80}
+                value={draft.category}
+                onChange={(category) =>
+                  setDraft((current) => ({ ...current, category }))
+                }
+              />
+              <Field
+                assist="summary"
+                label="Summary"
+                maxLength={280}
+                multiline
+                value={draft.summary}
+                onChange={(summary) =>
+                  setDraft((current) => ({ ...current, summary }))
+                }
+              />
+              <Field
+                assist="description"
+                label="Description"
+                maxLength={8000}
+                multiline
+                value={draft.description}
+                onChange={(description) =>
+                  setDraft((current) => ({ ...current, description }))
+                }
+              />
+              <Field
+                label="Call-to-action label"
+                maxLength={80}
+                required
+                value={draft.cta.label}
+                onChange={(label) =>
+                  setDraft((current) => ({
+                    ...current,
+                    cta: { ...current.cta, label },
+                  }))
+                }
+              />
+              <label className={styles.field}>
+                <span>Service-specific questions (JSON)</span>
+                <textarea
+                  aria-invalid={!questionsValid}
+                  aria-describedby="questions-help"
+                  onChange={(event) => updateQuestions(event.target.value)}
+                  spellCheck={false}
+                  value={questionsJSON}
+                />
+                <small id="questions-help">
+                  Use unique keys and supported types: text, textarea, select,
+                  multi_select, date, number or checkbox.
+                </small>
+              </label>
+              <label className={styles.checkbox}>
+                <input
+                  checked={draft.active}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      active: event.target.checked,
+                    }))
+                  }
+                  type="checkbox"
+                />
+                Publish immediately after save
+              </label>
+              <div className={styles.actions}>
+                <button disabled={pending || !questionsValid} type="submit">
+                  {selected ? "Save service" : "Create service"}
+                </button>
+                {selected && (
+                  <button disabled={pending} onClick={reset} type="button">
+                    Cancel edit
+                  </button>
+                )}
+              </div>
+            </form>
+          </section>
+        </AdminDialog>
+      ) : null}
     </div>
   );
 }
 
 function Field({
+  assist,
   label,
   maxLength,
   multiline = false,
@@ -450,6 +489,8 @@ function Field({
   required = false,
   value,
 }: {
+  /** Attaches the AI copy bar. Multiline fields only — prose, not identifiers. */
+  assist?: AiAssistField;
   label: string;
   maxLength: number;
   multiline?: boolean;
@@ -464,11 +505,21 @@ function Field({
     required,
     value,
   };
-  return (
+  const field = (
     <label className={styles.field}>
       <span>{label}</span>
       {multiline ? <textarea {...control} /> : <input {...control} />}
     </label>
+  );
+  // Outside the <label>: a label's accessible name comes from its text
+  // content, so an AI bar nested inside would rename the control to
+  // "Summary AI Rewrite Expand Shorten…".
+  if (!assist || !multiline) return field;
+  return (
+    <div className={styles.fieldGroup}>
+      {field}
+      <AiAssist field={assist} label={label} value={value} onApply={onChange} />
+    </div>
   );
 }
 

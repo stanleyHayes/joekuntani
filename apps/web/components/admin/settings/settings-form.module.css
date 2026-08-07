@@ -22,7 +22,7 @@
   gap: 0.4rem;
   font-weight: 650;
 }
-.form input,
+.form input:not([type="checkbox"]),
 .form textarea {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -42,6 +42,170 @@
 .help {
   color: var(--ink-soft);
   font-weight: 400;
+}
+
+/* Rows in `.grid` only line up if every label is the same height, so the label
+   stays a single short line and the explanation moves below the input. */
+.field {
+  align-content: start;
+}
+
+.fieldLabel {
+  font-weight: 650;
+  text-wrap: balance;
+}
+
+.fieldHint {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* ---- Repeatable list editor ---- */
+
+.listField {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.35rem;
+}
+
+.listHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.listTitle {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.listTitle strong {
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.listTitle span {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.listRows {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listRow {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.listRowTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.listIndex {
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.listRowTools {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.listRowTools button {
+  min-width: 2.1rem;
+  min-height: 2.1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  padding: 0.2rem 0.55rem;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.listRowTools button:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--brand-k);
+}
+
+.listRowTools button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.listRowTools .removeRow:hover {
+  color: var(--warning);
+  border-color: var(--warning-line);
+}
+
+.listFields {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+
+.listFields label {
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.listFields label span {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.listWide {
+  grid-column: 1 / -1;
+}
+
+.listEmpty {
+  margin: 0;
+  padding: 1.1rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.85rem;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.addRow {
+  justify-self: start;
+  min-height: 2.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.45rem 1.1rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.addRow:hover {
+  border-color: var(--brand-j);
 }
 .toolbar {
   align-items: center;
@@ -89,27 +253,306 @@
 .state {
   padding: 2rem;
 }
-.statusList {
+
+/* ---- Asset slots ---- */
+
+.assetField {
   display: grid;
   gap: 0.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  min-width: 0;
 }
-.statusList div {
-  border-top: 1px solid var(--line);
-  padding-top: 0.5rem;
+
+.assetTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.6rem;
 }
-.statusList dt {
-  text-transform: capitalize;
+
+.assetPreview {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  object-fit: cover;
 }
-.statusList dd {
-  margin: 0.2rem 0 0;
+
+/* Out-specifies `.form label`, which is a grid stack for ordinary fields. */
+.form .assetUpload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.35rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.35rem 0.95rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
 }
-.checkbox {
+
+.form .assetUpload:hover {
+  border-color: var(--brand-j);
+}
+
+.form .assetUpload:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Visually hidden, still focusable and still the labelled control. */
+.form .assetUpload input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.assetClear {
+  min-height: 2.35rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.assetClear:hover {
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.assetNote,
+.assetFailed {
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.assetNote {
+  color: var(--ink-soft);
+}
+
+.assetFailed {
+  color: var(--warning);
+}
+
+/* ---- Environment keys ---- */
+
+.secrets {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1.6rem;
+}
+
+.secretsHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 1rem;
+}
+
+.secretsTitle {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.secretsCount {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.secretsCount strong {
+  color: var(--ink);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.statusList {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  margin: 0;
+}
+
+/* The top rule carries the state, so a missing key is legible at a glance:
+   solid accent where a key is present, dashed hairline where the slot is open. */
+.statusItem {
+  display: grid;
+  gap: 0.35rem;
+  padding-top: 0.7rem;
+  border-top: 2px solid var(--line);
+}
+
+.statusItem dt {
+  color: var(--ink-soft);
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.statusItem dd {
+  align-items: center;
+  display: flex;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.statusItem dd::before {
+  border-radius: 50%;
+  content: "";
+  flex: none;
+  height: 0.5rem;
+  width: 0.5rem;
+}
+
+.statusOn {
+  border-top-color: var(--accent);
+}
+
+.statusOn dd {
+  color: var(--ink);
+}
+
+.statusOn dd::before {
+  background: var(--accent);
+}
+
+.statusOff {
+  border-top-style: dashed;
+  border-top-width: 1px;
+  padding-top: calc(0.7rem + 1px);
+}
+
+.statusOff dd {
+  color: var(--ink-soft);
+}
+
+.statusOff dd::before {
+  border: 1.5px solid currentColor;
+}
+
+/* ---- Publish confirmation ---- */
+
+/* Same language as the key slots above: the rule over the content carries the
+   state, so confirmed and unconfirmed never read alike. */
+.confirm {
+  display: grid;
+  gap: 0.8rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--line);
+  border-radius: 1rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.confirmOn {
+  border-top-color: var(--accent);
+}
+
+.confirmHead {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  justify-content: space-between;
+}
+
+.confirmStep {
+  color: var(--ink-soft);
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.confirmState {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+}
+
+.confirmOn .confirmState {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  color: var(--accent);
+}
+
+.confirmHint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+.form .checkbox {
   align-items: start;
-  display: flex !important;
-  font-weight: 700 !important;
+  cursor: pointer;
+  display: grid;
+  gap: 0.75rem;
   grid-template-columns: auto 1fr;
+  font-weight: 650;
+  line-height: 1.5;
 }
-.checkbox input {
-  margin-top: 0.1rem;
+
+.form .checkbox input[type="checkbox"] {
+  appearance: none;
+  background: var(--surface);
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 0.4rem;
+  cursor: pointer;
+  display: grid;
+  height: 1.3rem;
+  margin: 0.08rem 0 0;
+  padding: 0;
+  place-content: center;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+  width: 1.3rem;
+}
+
+.form .checkbox input[type="checkbox"]::after {
+  border: 0 solid var(--accent-contrast);
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+  content: "";
+  height: 0.32rem;
+  opacity: 0;
+  transform: rotate(-45deg) translate(1px, -2px);
+  width: 0.62rem;
+}
+
+.form .checkbox input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.form .checkbox input[type="checkbox"]:checked::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form .checkbox input[type="checkbox"] {
+    transition: none;
+  }
 }

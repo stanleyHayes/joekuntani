@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { TicketOperations } from "./ticket-operations";
 beforeEach(() =>
@@ -39,6 +45,10 @@ it("filters orders and submits an idempotent audited refund", async () => {
   vi.stubGlobal("fetch", fetcher);
   render(<TicketOperations />);
   expect(await screen.findByText("JKT-2026-ABC12345")).toBeVisible();
+  expect(
+    screen.queryByLabelText("Refund amount for JKT-2026-ABC12345"),
+  ).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Refund order" }));
   fireEvent.change(
     screen.getByLabelText("Refund amount for JKT-2026-ABC12345"),
     { target: { value: "25.00" } },
@@ -97,9 +107,8 @@ it("filters, resends, voids, exports and confirms event cancellation", async () 
   fireEvent.change(screen.getByLabelText("Event ID"), {
     target: { value: id },
   });
-  fireEvent.change(screen.getByLabelText("Status"), {
-    target: { value: "partially_refunded" },
-  });
+  fireEvent.click(screen.getByRole("button", { name: "Order status filter" }));
+  fireEvent.click(screen.getByRole("option", { name: "partially_refunded" }));
   fireEvent.change(screen.getByLabelText("Buyer or reference"), {
     target: { value: "ABC12345" },
   });
@@ -115,13 +124,18 @@ it("filters, resends, voids, exports and confirms event cancellation", async () 
   ).toHaveAttribute("href", expect.stringContaining(id));
   fireEvent.click(screen.getByRole("button", { name: "Resend tickets" }));
   fireEvent.click(screen.getByRole("button", { name: "Cancel event" }));
-  fireEvent.change(screen.getByLabelText("Ticket ID"), {
+  expect(screen.queryByLabelText("Ticket ID")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Void ticket" }));
+  const voidDialog = screen.getByRole("dialog", { name: "Void ticket" });
+  fireEvent.change(within(voidDialog).getByLabelText("Ticket ID"), {
     target: { value: id },
   });
-  fireEvent.change(screen.getByLabelText("Void reason"), {
+  fireEvent.change(within(voidDialog).getByLabelText("Void reason"), {
     target: { value: "Duplicate ticket" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Void ticket" }));
+  fireEvent.click(
+    within(voidDialog).getByRole("button", { name: "Void ticket" }),
+  );
   await waitFor(() => {
     const paths = fetcher.mock.calls.map(([path]) => String(path));
     expect(paths.some((path) => path.includes("/resend"))).toBe(true);

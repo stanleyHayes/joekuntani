@@ -31,3 +31,6 @@ dist/
 
 # Local infrastructure data
 .data/
+
+# Local agent tooling state (caches, session files)
+.raven/

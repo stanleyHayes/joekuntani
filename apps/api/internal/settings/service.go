@@ -31,7 +31,7 @@ func (service *Service) GetAdmin(ctx context.Context, actor auth.Principal) (Doc
 	}
 	document, err := service.store.Get(ctx)
 	if errors.Is(err, ErrNotFound) && actor.Role == auth.RoleAdministrator {
-		return Document{Key: GlobalKey, Draft: EmptyValues()}, nil
+		return Document{Key: GlobalKey, Draft: StarterValues()}, nil
 	}
 	return roleView(document, actor.Role), err
 }

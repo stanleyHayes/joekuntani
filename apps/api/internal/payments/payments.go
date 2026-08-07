@@ -19,7 +19,11 @@ var (
 	ErrUnavailable = errors.New("payment provider unavailable")
 )
 
-type CheckoutRequest struct{ IdempotencyKey, OrderReference, Currency, Amount, ReturnURL string }
+type CheckoutRequest struct {
+	IdempotencyKey, OrderReference, Currency, Amount, ReturnURL string
+	// PayerEmail is required by providers that email their own receipt.
+	PayerEmail string
+}
 type CheckoutSession struct {
 	ID, URL   string
 	ExpiresAt time.Time
@@ -53,6 +57,7 @@ func (UnavailableProvider) Refund(context.Context, RefundRequest) (RefundResult,
 
 type Order struct {
 	PublicID, Reference, EventID, Currency, Total, IdempotencyHash string
+	BuyerEmail                                                     string
 	Status                                                         string
 	HoldExpiresAt                                                  time.Time
 	CheckoutSession                                                *CheckoutSession
@@ -67,12 +72,33 @@ type Telemetry interface {
 	PaymentCompleted(string)
 	PaymentFailed(string, string)
 }
+
+// DonationApplier receives verified provider events whose reference belongs to
+// a donation rather than a ticket order. Paystack posts every event to one
+// endpoint, so the service routes by reference prefix.
+type DonationApplier interface {
+	ApplyWebhook(ctx context.Context, provider string, event VerifiedEvent, bodyHash string) (bool, error)
+}
+
 type Service struct {
 	store      Store
 	provider   PaymentProvider
 	now        func() time.Time
 	returnBase string
 	telemetry  Telemetry
+	donations  DonationApplier
+	donationIs func(string) bool
+}
+
+// SetDonationApplier registers the donation sink and the predicate that decides
+// which references belong to it.
+func (s *Service) SetDonationApplier(applier DonationApplier, isDonation func(string) bool) {
+	s.donations = applier
+	s.donationIs = isDonation
+}
+
+func (s *Service) isDonationReference(reference string) bool {
+	return s.donations != nil && s.donationIs != nil && s.donationIs(reference)
 }
 
 func NewService(store Store, provider PaymentProvider, returnBase string, telemetry Telemetry) (*Service, error) {
@@ -99,7 +125,7 @@ func (s *Service) Checkout(ctx context.Context, reference, accessKey string) (Ch
 	if order.CheckoutSession != nil && order.CheckoutSession.ExpiresAt.After(s.now().UTC()) {
 		return *order.CheckoutSession, nil
 	}
-	session, err := s.provider.CreateCheckout(ctx, CheckoutRequest{IdempotencyKey: order.PublicID, OrderReference: order.Reference, Currency: order.Currency, Amount: order.Total, ReturnURL: s.returnBase + "/tickets/checkout?reference=" + url.QueryEscape(order.Reference)})
+	session, err := s.provider.CreateCheckout(ctx, CheckoutRequest{IdempotencyKey: order.PublicID, OrderReference: order.Reference, Currency: order.Currency, Amount: order.Total, ReturnURL: s.returnBase + "/tickets/checkout?reference=" + url.QueryEscape(order.Reference), PayerEmail: order.BuyerEmail})
 	if err != nil {
 		return CheckoutSession{}, ErrUnavailable
 	}
@@ -123,10 +149,16 @@ func (s *Service) Webhook(ctx context.Context, headers http.Header, body []byte)
 	if err != nil {
 		return false, ErrForbidden
 	}
-	if event.ID == "" || !validReference(event.OrderReference) {
+	if event.ID == "" {
 		return false, ErrInvalid
 	}
 	h := sha256.Sum256(body)
+	if s.isDonationReference(event.OrderReference) {
+		return s.donations.ApplyWebhook(ctx, s.provider.Name(), event, hex.EncodeToString(h[:]))
+	}
+	if !validReference(event.OrderReference) {
+		return false, ErrInvalid
+	}
 	applied, err := s.store.ApplyWebhook(ctx, s.provider.Name(), event, hex.EncodeToString(h[:]), s.now().UTC())
 	if err == nil && applied && s.telemetry != nil {
 		if event.Type == "payment.succeeded" {

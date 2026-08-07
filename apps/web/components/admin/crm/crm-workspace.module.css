@@ -1,37 +1,35 @@
 .workspace,
-.toolbar,
 .grid,
 .panel,
 .actions {
   display: grid;
   gap: 1rem;
 }
-.toolbar {
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  align-items: end;
-}
+
 .grid {
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
 }
+
 .panel {
   border: 1px solid var(--border);
   padding: 1rem;
   background: var(--surface);
 }
+
 .actions {
   grid-template-columns: repeat(auto-fit, minmax(8rem, max-content));
   align-items: end;
 }
+
 .muted {
   color: var(--muted);
 }
-.danger {
-  color: var(--danger, #9f2525);
-}
+
 .table {
   width: 100%;
   border-collapse: collapse;
 }
+
 .table th,
 .table td {
   text-align: left;
@@ -39,6 +37,73 @@
   padding: 0.65rem;
   border-bottom: 1px solid var(--border);
 }
+
+/* Enquiry identity column ---------------------------------------------- */
+
+.reference {
+  display: block;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.source {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.summary {
+  display: block;
+  margin-top: 0.2rem;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+/* Row controls.
+   Deliberately not named `*actions*`: the shared
+   `.admin-stage [class*="actions"]` rule forces `align-items: end` on a flex
+   row, which drags the Owner input out of line with the Stage select inside a
+   narrow table cell. These own their layout instead. */
+
+.rowFields {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 10rem;
+}
+
+.rowFields label {
+  font-size: 0.72rem;
+}
+
+.rowButtons {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  min-width: 12rem;
+}
+
+/* Beats `.admin-stage button`'s `width: fit-content` so the stacked row
+   actions share one edge instead of ragging to their label widths. */
+.rowButtons button {
+  width: 100%;
+  justify-content: flex-start;
+  font-size: 0.79rem;
+}
+
+.danger {
+  border-color: color-mix(in srgb, #e45d68 38%, transparent);
+  color: color-mix(in srgb, #e45d68 62%, var(--ink));
+}
+
+.rowButtons .danger:hover {
+  border-color: color-mix(in srgb, #e45d68 60%, transparent);
+  background: color-mix(in srgb, #e45d68 12%, var(--surface));
+}
+
 @media (max-width: 44rem) {
   .table,
   .table tbody,
@@ -46,15 +111,27 @@
   .table td {
     display: block;
   }
+
   .table thead {
     position: absolute;
     clip: rect(0 0 0 0);
   }
+
   .table td {
     border: 0;
   }
+
   .table tr {
     border-bottom: 1px solid var(--border);
     padding: 0.75rem 0;
+  }
+
+  .rowButtons {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .rowButtons button {
+    width: auto;
   }
 }

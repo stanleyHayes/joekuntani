@@ -22,6 +22,7 @@ func (s *MongoStore) CheckoutOrder(ctx context.Context, ref, key string, now tim
 		PublicID          string          `bson:"public_id"`
 		Reference         string          `bson:"reference"`
 		EventID           string          `bson:"event_id"`
+		BuyerEmail        string          `bson:"buyer_email"`
 		Currency          string          `bson:"currency"`
 		Total             bson.Decimal128 `bson:"total"`
 		IdempotencyHash   string          `bson:"idempotency_hash"`
@@ -44,7 +45,7 @@ func (s *MongoStore) CheckoutOrder(ctx context.Context, ref, key string, now tim
 	if (d.Status != "pending" && d.Status != "awaiting_payment") || !d.HoldExpiresAt.After(now) {
 		return Order{}, ErrConflict
 	}
-	o := Order{d.PublicID, d.Reference, d.EventID, d.Currency, d.Total.String(), d.IdempotencyHash, d.Status, d.HoldExpiresAt, nil}
+	o := Order{PublicID: d.PublicID, Reference: d.Reference, EventID: d.EventID, Currency: d.Currency, Total: d.Total.String(), IdempotencyHash: d.IdempotencyHash, BuyerEmail: d.BuyerEmail, Status: d.Status, HoldExpiresAt: d.HoldExpiresAt}
 	if d.CheckoutSessionID != "" {
 		o.CheckoutSession = &CheckoutSession{ID: d.CheckoutSessionID, URL: d.CheckoutURL, ExpiresAt: d.CheckoutExpiresAt}
 	}

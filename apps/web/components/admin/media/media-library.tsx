@@ -1,10 +1,24 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useDeferredValue, useMemo, useState } from "react";
 import Image from "next/image";
+import {
+  ArrowClockwise,
+  CheckCircle,
+  FileArrowUp,
+  FilePdf,
+  FloppyDisk,
+  ImageSquare,
+  MagnifyingGlass,
+  Trash,
+  UploadSimple,
+  X,
+} from "@phosphor-icons/react";
 
 import { EmptyState } from "../../ui/empty-state";
 import { Select } from "../../ui/select";
+import { AdminDialog } from "../admin-dialog";
+import { ButtonPending } from "../admin-feedback";
 import styles from "./media-library.module.css";
 
 export type MediaAsset = {
@@ -57,13 +71,35 @@ export function MediaLibrary({
   onRetry,
 }: MediaLibraryProps) {
   const [assets, setAssets] = useState(initialAssets);
-  const [selectedID, setSelectedID] = useState(initialAssets[0]?.id ?? "");
+  const [selectedID, setSelectedID] = useState("");
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [retryFile, setRetryFile] = useState<File | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [folderFilter, setFolderFilter] = useState("all");
+  const deferredQuery = useDeferredValue(query.trim().toLowerCase());
   const selected = useMemo(
     () => assets.find((asset) => asset.id === selectedID),
     [assets, selectedID],
+  );
+  const filteredAssets = useMemo(
+    () =>
+      assets.filter((asset) => {
+        const matchesFolder =
+          folderFilter === "all" || asset.folder === folderFilter;
+        const haystack =
+          `${asset.filename} ${asset.altText} ${asset.tags.join(" ")}`.toLowerCase();
+        return (
+          matchesFolder && (!deferredQuery || haystack.includes(deferredQuery))
+        );
+      }),
+    [assets, deferredQuery, folderFilter],
+  );
+  const readyCount = useMemo(
+    () => assets.filter((asset) => asset.status === "ready").length,
+    [assets],
   );
 
   async function upload(event: FormEvent<HTMLFormElement>) {
@@ -108,6 +144,7 @@ export function MediaLibrary({
           : "Draft saved. Provider completion is pending and can be retried.",
       );
       form.reset();
+      setUploadOpen(false);
     } catch {
       setNotice(
         "Upload is temporarily unavailable. Your draft metadata has not been discarded.",
@@ -155,10 +192,9 @@ export function MediaLibrary({
     setBusy(true);
     try {
       await onDelete(selected.id);
-      setAssets((current) =>
-        current.filter((asset) => asset.id !== selected.id),
-      );
-      setSelectedID("");
+      const remaining = assets.filter((asset) => asset.id !== selected.id);
+      setAssets(remaining);
+      setSelectedID(remaining[0]?.id ?? "");
       setNotice("Asset deleted.");
     } catch {
       setNotice("The asset could not be deleted. It remains available.");
@@ -197,79 +233,200 @@ export function MediaLibrary({
 
   return (
     <section className={styles.library} aria-labelledby="media-title">
-      <header className={styles.header}>
-        <div>
-          <p className={styles.eyebrow}>Content studio / Media</p>
-          <h1 id="media-title">Asset library</h1>
-          <p>
-            Upload approved files, add useful descriptions, and see where every
-            asset is used.
-          </p>
+      {/* `stage-head`, matching the events and services workspaces: the shared
+          `.admin-stage > section > header:not(.stage-head)` rule forces a grid
+          on any other header, which is what dropped the upload action below the
+          copy instead of pinning it to the right edge. */}
+      <header className="stage-head">
+        <div className={styles.heading}>
+          <span className={styles.headingIcon} aria-hidden="true">
+            <ImageSquare size={22} weight="duotone" />
+          </span>
+          <div className="stage-head__copy">
+            <p className="stage-head__eyebrow">Content and media</p>
+            <h2 id="media-title">Asset library</h2>
+            <p className="stage-head__lede">
+              Upload approved images and documents, then maintain descriptions
+              and usage metadata.
+            </p>
+          </div>
         </div>
-        <span className={styles.count}>{assets.length} assets</span>
-      </header>
-      <p className={styles.notice} role="status" aria-live="polite">
-        {notice}
-      </p>
-      <div className={styles.workspace}>
-        <form
-          className={styles.upload}
-          onSubmit={upload}
-          aria-labelledby="upload-title"
-        >
-          <h2 id="upload-title">Upload an asset</h2>
-          <label>
-            File<span>JPEG, PNG, WebP or PDF; 10 MB maximum</span>
-            <input
-              name="file"
-              type="file"
-              accept={allowedTypes.join(",")}
-              required
-            />
-          </label>
-          <label>
-            Folder
-            <Select
-              name="folder"
-              defaultValue="content"
-              options={[
-                { value: "content", label: "Content" },
-                { value: "press", label: "Press" },
-                { value: "documents", label: "Documents" },
-              ]}
-              aria-label="Media folder"
-            />
-          </label>
-          <label>
-            Alternative text
-            <span>Describe the purpose and visible subject.</span>
-            <textarea name="altText" required minLength={8} />
-          </label>
-          <label>
-            Tags<span>Comma separated</span>
-            <input name="tags" />
-          </label>
-          <button type="submit" disabled={busy}>
-            {busy ? "Working…" : "Request secure upload"}
+        <div className="stage-head__actions">
+          <button
+            type="button"
+            className={`primary ${styles.uploadToggle}`}
+            aria-expanded={uploadOpen}
+            aria-controls="media-upload-panel"
+            onClick={() => setUploadOpen((current) => !current)}
+          >
+            {uploadOpen ? <X size={17} /> : <UploadSimple size={17} />}
+            {uploadOpen ? "Close upload" : "Upload asset"}
           </button>
-        </form>
-        <div className={styles.gridPanel}>
-          <h2>Assets</h2>
+        </div>
+      </header>
+
+      <div className={styles.summary} aria-label="Media summary">
+        <div>
+          <span>Total assets</span>
+          <strong>{assets.length}</strong>
+        </div>
+        <div>
+          <span>Ready</span>
+          <strong>{readyCount}</strong>
+        </div>
+        <div>
+          <span>Needs attention</span>
+          <strong>{assets.length - readyCount}</strong>
+        </div>
+      </div>
+
+      {notice ? (
+        <p className={styles.notice} role="status" aria-live="polite">
+          <CheckCircle size={18} weight="fill" aria-hidden="true" />
+          {notice}
+        </p>
+      ) : null}
+
+      {uploadOpen ? (
+        <AdminDialog
+          title="Upload asset"
+          description="Add an approved image or document to the media library."
+          onClose={() => setUploadOpen(false)}
+          wide
+        >
+          <form
+            id="media-upload-panel"
+            className={styles.upload}
+            onSubmit={upload}
+          >
+            <div className={styles.uploadIntro}>
+              <FileArrowUp size={24} weight="duotone" aria-hidden="true" />
+              <div>
+                <h3>New asset</h3>
+                <p>JPEG, PNG, WebP, or PDF. Maximum file size is 10 MB.</p>
+              </div>
+            </div>
+            <div className={styles.uploadFields}>
+              <label className={styles.fileField}>
+                File
+                <input
+                  name="file"
+                  type="file"
+                  accept={allowedTypes.join(",")}
+                  required
+                />
+              </label>
+              <label>
+                Folder
+                <Select
+                  name="folder"
+                  defaultValue="content"
+                  options={[
+                    { value: "content", label: "Content" },
+                    { value: "press", label: "Press" },
+                    { value: "documents", label: "Documents" },
+                  ]}
+                  aria-label="Media folder"
+                />
+              </label>
+              <label className={styles.altField}>
+                Alternative text
+                <span>Describe the visible subject and its purpose.</span>
+                <textarea name="altText" required minLength={8} />
+              </label>
+              <label>
+                Tags
+                <span>Comma separated</span>
+                <input name="tags" />
+              </label>
+            </div>
+            <div className={styles.uploadFooter}>
+              <button
+                type="submit"
+                className={styles.primaryAction}
+                disabled={busy}
+              >
+                <UploadSimple size={17} aria-hidden="true" />
+                {busy ? (
+                  <ButtonPending label="Uploading asset" />
+                ) : (
+                  "Request secure upload"
+                )}
+              </button>
+            </div>
+          </form>
+        </AdminDialog>
+      ) : null}
+
+      <div className={styles.assetTools}>
+        <label className={styles.search}>
+          <span className={styles.visuallyHidden}>Search assets</span>
+          <MagnifyingGlass size={17} aria-hidden="true" />
+          <input
+            type="search"
+            value={query}
+            placeholder="Search filename, description, or tag"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
+        <div className={styles.folderTabs} aria-label="Filter by folder">
+          {["all", "content", "press", "documents"].map((folder) => (
+            <button
+              key={folder}
+              type="button"
+              aria-pressed={folderFilter === folder}
+              onClick={() => setFolderFilter(folder)}
+            >
+              {folder === "all" ? "All folders" : folder}
+            </button>
+          ))}
+        </div>
+        <span className={styles.resultCount}>
+          {filteredAssets.length} shown
+        </span>
+      </div>
+
+      <div className={styles.contentLayout}>
+        <section
+          className={styles.assetCollection}
+          aria-labelledby="assets-heading"
+        >
+          <div className={styles.sectionHead}>
+            <div>
+              <h3 id="assets-heading">Assets</h3>
+              <p>Open an item when you need to inspect or edit its metadata.</p>
+            </div>
+          </div>
           {assets.length === 0 ? (
             <EmptyState
               className={styles.empty}
               tone="media"
-              title="The media shelf is clear"
-              description="Request a secure upload above. Ready assets will appear here with their dimensions and approval state."
+              title="No assets yet"
+              description="Request a secure upload. Ready assets will appear here with dimensions and approval state."
+              announce={false}
+              action={
+                <button type="button" onClick={() => setUploadOpen(true)}>
+                  Upload first asset
+                </button>
+              }
             />
+          ) : filteredAssets.length === 0 ? (
+            <div className={styles.noResults}>
+              <MagnifyingGlass size={26} aria-hidden="true" />
+              <h3>No matching assets</h3>
+              <p>Clear the search or choose another folder.</p>
+            </div>
           ) : (
             <ul className={styles.grid} aria-label="Media assets">
-              {assets.map((asset) => (
+              {filteredAssets.map((asset) => (
                 <li key={asset.id}>
                   <button
                     type="button"
-                    aria-pressed={selectedID === asset.id}
-                    onClick={() => setSelectedID(asset.id)}
+                    aria-label={`View ${asset.filename}`}
+                    onClick={() => {
+                      setSelectedID(asset.id);
+                      setDetailsOpen(true);
+                    }}
                   >
                     <span className={styles.preview}>
                       {asset.mimeType.startsWith("image/") &&
@@ -282,105 +439,158 @@ export function MediaLibrary({
                           unoptimized
                         />
                       ) : (
-                        <span aria-hidden="true">
-                          {asset.mimeType === "application/pdf"
-                            ? "PDF"
-                            : "FILE"}
-                        </span>
+                        <>
+                          <FilePdf
+                            size={38}
+                            weight="duotone"
+                            aria-hidden="true"
+                          />
+                          <span className={styles.visuallyHidden}>PDF</span>
+                        </>
                       )}
+                      <span
+                        className={styles.status}
+                        data-status={asset.status}
+                      >
+                        {asset.status}
+                      </span>
                     </span>
-                    <strong>{asset.filename}</strong>
-                    <span>
-                      {asset.width && asset.height
-                        ? `${asset.width} × ${asset.height}`
-                        : asset.mimeType}
+                    <span className={styles.assetCopy}>
+                      <strong>{asset.filename}</strong>
+                      <span>
+                        {asset.width && asset.height
+                          ? `${asset.width} × ${asset.height}`
+                          : asset.mimeType}
+                        {" · "}
+                        {formatBytes(asset.bytes)}
+                      </span>
                     </span>
-                    <span className={styles.status}>{asset.status}</span>
                   </button>
                 </li>
               ))}
             </ul>
           )}
-        </div>
-        <aside className={styles.editor} aria-labelledby="editor-title">
-          <h2 id="editor-title">Asset details</h2>
-          {!selected ? (
-            <p>Select an asset to edit its metadata.</p>
-          ) : (
-            <form onSubmit={save} key={selected.id}>
-              <p className={styles.filename}>{selected.filename}</p>
-              <label>
-                Alternative text
-                <textarea
-                  name="altText"
-                  required
-                  minLength={8}
-                  defaultValue={selected.altText}
-                />
-              </label>
-              <label>
-                Tags
-                <input name="tags" defaultValue={selected.tags.join(", ")} />
-              </label>
-              <label>
-                Approved transformations
-                <input
-                  name="transformations"
-                  defaultValue={selected.transformations.join(", ")}
-                  aria-describedby="transform-help"
-                />
-                <span id="transform-help">
-                  Use configured names such as hero or card.
-                </span>
-              </label>
-              <dl>
+        </section>
+
+        {detailsOpen && selected ? (
+          <AdminDialog
+            title="Asset details"
+            description="Review delivery information and edit metadata."
+            onClose={() => setDetailsOpen(false)}
+          >
+            <aside className={styles.editor} aria-labelledby="editor-title">
+              <div className={styles.sectionHead}>
                 <div>
-                  <dt>Folder</dt>
-                  <dd>{selected.folder}</dd>
+                  <h3 id="editor-title">Metadata</h3>
+                  <p>Metadata and delivery settings.</p>
                 </div>
-                <div>
-                  <dt>Usage</dt>
-                  <dd>
-                    {selected.referenceCount} reference
-                    {selected.referenceCount === 1 ? "" : "s"}
-                  </dd>
+              </div>
+              <form onSubmit={save} key={selected.id}>
+                <div className={styles.selectedFile}>
+                  <span aria-hidden="true">
+                    {selected.mimeType === "application/pdf" ? (
+                      <FilePdf size={22} weight="duotone" />
+                    ) : (
+                      <ImageSquare size={22} weight="duotone" />
+                    )}
+                  </span>
+                  <div>
+                    <p className={styles.filename}>{selected.filename}</p>
+                    <p>{formatBytes(selected.bytes)}</p>
+                  </div>
                 </div>
-              </dl>
-              <button type="submit" disabled={busy || !onSave}>
-                Save metadata
-              </button>
-              {["draft", "uploading", "failed"].includes(selected.status) && (
-                <>
-                  <label>
-                    Original file
-                    <input
-                      type="file"
-                      accept={selected.mimeType}
-                      onChange={(event) =>
-                        setRetryFile(event.currentTarget.files?.[0] ?? null)
-                      }
-                    />
-                  </label>
+                <label>
+                  Alternative text
+                  <span>Describe content, not filename.</span>
+                  <textarea
+                    name="altText"
+                    required
+                    minLength={8}
+                    defaultValue={selected.altText}
+                  />
+                </label>
+                <label>
+                  Tags
+                  <input name="tags" defaultValue={selected.tags.join(", ")} />
+                </label>
+                <label>
+                  Approved transformations
+                  <input
+                    name="transformations"
+                    defaultValue={selected.transformations.join(", ")}
+                    aria-describedby="transform-help"
+                  />
+                  <span id="transform-help">
+                    Use configured names such as hero or card.
+                  </span>
+                </label>
+                <dl className={styles.metadata}>
+                  <div>
+                    <dt>Folder</dt>
+                    <dd>{selected.folder}</dd>
+                  </div>
+                  <div>
+                    <dt>Usage</dt>
+                    <dd>
+                      {selected.referenceCount} reference
+                      {selected.referenceCount === 1 ? "" : "s"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Status</dt>
+                    <dd>{selected.status}</dd>
+                  </div>
+                </dl>
+                <button
+                  type="submit"
+                  className={styles.primaryAction}
+                  disabled={busy || !onSave}
+                >
+                  <FloppyDisk size={17} aria-hidden="true" />
+                  Save metadata
+                </button>
+                {["draft", "uploading", "failed"].includes(selected.status) ? (
+                  <div className={styles.retry}>
+                    <label>
+                      Original file
+                      <input
+                        type="file"
+                        accept={selected.mimeType}
+                        onChange={(event) =>
+                          setRetryFile(event.currentTarget.files?.[0] ?? null)
+                        }
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={busy || !onRetry}
+                      onClick={retry}
+                    >
+                      <ArrowClockwise size={17} aria-hidden="true" />
+                      Retry secure upload
+                    </button>
+                  </div>
+                ) : null}
+                <div className={styles.dangerZone}>
+                  <div>
+                    <strong>Delete asset</strong>
+                    <p>Only unused assets can be removed.</p>
+                  </div>
                   <button
+                    className={styles.danger}
                     type="button"
-                    disabled={busy || !onRetry}
-                    onClick={retry}
+                    aria-label="Delete asset"
+                    disabled={busy || !onDelete}
+                    onClick={remove}
                   >
-                    Retry secure upload
+                    <Trash size={17} aria-hidden="true" />
+                    Delete
                   </button>
-                </>
-              )}
-              <button
-                className={styles.danger}
-                type="button"
-                disabled={busy || !onDelete}
-                onClick={remove}
-              >
-                Delete asset
-              </button>
-            </form>
-          )}
-        </aside>
+                </div>
+              </form>
+            </aside>
+          </AdminDialog>
+        ) : null}
       </div>
     </section>
   );
@@ -395,4 +605,11 @@ function splitList(value: string) {
         .filter(Boolean),
     ),
   ];
+}
+
+function formatBytes(bytes: number) {
+  if (!bytes) return "Size unavailable";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

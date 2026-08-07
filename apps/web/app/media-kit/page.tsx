@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getMediaKit } from "../../components/public-info/data";
 import styles from "../../components/public-info/public-info.module.css";
 import { PublicShell } from "../../components/layout/public-shell";
+import { EmptyState } from "../../components/ui/empty-state";
 import { contentMetadata, unavailableMetadata } from "../../lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -72,10 +73,14 @@ export default async function MediaKitPage() {
               </a>
             </div>
           ) : (
-            <p className={styles.notice} role="status">
-              No approved, versioned PDF is available. Downloads remain disabled
-              until the asset, rights, host and update date are approved.
-            </p>
+            <div className={styles.notice}>
+              <EmptyState
+                announce={false}
+                tone="media"
+                title="No approved media kit to download"
+                description="Downloads stay disabled until the asset, its rights, host and update date are all approved. Send a media enquiry to request a specific asset in the meantime."
+              />
+            </div>
           )}
         </section>
       </main>

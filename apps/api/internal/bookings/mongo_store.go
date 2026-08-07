@@ -126,19 +126,37 @@ func (s *MongoStore) SoftDelete(ctx context.Context, id string, version int64, a
 		return s.audit(tx, actor, "booking.delete", id, Cancelled, now)
 	})
 }
+
+// defaultBusinessTimezone mirrors the starter value the settings service hands
+// out before anyone has published (see settings.StarterValues). The calendar is
+// unusable without a zone, so an unconfigured install falls back here rather
+// than failing the whole read.
+const (
+	defaultBusinessTimezone = "Africa/Accra"
+	settingsCollection      = "global_settings"
+	settingsGlobalKey       = "global"
+)
+
 func (s *MongoStore) Timezone(ctx context.Context) (string, error) {
 	var row struct {
-		Published struct {
+		Published *struct {
 			Team struct {
 				BusinessTimezone string `bson:"business_timezone"`
 			} `bson:"team"`
 		} `bson:"published"`
 	}
-	if err := s.db.Collection("site_settings").FindOne(ctx, bson.M{"key": "global"}).Decode(&row); err != nil {
+	// `global_settings` is the collection the settings service owns. The older
+	// `site_settings` bootstrap collection has an unrelated key/value shape and
+	// never carries a business timezone, so reading it always failed here.
+	err := s.db.Collection(settingsCollection).FindOne(ctx, bson.M{"key": settingsGlobalKey}).Decode(&row)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return defaultBusinessTimezone, nil
+	}
+	if err != nil {
 		return "", err
 	}
-	if row.Published.Team.BusinessTimezone == "" {
-		return "", ErrInvalid
+	if row.Published == nil || row.Published.Team.BusinessTimezone == "" {
+		return defaultBusinessTimezone, nil
 	}
 	return row.Published.Team.BusinessTimezone, nil
 }

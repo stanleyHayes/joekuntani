@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BrandMark, BRAND_LOGO_SRC } from "../../layout/brand-mark";
+import { ButtonPending } from "../admin-feedback";
 import styles from "./auth-form.module.css";
 
 export function LoginForm() {
@@ -38,7 +39,9 @@ export function LoginForm() {
             "Sign-in service is unavailable. Confirm the API is running on port 8080.",
           );
         } else {
-          setError("Sign-in was not accepted. Check your details and try again.");
+          setError(
+            "Sign-in was not accepted. Check your details and try again.",
+          );
         }
         return;
       }
@@ -55,20 +58,45 @@ export function LoginForm() {
   return (
     <main className={styles.split}>
       <aside className={styles.hero} aria-hidden="true">
-        <div className={styles.heroGlow} />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          alt=""
-          className={styles.heroLogo}
-          height={160}
-          src={BRAND_LOGO_SRC}
-          width={160}
-        />
-        <p className={styles.heroBrand}>Joe Kuntani</p>
-        <p className={styles.heroTag}>Staff console</p>
-        <p className={styles.heroCopy}>
-          Secure access for publishing, bookings, CRM, and live ticketing.
-        </p>
+        <div className={styles.heroInner}>
+          <div className={styles.heroTop}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt=""
+              className={styles.heroLogo}
+              height={160}
+              src={BRAND_LOGO_SRC}
+              width={160}
+            />
+            <div>
+              <p className={styles.heroBrand}>Joe Kuntani</p>
+              <p className={styles.heroTag}>Staff console</p>
+            </div>
+          </div>
+          <div className={styles.heroStatement}>
+            <p className={styles.heroDisplay}>
+              Run the <em>whole</em> show.
+            </p>
+            <p className={styles.heroCopy}>
+              Publishing, bookings, CRM and live ticketing — one console, one
+              audited trail.
+            </p>
+          </div>
+          <dl className={styles.heroRail}>
+            <div className={styles.heroRailItem}>
+              <dt>Access</dt>
+              <dd>Second factor enforced</dd>
+            </div>
+            <div className={styles.heroRailItem}>
+              <dt>Sessions</dt>
+              <dd>Expire after 12 hours</dd>
+            </div>
+            <div className={styles.heroRailItem}>
+              <dt>Changes</dt>
+              <dd>Audited server-side</dd>
+            </div>
+          </dl>
+        </div>
       </aside>
 
       <section className={styles.panel} aria-labelledby="sign-in-title">
@@ -125,7 +153,13 @@ export function LoginForm() {
             </p>
           ) : null}
           <button className={styles.button} disabled={pending} type="submit">
-            <span>{pending ? "Signing in…" : "Continue securely"}</span>
+            <span>
+              {pending ? (
+                <ButtonPending label="Signing in" />
+              ) : (
+                "Continue securely"
+              )}
+            </span>
             <span className={styles.buttonArrow} aria-hidden="true">
               →
             </span>

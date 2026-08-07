@@ -48,7 +48,20 @@ type document struct {
 }
 
 func fromDocument(kind Kind, d document) Item {
-	return Item{ID: d.ID.Hex(), PublicID: d.PublicID, Kind: kind, Slug: d.Slug, Title: d.Title, Summary: d.Summary, Body: d.Body, Category: d.Category, Tags: d.Tags, Featured: d.Featured, GalleryAssetIDs: d.GalleryAssetIDs, Results: d.Results, ExternalURL: d.ExternalURL, EmbedURL: d.EmbedURL, Outlet: d.Outlet, PersonName: d.PersonName, PersonTitle: d.PersonTitle, Organization: d.Organization, SEO: d.SEO, Status: d.Status, Approved: d.Approved, Revision: d.Revision, PublishAt: fromDate(d.PublishAt), UnpublishAt: fromDate(d.UnpublishAt), PublishedAt: fromDate(d.PublishedAt), CreatedAt: d.CreatedAt.Time(), UpdatedAt: d.UpdatedAt.Time()}
+	return Item{ID: d.ID.Hex(), PublicID: d.PublicID, Kind: kind, Slug: d.Slug, Title: d.Title, Summary: d.Summary, Body: d.Body, Category: d.Category, Tags: emptyIfNil(d.Tags), Featured: d.Featured, GalleryAssetIDs: emptyIfNil(d.GalleryAssetIDs), Results: emptyIfNil(d.Results), ExternalURL: d.ExternalURL, EmbedURL: d.EmbedURL, Outlet: d.Outlet, PersonName: d.PersonName, PersonTitle: d.PersonTitle, Organization: d.Organization, SEO: d.SEO, Status: d.Status, Approved: d.Approved, Revision: d.Revision, PublishAt: fromDate(d.PublishAt), UnpublishAt: fromDate(d.UnpublishAt), PublishedAt: fromDate(d.PublishedAt), CreatedAt: d.CreatedAt.Time(), UpdatedAt: d.UpdatedAt.Time()}
+}
+
+// emptyIfNil keeps absent collections serialising as [] rather than null.
+//
+// Not cosmetic: several collections (pages among them) have validators that
+// forbid the `results` property entirely, so it is always absent on read. The
+// public site rejects any item whose collections are not arrays, which meant no
+// page could ever be published from the CMS.
+func emptyIfNil[T any](values []T) []T {
+	if values == nil {
+		return []T{}
+	}
+	return values
 }
 func fromDate(value *bson.DateTime) *time.Time {
 	if value == nil {

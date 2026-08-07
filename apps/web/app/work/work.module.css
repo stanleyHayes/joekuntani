@@ -1,0 +1,574 @@
+.work {
+  overflow: clip;
+}
+
+.hero {
+  min-height: calc(100dvh - var(--header-height));
+  padding-block: clamp(4rem, 9vw, 8rem) clamp(5rem, 11vw, 9rem);
+}
+
+.kicker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 clamp(3rem, 8vw, 6rem);
+  color: var(--eyebrow-color);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+
+/* Trailing count is metadata, not the kicker itself — it stays muted so the
+   gold reads as one label, matching the events hero. */
+.kicker span:last-child {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.heroGrid {
+  display: grid;
+  align-items: end;
+  gap: clamp(2.5rem, 7vw, 7rem);
+}
+
+.hero h1 {
+  max-width: 9ch;
+  margin: 0;
+  font-size: clamp(4.4rem, 13vw, 11rem);
+  font-weight: 800;
+  letter-spacing: -0.08em;
+  line-height: 0.78;
+}
+
+.hero h1 span {
+  display: block;
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+.intro {
+  max-width: 27rem;
+  padding-bottom: 0.5rem;
+}
+
+.intro p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.intro a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  font-size: 0.83rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.intro a span {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.projects {
+  padding-block: clamp(4.5rem, 8vw, 7.5rem);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+}
+
+.projectHead {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
+}
+
+.projectHead > div:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.sectionNumber {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1em;
+}
+
+.projectHead h2 {
+  margin: 0;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  letter-spacing: -0.06em;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.filters a {
+  min-height: 2.45rem;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  padding: 0.45rem 0.85rem;
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  font-weight: 650;
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.filters a[aria-current="page"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.filters a:active {
+  transform: scale(0.97);
+}
+
+/* Three tracks, but never three cards abreast: each band pairs one 2-track
+   card with one 1-track card, so the wide side alternates down the page while
+   both media boxes land on near-identical heights (2:1 width against 16/10 vs
+   4/5 ratios). That keeps the asymmetry without opening a hole in the row. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(3.25rem, 6vw, 5.5rem) clamp(1.25rem, 2.6vw, 2.75rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  min-width: 0;
+}
+
+.card:first-child {
+  grid-column: 1 / -1;
+}
+
+.card:nth-child(4n + 2) {
+  grid-column: 1 / span 2;
+}
+
+.card:nth-child(4n + 3) {
+  grid-column: 3;
+}
+
+.card:nth-child(4n + 4) {
+  grid-column: 1;
+}
+
+.card:nth-child(4n + 1):not(:first-child) {
+  grid-column: 2 / span 2;
+}
+
+/* Self-healing closer. An even-numbered last card would start a band with
+   nothing beside it, so it takes the full width as a split composition
+   instead — the layout stays composed at 1, 2, 3, 5 or 12 items. */
+.card:last-child:nth-child(even) {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr);
+  align-items: end;
+  gap: clamp(1.75rem, 3.4vw, 3.5rem);
+}
+
+.card:last-child:nth-child(even) .media {
+  grid-row: 1;
+  grid-column: 2;
+}
+
+.card:last-child:nth-child(even) .cardCopy {
+  grid-row: 1;
+  grid-column: 1;
+}
+
+.media {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  background: #080a0e;
+  container-type: inline-size;
+  isolation: isolate;
+}
+
+.card:first-child .media {
+  aspect-ratio: 21 / 9;
+}
+
+.card:nth-child(4n + 3) .media,
+.card:nth-child(4n + 4) .media {
+  aspect-ratio: 4 / 5;
+}
+
+.card:last-child:nth-child(even) .media {
+  aspect-ratio: 16 / 10;
+}
+
+.media::after {
+  position: absolute;
+  inset: 0;
+  border: 1px solid color-mix(in srgb, #ffffff 15%, transparent);
+  content: "";
+  pointer-events: none;
+}
+
+.media img,
+.poster {
+  width: 100%;
+  height: 100%;
+}
+
+.media img {
+  display: block;
+  object-fit: cover;
+  filter: saturate(0.9) contrast(1.03);
+  transition:
+    transform 700ms cubic-bezier(0.23, 1, 0.32, 1),
+    filter 350ms ease;
+}
+
+.poster {
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: #0a0d12;
+}
+
+.poster::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      color-mix(in srgb, #ffffff 7%, transparent) 0 1px,
+      transparent 1px 3.5rem
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      color-mix(in srgb, #ffffff 7%, transparent) 0 1px,
+      transparent 1px 3.5rem
+    );
+  content: "";
+}
+
+.poster span {
+  position: relative;
+  z-index: 1;
+  color: transparent;
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 20vw, 12rem);
+  font-size: min(38cqi, 13rem);
+  font-weight: 800;
+  letter-spacing: -0.12em;
+  -webkit-text-stroke: 1px color-mix(in srgb, #ffffff 35%, transparent);
+}
+
+.poster i {
+  position: absolute;
+  right: 1rem;
+  bottom: 0.75rem;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardIndex {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  min-width: 2.6rem;
+  padding: 0.6rem 0.7rem;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 0.68rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.cardCopy {
+  display: grid;
+  gap: 0.4rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.meta {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cardCopy h3 {
+  margin: 0;
+  font-size: clamp(1.7rem, 2.9vw, 2.8rem);
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.card:first-child .cardCopy h3 {
+  font-size: clamp(2.4rem, 5vw, 5rem);
+  letter-spacing: -0.065em;
+  line-height: 0.9;
+}
+
+.card:nth-child(4n + 3) .cardCopy h3,
+.card:nth-child(4n + 4) .cardCopy h3 {
+  font-size: clamp(1.35rem, 1.9vw, 1.85rem);
+  letter-spacing: -0.04em;
+  line-height: 1.04;
+}
+
+.card:last-child:nth-child(even) .cardCopy h3 {
+  font-size: clamp(1.9rem, 3.3vw, 3.1rem);
+  line-height: 0.96;
+}
+
+.cardCopy h3 a {
+  text-decoration: none;
+}
+
+.summary {
+  max-width: 46rem;
+  margin: 0.55rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.96rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.card:first-child .summary {
+  max-width: 44rem;
+  font-size: clamp(1rem, 1.35vw, 1.12rem);
+}
+
+.caseLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: fit-content;
+  margin-top: 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.caseLink span {
+  transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.closing {
+  padding-block: clamp(4rem, 9vw, 8rem) clamp(8rem, 15vw, 13rem);
+}
+
+.closing > div {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-top: 2rem;
+  padding-top: clamp(2.5rem, 6vw, 5rem);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+.closing h2 {
+  max-width: 10ch;
+  margin: 0;
+  font-size: clamp(3.2rem, 9vw, 8rem);
+  letter-spacing: -0.07em;
+  line-height: 0.83;
+  text-wrap: balance;
+}
+
+.closing a {
+  display: inline-flex;
+  min-height: 3.1rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.1rem;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.closing a:active {
+  transform: scale(0.97);
+}
+
+@media (min-width: 58rem) {
+  .heroGrid {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.34fr);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .intro a:hover span {
+    transform: translateY(0.25rem);
+  }
+
+  .filters a:hover:not([aria-current="page"]) {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+
+  .card:hover .media img {
+    filter: saturate(1.05) contrast(1.02);
+    transform: scale(1.025);
+  }
+
+  .cardCopy h3 a:hover,
+  .caseLink:hover {
+    color: var(--accent);
+  }
+
+  .caseLink:hover span {
+    transform: translate(0.18rem, -0.18rem);
+  }
+
+  .closing a:hover {
+    border-color: var(--brand-k);
+    background: var(--brand-k);
+  }
+}
+
+/* Below the three-track threshold the bands collapse to one column and every
+   role-specific placement is reset, so the stream never depends on count. */
+@media (max-width: 63.99rem) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(3rem, 8vw, 4.5rem);
+  }
+
+  .card,
+  .card:first-child,
+  .card:nth-child(4n + 2),
+  .card:nth-child(4n + 3),
+  .card:nth-child(4n + 4),
+  .card:nth-child(4n + 1):not(:first-child),
+  .card:last-child:nth-child(even) {
+    display: block;
+    grid-column: 1 / -1;
+  }
+
+  .media,
+  .card:nth-child(4n + 3) .media,
+  .card:nth-child(4n + 4) .media,
+  .card:last-child:nth-child(even) .media {
+    aspect-ratio: 16 / 10;
+  }
+
+  .card:first-child .media {
+    aspect-ratio: 4 / 3;
+  }
+
+  .cardCopy h3,
+  .card:nth-child(4n + 3) .cardCopy h3,
+  .card:nth-child(4n + 4) .cardCopy h3,
+  .card:last-child:nth-child(even) .cardCopy h3 {
+    font-size: clamp(1.6rem, 4.2vw, 2.5rem);
+    letter-spacing: -0.05em;
+    line-height: 1;
+  }
+
+  .card:first-child .cardCopy h3 {
+    font-size: clamp(2rem, 6.4vw, 3.6rem);
+  }
+
+  .hero {
+    min-height: auto;
+  }
+
+  .projectHead {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .filters {
+    justify-content: flex-start;
+  }
+
+  .closing > div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 35rem) {
+  .hero h1 {
+    font-size: clamp(4rem, 21vw, 6.3rem);
+  }
+
+  .kicker {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .filters {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filters a {
+    justify-content: center;
+  }
+
+  .media,
+  .card:first-child .media,
+  .card:nth-child(4n + 3) .media,
+  .card:nth-child(4n + 4) .media,
+  .card:last-child:nth-child(even) .media {
+    aspect-ratio: 4 / 5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media img,
+  .intro a span,
+  .filters a,
+  .caseLink span,
+  .closing a {
+    transition-duration: 0.01ms;
+  }
+}

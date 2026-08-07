@@ -1,0 +1,151 @@
+.splash {
+  position: relative;
+  display: grid;
+  min-height: 100dvh;
+  place-content: center;
+  gap: 1.4rem;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 48% 46%,
+      color-mix(in srgb, var(--brand-j) 12%, transparent),
+      transparent 17rem
+    ),
+    radial-gradient(
+      circle at 54% 53%,
+      color-mix(in srgb, var(--brand-k) 10%, transparent),
+      transparent 22rem
+    ),
+    #0c1218;
+  color: #f4efe6;
+}
+
+.splash[data-overlay="true"] {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  animation: admin-splash-enter 160ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.splash::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(244, 239, 230, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(244, 239, 230, 0.035) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+  mask-image: radial-gradient(circle at center, black, transparent 68%);
+}
+
+.brand {
+  position: relative;
+  display: grid;
+  min-width: 15rem;
+  min-height: 7rem;
+  place-items: center;
+}
+
+.mark {
+  position: relative;
+  z-index: 1;
+  transform: scale(1.08);
+}
+
+.mark :global(.brand-mark__text) {
+  color: #f4efe6;
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+}
+
+.orbit {
+  position: absolute;
+  width: 7rem;
+  height: 7rem;
+  border: 1px solid rgba(244, 239, 230, 0.1);
+  border-radius: 50%;
+}
+
+.orbit::before,
+.orbit::after {
+  position: absolute;
+  border-radius: 50%;
+  content: "";
+}
+
+.orbit::before {
+  top: -0.22rem;
+  left: calc(50% - 0.22rem);
+  width: 0.44rem;
+  height: 0.44rem;
+  background: var(--brand-j);
+  box-shadow: 0 0 1rem color-mix(in srgb, var(--brand-j) 50%, transparent);
+  animation: admin-splash-orbit 1.15s linear infinite;
+  transform-origin: 0.22rem 3.72rem;
+}
+
+.orbit::after {
+  inset: 0.55rem;
+  border: 1px solid rgba(0, 200, 240, 0.12);
+}
+
+.dots {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.32rem;
+}
+
+.dots i {
+  width: 0.34rem;
+  height: 0.34rem;
+  border-radius: 50%;
+  background: rgba(244, 239, 230, 0.72);
+  animation: admin-splash-dot 780ms cubic-bezier(0.23, 1, 0.32, 1) infinite;
+}
+
+.dots i:nth-child(2) {
+  animation-delay: 100ms;
+}
+
+.dots i:nth-child(3) {
+  animation-delay: 200ms;
+}
+
+@keyframes admin-splash-enter {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes admin-splash-orbit {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes admin-splash-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-0.24rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash[data-overlay="true"],
+  .orbit::before,
+  .dots i {
+    animation: none;
+  }
+}

@@ -29,6 +29,12 @@ describe("MediaLibrary", () => {
     expect(
       screen.getByRole("list", { name: "Media assets" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", { name: "Asset details" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "View performance.jpg" }),
+    );
     fireEvent.click(screen.getByRole("button", { name: "Delete asset" }));
     expect(remove).not.toHaveBeenCalled();
     expect(screen.getByRole("status")).toHaveTextContent("used in 1 place");
@@ -36,6 +42,8 @@ describe("MediaLibrary", () => {
   it("validates uploads before invoking a provider", async () => {
     const upload = vi.fn();
     render(<MediaLibrary initialAssets={[]} onUpload={upload} />);
+    expect(screen.queryByLabelText(/Alternative text/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Upload asset" }));
     fireEvent.change(screen.getByLabelText(/Alternative text/), {
       target: { value: "short" },
     });
@@ -59,6 +67,7 @@ describe("MediaLibrary", () => {
     };
     const upload = vi.fn(async () => uploaded);
     render(<MediaLibrary initialAssets={[]} onUpload={upload} />);
+    fireEvent.click(screen.getByRole("button", { name: "Upload asset" }));
     const file = new File(["image"], "new.png", { type: "image/png" });
     fireEvent.change(screen.getByLabelText(/^File/), {
       target: { files: [file] },
@@ -82,6 +91,10 @@ describe("MediaLibrary", () => {
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent("uploaded"),
     );
+    expect(
+      screen.queryByRole("dialog", { name: "Asset details" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "View new.png" }));
     expect(screen.getAllByText("new.png")).toHaveLength(2);
   });
 
@@ -91,6 +104,7 @@ describe("MediaLibrary", () => {
     });
     const { rerender } = render(<MediaLibrary initialAssets={[]} />);
     const file = new File(["image"], "new.png", { type: "image/png" });
+    fireEvent.click(screen.getByRole("button", { name: "Upload asset" }));
     fireEvent.change(screen.getByLabelText(/^File/), {
       target: { files: [file] },
     });
@@ -112,6 +126,7 @@ describe("MediaLibrary", () => {
         onUpload={failing}
       />,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Upload asset" }));
     fireEvent.change(screen.getByLabelText(/^File/), {
       target: { files: [file] },
     });
@@ -137,6 +152,9 @@ describe("MediaLibrary", () => {
       ) => ({ ...asset, ...input }),
     );
     render(<MediaLibrary initialAssets={[asset]} onSave={save} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "View performance.jpg" }),
+    );
     const alt = screen.getByDisplayValue(asset.altText);
     fireEvent.change(alt, {
       target: { value: "Joe standing backstage in a red jacket" },
@@ -158,6 +176,9 @@ describe("MediaLibrary", () => {
       throw new Error("offline");
     });
     render(<MediaLibrary initialAssets={[asset]} onSave={save} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "View performance.jpg" }),
+    );
     const alt = screen.getByDisplayValue(asset.altText);
     fireEvent.change(alt, { target: { value: "short" } });
     fireEvent.click(screen.getByRole("button", { name: "Save metadata" }));
@@ -180,6 +201,9 @@ describe("MediaLibrary", () => {
     const { rerender } = render(
       <MediaLibrary initialAssets={[removable]} onDelete={remove} />,
     );
+    fireEvent.click(
+      screen.getByRole("button", { name: "View performance.jpg" }),
+    );
     fireEvent.click(screen.getByRole("button", { name: "Delete asset" }));
     await waitFor(() => expect(remove).toHaveBeenCalledWith("asset-1"));
     expect(screen.getByText("No assets yet")).toBeInTheDocument();
@@ -192,6 +216,9 @@ describe("MediaLibrary", () => {
         initialAssets={[removable]}
         onDelete={failing}
       />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "View performance.jpg" }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Delete asset" }));
     await waitFor(() =>
@@ -214,6 +241,9 @@ describe("MediaLibrary", () => {
       referenceCount: 0,
     };
     render(<MediaLibrary initialAssets={[asset, pdf]} />);
+    expect(
+      screen.queryByRole("dialog", { name: "Asset details" }),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /press-kit.pdf/ }));
     expect(screen.getByText("PDF")).toBeInTheDocument();
     expect(
@@ -227,6 +257,9 @@ describe("MediaLibrary", () => {
       status: "uploading" as const,
     }));
     render(<MediaLibrary initialAssets={[draft]} onRetry={retry} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "View performance.jpg" }),
+    );
     fireEvent.click(
       screen.getByRole("button", { name: "Retry secure upload" }),
     );
@@ -259,6 +292,9 @@ describe("MediaLibrary", () => {
       throw new Error("offline");
     });
     render(<MediaLibrary initialAssets={[draft]} onRetry={retry} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "View performance.jpg" }),
+    );
     const correct = new File([new Uint8Array(draft.bytes)], draft.filename, {
       type: draft.mimeType,
     });
@@ -276,6 +312,7 @@ describe("MediaLibrary", () => {
     const draft = { ...asset, status: "draft" as const, referenceCount: 0 };
     const upload = vi.fn(async () => draft);
     render(<MediaLibrary initialAssets={[]} onUpload={upload} />);
+    fireEvent.click(screen.getByRole("button", { name: "Upload asset" }));
     const file = new File([new Uint8Array(draft.bytes)], draft.filename, {
       type: draft.mimeType,
     });

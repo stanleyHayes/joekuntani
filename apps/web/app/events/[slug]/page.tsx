@@ -158,49 +158,63 @@ export default async function EventDetailPage({
               className={`${styles.section} shell-container`}
               aria-labelledby="event-details"
             >
-              <h2 id="event-details">Event details</h2>
-              <div className={styles.details}>
-                <p>{event.description}</p>
-                <dl className={styles.facts}>
-                  <div>
-                    <dt>Venue</dt>
-                    <dd>{event.venue.name}</dd>
-                  </div>
-                  <div>
-                    <dt>Address</dt>
-                    <dd>
-                      {event.venue.address}, {event.venue.city},{" "}
-                      {event.venue.country_code}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Local date and time</dt>
-                    <dd>{formatDateRange(event)}</dd>
-                  </div>
-                  <div>
-                    <dt>Timezone</dt>
-                    <dd>{event.timezone}</dd>
-                  </div>
-                </dl>
-                {event.venue.map_url ? (
-                  <a href={event.venue.map_url} rel="noopener noreferrer">
-                    Open approved venue map
-                  </a>
-                ) : null}
-                {event.venue.accessibility ? (
-                  <div className={styles.policy}>
-                    <h3>Venue accessibility</h3>
-                    <p>{event.venue.accessibility}</p>
-                  </div>
-                ) : null}
+              <div className={styles.sectionHead}>
+                <span>01</span>
+                <h2 id="event-details">Event details</h2>
+                <p>Where this date happens, and when doors run.</p>
+              </div>
+              <div className={styles.detailBody}>
+                <p className={styles.detailProse}>{event.description}</p>
+                <div className={styles.factPanel}>
+                  <dl className={styles.facts}>
+                    <div>
+                      <dt>Venue</dt>
+                      <dd>{event.venue.name}</dd>
+                    </div>
+                    <div>
+                      <dt>Address</dt>
+                      <dd>
+                        {event.venue.address}, {event.venue.city},{" "}
+                        {event.venue.country_code}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Local date and time</dt>
+                      <dd>{formatDateRange(event)}</dd>
+                    </div>
+                    <div>
+                      <dt>Timezone</dt>
+                      <dd>{event.timezone}</dd>
+                    </div>
+                  </dl>
+                  {event.venue.map_url ? (
+                    <a
+                      className={styles.mapLink}
+                      href={event.venue.map_url}
+                      rel="noopener noreferrer"
+                    >
+                      Open approved venue map
+                    </a>
+                  ) : null}
+                  {event.venue.accessibility ? (
+                    <div className={styles.accessNote}>
+                      <h3>Venue accessibility</h3>
+                      <p>{event.venue.accessibility}</p>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </section>
             <section
               className={`${styles.section} shell-container`}
               aria-labelledby="event-policies"
             >
-              <h2 id="event-policies">Entry and event policies</h2>
-              <div className={styles.grid}>
+              <div className={styles.sectionHead}>
+                <span>02</span>
+                <h2 id="event-policies">Entry and event policies</h2>
+                <p>Door rules, refunds and age guidance for this date.</p>
+              </div>
+              <div className={styles.policyGrid}>
                 <article className={styles.policy}>
                   <h3>Entry</h3>
                   <p>{event.policies.entry}</p>
@@ -229,7 +243,11 @@ export default async function EventDetailPage({
               id="tickets"
               aria-labelledby="tickets-title"
             >
-              <h2 id="tickets-title">Tickets</h2>
+              <div className={styles.sectionHead}>
+                <span>03</span>
+                <h2 id="tickets-title">Tickets</h2>
+                <p>Published ticket types, live availability and order limits.</p>
+              </div>
               {event.tickets.length ? (
                 <div className={styles.tickets}>
                   {event.tickets.map((ticket) => (

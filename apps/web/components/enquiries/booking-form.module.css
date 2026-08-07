@@ -22,10 +22,11 @@
 
 .eyebrow {
   margin: 0;
-  color: var(--accent-2);
-  font-size: 0.75rem;
-  font-weight: 750;
-  letter-spacing: 0.14em;
+  color: var(--eyebrow-color);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
   text-transform: uppercase;
 }
 

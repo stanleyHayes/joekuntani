@@ -7,11 +7,14 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type KeyboardEvent,
 } from "react";
 import { createPortal } from "react-dom";
 import styles from "./date-field.module.css";
+
+const subscribeToMount = () => () => {};
 
 type Mode = "date" | "datetime";
 
@@ -118,7 +121,11 @@ export function DateField({
   const [internal, setInternal] = useState(defaultValue);
   const selected = isControlled ? value : internal;
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    subscribeToMount,
+    () => true,
+    () => false,
+  );
   const [placement, setPlacement] = useState<PanelPlacement | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -131,16 +138,15 @@ export function DateField({
   const [minutes, setMinutes] = useState(selectedDate.getMinutes());
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
     const parsed = parseValue(selected, mode);
     if (!parsed) return;
-    setViewYear(parsed.getFullYear());
-    setViewMonth(parsed.getMonth());
-    setHours(parsed.getHours());
-    setMinutes(parsed.getMinutes());
+    const timer = window.setTimeout(() => {
+      setViewYear(parsed.getFullYear());
+      setViewMonth(parsed.getMonth());
+      setHours(parsed.getHours());
+      setMinutes(parsed.getMinutes());
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [selected, mode]);
 
   useLayoutEffect(() => {
@@ -156,7 +162,8 @@ export function DateField({
       const gap = 8;
       const estimatedHeight = mode === "datetime" ? 360 : 300;
       const spaceBelow = window.innerHeight - rect.bottom - 8;
-      const preferDown = spaceBelow >= estimatedHeight || spaceBelow >= rect.top;
+      const preferDown =
+        spaceBelow >= estimatedHeight || spaceBelow >= rect.top;
       const top = preferDown
         ? rect.bottom + gap
         : Math.max(8, rect.top - gap - estimatedHeight);
@@ -221,7 +228,11 @@ export function DateField({
 
   function onTriggerKey(event: KeyboardEvent<HTMLButtonElement>) {
     if (disabled) return;
-    if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+    if (
+      event.key === "ArrowDown" ||
+      event.key === "Enter" ||
+      event.key === " "
+    ) {
       event.preventDefault();
       setOpen(true);
     }
@@ -356,9 +367,7 @@ export function DateField({
               const now = new Date();
               if (mode === "date") commit(formatDate(now));
               else
-                commit(
-                  formatDateTime(now, now.getHours(), now.getMinutes()),
-                );
+                commit(formatDateTime(now, now.getHours(), now.getMinutes()));
               setOpen(false);
             }}
           >

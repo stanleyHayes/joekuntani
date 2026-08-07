@@ -28,6 +28,7 @@ import (
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/httpapi"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/issuance"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/media"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/newsletter"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/payments"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/platform/config"
 	mongoplatform "github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/platform/mongo"
@@ -36,6 +37,7 @@ import (
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/search"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/services"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/settings"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/support"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/ticketanalytics"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/ticketing"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/ticketops"
@@ -197,7 +199,21 @@ func main() {
 		logger.Error("ticket issuance configuration failed", "error", "TICKET_TOKEN_HMAC_KEY must contain at least 32 bytes")
 		os.Exit(1)
 	}
-	paymentProvider := payments.UnavailableProvider{}
+	// Paystack takes over whenever a secret key is present; without one the
+	// service stays on UnavailableProvider and checkout returns 503 rather than
+	// silently accepting money it cannot capture.
+	var paymentProvider payments.PaymentProvider = payments.UnavailableProvider{}
+	if paystackKey := strings.TrimSpace(os.Getenv("PAYSTACK_SECRET_KEY")); paystackKey != "" {
+		paystack, paystackErr := payments.NewPaystackProvider(paystackKey, os.Getenv("PAYSTACK_API_BASE_URL"), &http.Client{Timeout: 15 * time.Second})
+		if paystackErr != nil {
+			logger.Error("paystack configuration failed", "error", paystackErr)
+			os.Exit(1)
+		}
+		paymentProvider = paystack
+		logger.Info("payment provider configured", "provider", paystack.Name())
+	} else {
+		logger.Warn("payment provider not configured", "detail", "set PAYSTACK_SECRET_KEY to enable checkout")
+	}
 	paymentReturnURL := envOrDefault("PAYMENT_RETURN_URL", "https://unconfigured.invalid")
 	paymentStore := payments.NewMongoStore(mongoClient.Database())
 	paymentStore.SetIssuer(ticketIssuer)
@@ -329,6 +345,28 @@ func main() {
 		}
 		campaignWrite.ServeHTTP(response, request)
 	})
+	newsletterHandler := newsletter.NewHandler(newsletter.NewStore(mongoClient.Database()))
+	newsletterAdmin := authHandler.Protect(auth.PermissionAdminAccess, false, newsletterHandler.AdminRoutes())
+	newsletterAdminWrite := authHandler.Protect(auth.PermissionAdminAccess, true, newsletterHandler.AdminRoutes())
+	newsletterAdminRoutes := http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet {
+			newsletterAdmin.ServeHTTP(response, request)
+			return
+		}
+		newsletterAdminWrite.ServeHTTP(response, request)
+	})
+	// Donations reuse the configured payment provider but keep their own store
+	// and reference space so they can never touch ticket inventory.
+	supportStore := support.NewMongoStore(mongoClient.Database())
+	supportService, supportErr := support.NewService(supportStore, paymentProvider, envOrDefault("PUBLIC_WEB_URL", paymentReturnURL), envOrDefault("SUPPORT_CURRENCY", "GHS"))
+	if supportErr != nil {
+		logger.Error("donation configuration failed", "error", supportErr)
+		os.Exit(1)
+	}
+	paymentService.SetDonationApplier(supportService, support.IsDonationReference)
+	supportHandler := support.NewHandler(supportService)
+	supportAdminRoutes := authHandler.Protect(auth.PermissionAdminAccess, false, supportHandler.AdminRoutes())
+
 	ticketOpsService := ticketops.NewService(ticketops.NewMongoStore(mongoClient.Database(), crm.UUID), paymentProvider, nil)
 	ticketOpsHandler := ticketops.NewHandler(ticketOpsService)
 	ticketOpsRead := authHandler.Protect(auth.PermissionBookingsManage, false, ticketOpsHandler)
@@ -486,6 +524,10 @@ func main() {
 			AdminCheckin:             checkinRoutes,
 			AdminTicketAnalytics:     authHandler.Protect(auth.PermissionDashboardsRead, false, ticketAnalyticsHandler),
 			PublicAnalyticsTrack:     analyticsHandler.PublicTrack(),
+			PublicNewsletter:         newsletterHandler.PublicRoutes(),
+			AdminNewsletter:          newsletterAdminRoutes,
+			PublicSupport:            supportHandler.PublicRoutes(),
+			AdminSupport:             supportAdminRoutes,
 			ReadinessChecks: []httpapi.ReadinessCheck{func(ctx context.Context) error {
 				return mongoClient.Database().RunCommand(ctx, bson.D{{Key: "ping", Value: 1}}).Err()
 			}},

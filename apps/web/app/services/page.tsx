@@ -38,30 +38,36 @@ export default async function ServicesPage() {
       }}
     >
       {usingDemo ? <DemoBanner /> : null}
-      <main id="main-content">
+      <main id="main-content" className={styles.page}>
         <header className={`${styles.hero} shell-container`}>
-          <div>
-            <p className="eyebrow">{usingDemo ? "Demo services" : "Services"}</p>
-            <h1>Choose the right starting point.</h1>
-            <p>
-              {usingDemo
-                ? "These demo services exist only for layout and enquiry-flow review. Replace them with approved services in admin."
-                : "This page lists only service descriptions approved through the content system. Each option opens a contextual enquiry path."}
-            </p>
+          <p className={styles.kicker}>Services</p>
+          <div className={styles.heroGrid}>
+            <h1>Ways to work together.</h1>
+            <div className={styles.heroCopy}>
+              <p>
+                {usingDemo
+                  ? "Demo services for layout and enquiry-flow review. Replace them with approved offers in admin."
+                  : "Choose the closest starting point. Every enquiry is reviewed before scope, availability and commercial terms are confirmed."}
+              </p>
+              <a href="#services-heading">
+                Explore services <span aria-hidden="true">↓</span>
+              </a>
+            </div>
           </div>
-          <p className={styles.heroAside}>
-            Scope, availability and commercial terms are confirmed after the
-            team reviews a complete brief.
-          </p>
         </header>
 
         <section
           className={`${styles.footerSpace} shell-container`}
           aria-labelledby="services-heading"
         >
-          <h2 className={styles.sectionTitle} id="services-heading">
-            Available services
-          </h2>
+          <div className={styles.sectionHead}>
+            <span>01</span>
+            <h2 id="services-heading">Available services</h2>
+            <p>
+              Each route opens an enquiry with the relevant service already
+              selected.
+            </p>
+          </div>
           {services.length === 0 ? (
             <EmptyState
               className={styles.empty}
@@ -76,9 +82,12 @@ export default async function ServicesPage() {
             />
           ) : (
             <ol className={styles.list}>
-              {services.map((service) => (
+              {services.map((service, index) => (
                 <li className={styles.card} key={service.id}>
-                  <p className={styles.category}>{service.category}</p>
+                  <div className={styles.cardTop}>
+                    <p className={styles.category}>{service.category}</p>
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                  </div>
                   <h2>{service.name}</h2>
                   <p className={styles.summary}>{service.summary}</p>
                   <a
@@ -91,6 +100,38 @@ export default async function ServicesPage() {
               ))}
             </ol>
           )}
+        </section>
+        <section
+          className={`${styles.process} shell-container`}
+          aria-labelledby="service-process"
+        >
+          <div className={styles.sectionHead}>
+            <span>02</span>
+            <h2 id="service-process">From brief to booking</h2>
+          </div>
+          <ol>
+            <li>
+              <span>01</span>
+              <h3>Share the context</h3>
+              <p>Send the date, location, audience and the outcome you want.</p>
+            </li>
+            <li>
+              <span>02</span>
+              <h3>Align the scope</h3>
+              <p>
+                The team reviews fit, availability and the practical
+                requirements.
+              </p>
+            </li>
+            <li>
+              <span>03</span>
+              <h3>Confirm the booking</h3>
+              <p>
+                Agreed details move into the formal booking and production
+                process.
+              </p>
+            </li>
+          </ol>
         </section>
       </main>
     </PublicShell>

@@ -1,10 +1,16 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useId, useState } from "react";
+import { ButtonPending } from "../admin-feedback";
 import styles from "./scanner.module.css";
 
 type ScanResult = {
-  result: "admitted" | "already_checked_in" | "invalid" | "wrong_event" | "not_valid";
+  result:
+    | "admitted"
+    | "already_checked_in"
+    | "invalid"
+    | "wrong_event"
+    | "not_valid";
   ticket_ref?: string;
   checked_in_at?: string;
   checked_in_count: number;
@@ -37,7 +43,9 @@ export function Scanner() {
   const eventFieldId = useId();
   const tokenFieldId = useId();
   const [eventID, setEventID] = useState("");
-  const [state, setState] = useState<"idle" | "loading" | "offline" | "ready">("idle");
+  const [state, setState] = useState<"idle" | "loading" | "offline" | "ready">(
+    "idle",
+  );
   const [result, setResult] = useState<ScanResult | null>(null);
   const [count, setCount] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -60,7 +68,7 @@ export function Scanner() {
 
   useEffect(() => {
     if (!eventID) return;
-    void refreshCount(eventID);
+    const initial = window.setTimeout(() => void refreshCount(eventID), 0);
     const timer = window.setInterval(() => {
       if (!navigator.onLine) {
         setState((current) => (current === "loading" ? current : "offline"));
@@ -68,11 +76,15 @@ export function Scanner() {
       }
       void refreshCount(eventID);
     }, 5000);
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(timer);
+    };
   }, [eventID, refreshCount]);
 
   useEffect(() => {
-    const onOnline = () => setState((current) => (current === "offline" ? "idle" : current));
+    const onOnline = () =>
+      setState((current) => (current === "offline" ? "idle" : current));
     const onOffline = () => setState("offline");
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
@@ -106,7 +118,11 @@ export function Scanner() {
           "Content-Type": "application/json",
           "X-CSRF-Token": decodeURIComponent(csrfToken()),
         },
-        body: JSON.stringify({ event_id: nextEventID, token, device_label: "admin-scanner" }),
+        body: JSON.stringify({
+          event_id: nextEventID,
+          token,
+          device_label: "admin-scanner",
+        }),
       });
       if (!response.ok && response.status !== 409) {
         throw new Error(`scan failed:${response.status}`);
@@ -123,72 +139,134 @@ export function Scanner() {
     } catch {
       setResult(null);
       setState(navigator.onLine ? "idle" : "offline");
-      setError(navigator.onLine ? "Check-in could not be completed. Try again." : "You are offline. Reconnect before scanning.");
+      setError(
+        navigator.onLine
+          ? "Check-in could not be completed. Try again."
+          : "You are offline. Reconnect before scanning.",
+      );
     }
   }
 
   return (
     <section className={styles.workspace} aria-labelledby="checkin-heading">
-      <header className={styles.header}>
-        <p className={styles.eyebrow}>Door operations</p>
-        <h2 id="checkin-heading">Check-in scanner</h2>
-        <p>Scan or paste a ticket bearer. Responses never include buyer personal data.</p>
+      <header className="stage-head">
+        <div className="stage-head__copy">
+          <p className="stage-head__eyebrow">Door operations</p>
+          <h2 id="checkin-heading">Check-in scanner</h2>
+          <p className="stage-head__lede">
+            Scan or paste a ticket at the door. Responses never include buyer
+            personal data.
+          </p>
+        </div>
+        <div className="stage-head__actions">
+          <span
+            className={styles.connection}
+            data-offline={state === "offline"}
+          >
+            {state === "offline" ? "Offline" : "Live"}
+          </span>
+        </div>
       </header>
-
-      <p className={styles.count} role="status" aria-live="polite">
-        {count === null ? "Select an event to load live attendance." : `Checked in: ${count}`}
-      </p>
 
       {state === "offline" ? (
         <p className={styles.offline} role="alert">
-          Offline. Check-in requires a live connection so admissions stay atomic.
+          Offline. Check-in requires a live connection so admissions stay
+          atomic.
         </p>
       ) : null}
 
-      <form className={styles.form} onSubmit={submit}>
-        <label htmlFor={eventFieldId}>Event ID</label>
-        <input
-          id={eventFieldId}
-          name="event_id"
-          type="text"
-          required
-          autoComplete="off"
-          spellCheck={false}
-          pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"
-          placeholder="Event UUID"
-          onChange={(change) => setEventID(change.target.value.trim())}
-        />
+      <div className={styles.console}>
+        <div className={styles.scanBlock}>
+          <p className={styles.blockTitle}>Scan a ticket</p>
+          <form className={styles.form} onSubmit={submit}>
+            <label htmlFor={eventFieldId}>
+              Event ID <span className={styles.hint}>— from the event page</span>
+            </label>
+            <input
+              id={eventFieldId}
+              name="event_id"
+              type="text"
+              required
+              autoComplete="off"
+              spellCheck={false}
+              pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"
+              placeholder="Paste the event ID"
+              onChange={(change) => setEventID(change.target.value.trim())}
+            />
 
-        <label htmlFor={tokenFieldId}>Scanned token or manual paste</label>
-        <input
-          id={tokenFieldId}
-          name="token"
-          type="text"
-          required
-          minLength={16}
-          maxLength={512}
-          autoComplete="off"
-          spellCheck={false}
-          inputMode="text"
-          placeholder="Scan QR or paste bearer token"
-        />
+            <label htmlFor={tokenFieldId}>
+              Scanned token{" "}
+              <span className={styles.hint}>— or paste it manually</span>
+            </label>
+            <input
+              id={tokenFieldId}
+              className={styles.tokenInput}
+              name="token"
+              type="text"
+              required
+              minLength={16}
+              maxLength={512}
+              autoComplete="off"
+              spellCheck={false}
+              inputMode="text"
+              placeholder="Scan the QR code"
+            />
 
-        <button type="submit" disabled={state === "loading" || state === "offline"}>
-          {state === "loading" ? "Checking in…" : "Look up / Check in"}
-        </button>
-      </form>
+            <button
+              className={styles.submit}
+              type="submit"
+              disabled={state === "loading" || state === "offline"}
+            >
+              {state === "loading" ? (
+                <ButtonPending label="Checking in ticket" />
+              ) : (
+                "Look up / Check in"
+              )}
+            </button>
+          </form>
+        </div>
 
-      <div className={styles.result} aria-live="polite">
-        {error ? <p className={styles.error}>{error}</p> : null}
-        {result ? (
-          <article className={styles.card} data-result={result.result}>
-            <h3>{resultCopy[result.result]}</h3>
-            {result.ticket_ref ? <p>Ticket ref {result.ticket_ref}</p> : null}
-            {result.message ? <p>{result.message}</p> : null}
-            {result.checked_in_at ? <p>Checked in at {new Date(result.checked_in_at).toLocaleString()}</p> : null}
-            <p>Live count {result.checked_in_count}</p>
-          </article>
-        ) : null}
+        <div className={styles.side}>
+          <div className={styles.live} role="status" aria-live="polite">
+            <p className={styles.blockTitle}>Checked in</p>
+            {count === null ? (
+              <p className={styles.liveIdle}>
+                Enter an event ID to load live attendance.
+              </p>
+            ) : (
+              <>
+                <p className={styles.liveValue}>{count}</p>
+                <p className={styles.liveMeta}>Refreshes every 5 seconds</p>
+              </>
+            )}
+          </div>
+
+          <div className={styles.result} aria-live="polite">
+            {error ? <p className={styles.error}>{error}</p> : null}
+            {result ? (
+              <article className={styles.verdict} data-result={result.result}>
+                <h3>{resultCopy[result.result]}</h3>
+                {result.ticket_ref ? (
+                  <p className={styles.verdictRef}>
+                    Ticket ref {result.ticket_ref}
+                  </p>
+                ) : null}
+                {result.message ? <p>{result.message}</p> : null}
+                {result.checked_in_at ? (
+                  <p>
+                    Checked in at{" "}
+                    {new Date(result.checked_in_at).toLocaleString()}
+                  </p>
+                ) : null}
+              </article>
+            ) : error ? null : (
+              <p className={styles.waiting}>
+                The scan result appears here — admitted, already used, or not
+                valid.
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     </section>
   );

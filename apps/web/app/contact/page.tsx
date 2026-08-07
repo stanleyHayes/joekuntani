@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { ContactDetails } from "../../components/public-info/contact-details";
 import { ContactForm } from "../../components/public-info/contact-form";
 import { getContactConfiguration } from "../../components/public-info/data";
 import styles from "../../components/public-info/public-info.module.css";
 import { PublicShell } from "../../components/layout/public-shell";
 import { getPublicServices } from "../../components/services/data";
 import { pageMetadata, unavailableMetadata } from "../../lib/seo";
+import { getPublicSettings } from "../../lib/settings";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,14 +21,18 @@ export async function generateMetadata(): Promise<Metadata> {
     : unavailableMetadata("Contact", description);
 }
 export default async function ContactPage() {
-  const [settings, services] = await Promise.all([
+  // `getContactConfiguration` gates on consent copy because the enquiry form
+  // cannot submit without it. The published contact details are not gated that
+  // way — a visitor should still get an email address when consent is pending.
+  const [settings, publishedSettings, services] = await Promise.all([
     getContactConfiguration(),
+    getPublicSettings(),
     getPublicServices(),
   ]);
   return (
     <PublicShell
       currentPath="/contact"
-      settings={settings}
+      settings={settings ?? publishedSettings}
       footerCta={{
         href: "/services",
         label: "Review services",
@@ -50,8 +56,13 @@ export default async function ContactPage() {
           className={`${styles.section} shell-container`}
           aria-labelledby="contact-form"
         >
-          <h2 id="contact-form">Send an enquiry</h2>
-          <ContactForm services={services} settings={settings} />
+          <div className={styles.contactLayout}>
+            <div className={styles.contactMain}>
+              <h2 id="contact-form">Send an enquiry</h2>
+              <ContactForm services={services} settings={settings} />
+            </div>
+            <ContactDetails settings={publishedSettings} />
+          </div>
         </section>
       </main>
     </PublicShell>
