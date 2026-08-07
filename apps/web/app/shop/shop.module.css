@@ -137,3 +137,46 @@
   color: var(--ink-soft);
   font-size: 0.8rem;
 }
+
+.detail {
+  display: grid;
+  gap: clamp(2rem, 5vw, 3.5rem);
+  align-items: start;
+  padding-block: clamp(3rem, 8vw, 6rem);
+}
+
+.detailCopy {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.detailTitle {
+  margin: 0;
+  font-size: clamp(2.5rem, 7vw, 4.5rem);
+  letter-spacing: -0.055em;
+  line-height: 0.95;
+}
+
+.detailBody {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.detailBuy {
+  min-width: 0;
+  padding: clamp(1.35rem, 3vw, 2rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+}
+
+@media (min-width: 62rem) {
+  .detail {
+    grid-template-columns: minmax(0, 1fr) minmax(24rem, 0.9fr);
+  }
+}

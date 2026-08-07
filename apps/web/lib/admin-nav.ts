@@ -1,5 +1,6 @@
 import type { Icon } from "@phosphor-icons/react";
 import {
+  Storefront,
   AddressBook,
   Archive,
   Article,
@@ -52,6 +53,7 @@ export const ADMIN_NAV_GROUPS: readonly AdminNavGroup[] = [
     items: [
       { href: "/admin/content", label: "Content", icon: Newspaper },
       { href: "/admin/media", label: "Media", icon: ImageSquare },
+      { href: "/admin/merch", label: "Merchandise", icon: Storefront },
       { href: "/admin/services", label: "Services", icon: CirclesThreePlus },
       { href: "/admin/settings", label: "Site settings", icon: GearSix },
     ],

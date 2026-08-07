@@ -129,7 +129,7 @@ describe("PublicShell", () => {
 });
 
 describe("AdminShell", () => {
-  it("always exposes the content warning and accessible workspace landmarks", () => {
+  it("exposes the content warning and accessible workspace landmarks", () => {
     render(
       <AdminShell
         currentPath="/admin/content"
@@ -157,17 +157,24 @@ describe("AdminShell", () => {
     ).toHaveAttribute("href", "#admin-main-content");
   });
 
-  it("keeps the blocking warning explicit when an item count is unavailable", () => {
+  it("hides the content warning when no outstanding item count is reported", () => {
     render(
       <AdminShell title="Overview">
         <p>No content yet</p>
       </AdminShell>,
     );
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Production publishing is blocked",
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("hides the content warning once every required item is recorded", () => {
+    render(
+      <AdminShell missingContentCount={0} title="Overview">
+        <p>Everything recorded</p>
+      </AdminShell>,
     );
-    expect(screen.getByRole("status")).not.toHaveTextContent("items remain");
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("renders collapsible grouped navigation with connectors and collapse control", () => {

@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 export type SettingsLink = { label: string; href: string };
 export type SettingsCTA = {
   key: string;
@@ -33,17 +35,27 @@ export type PublicSettings = {
   };
 };
 
-export async function getPublicSettings(): Promise<PublicSettings | null> {
-  const base = process.env.API_BASE_URL;
-  if (!base) return null;
-  try {
-    const response = await fetch(`${base}/api/public/settings`, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(2000),
-    });
-    if (!response.ok) return null;
-    return (await response.json()) as PublicSettings;
-  } catch {
-    return null;
-  }
-}
+/**
+ * Deduplicated per render pass. `cache: "no-store"` opts out of Next's own
+ * fetch memoisation, so the contact page was hitting this endpoint three times
+ * for one page — once in `generateMetadata`, then twice more in the page body
+ * via `getContactConfiguration()` and this function. Each call carried its own
+ * 2s abort, so a cold API had three chances to lose the race and blank the
+ * enquiry form. React's `cache` collapses them into one request.
+ */
+export const getPublicSettings = cache(
+  async (): Promise<PublicSettings | null> => {
+    const base = process.env.API_BASE_URL;
+    if (!base) return null;
+    try {
+      const response = await fetch(`${base}/api/public/settings`, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(2000),
+      });
+      if (!response.ok) return null;
+      return (await response.json()) as PublicSettings;
+    } catch {
+      return null;
+    }
+  },
+);

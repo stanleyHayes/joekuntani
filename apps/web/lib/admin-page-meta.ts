@@ -37,6 +37,10 @@ const ADMIN_PAGE_META: Record<string, AdminPageMeta> = {
   "/admin/crm": { title: "CRM and enquiries" },
   "/admin/events": { title: "Events and ticket types" },
   "/admin/exports": { title: "Exports" },
+  "/admin/merch": {
+    title: "Merchandise",
+    description: "Products, variants, stock and shop orders.",
+  },
   "/admin/media": {
     title: "Media",
     description: "Library assets for the public brand surfaces.",

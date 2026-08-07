@@ -78,3 +78,34 @@ export function totalStock(product: MerchProduct): number {
     .filter((variant) => variant.active)
     .reduce((sum, variant) => sum + variant.stock, 0);
 }
+
+export type ProductDetail = {
+  product: MerchProduct | null;
+  currency: string;
+  enabled: boolean;
+};
+
+export async function getProduct(slug: string): Promise<ProductDetail> {
+  const base = process.env.API_BASE_URL;
+  if (!base || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))
+    return { product: null, currency: "GHS", enabled: false };
+  try {
+    const response = await fetch(
+      `${base}/api/public/merch/products/${encodeURIComponent(slug)}`,
+      { cache: "no-store", signal: AbortSignal.timeout(2000) },
+    );
+    if (!response.ok) return { product: null, currency: "GHS", enabled: false };
+    const body = (await response.json()) as {
+      product?: unknown;
+      currency?: string;
+      enabled?: boolean;
+    };
+    return {
+      product: validProduct(body.product) ? body.product : null,
+      currency: body.currency || "GHS",
+      enabled: body.enabled === true,
+    };
+  } catch {
+    return { product: null, currency: "GHS", enabled: false };
+  }
+}
