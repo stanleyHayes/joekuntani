@@ -96,9 +96,11 @@ func settingsValues() bson.M {
 				"href":        "/book",
 			},
 		},
-		// Placeholders on purpose — replace in Settings before going live.
+		// Live aliases on the joekuntani.com mailbox. `contact@` is the general
+		// public address (contact page, footer, Person structured data);
+		// `booking@` is the mailbox itself and takes the enquiry notifications.
 		"contact": bson.M{
-			"public_email": "bookings@joekuntani.com",
+			"public_email": "contact@joekuntani.com",
 			"phone":        "",
 			"location":     "Accra, Ghana",
 		},

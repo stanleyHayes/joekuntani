@@ -47,15 +47,24 @@ export const getPublicSettings = cache(
   async (): Promise<PublicSettings | null> => {
     const base = process.env.API_BASE_URL;
     if (!base) return null;
-    try {
-      const response = await fetch(`${base}/api/public/settings`, {
-        cache: "no-store",
-        signal: AbortSignal.timeout(2000),
-      });
-      if (!response.ok) return null;
-      return (await response.json()) as PublicSettings;
-    } catch {
-      return null;
+    // Two attempts, not one. Settings gate the enquiry form's consent copy, so
+    // losing this race doesn't degrade the contact page — it removes the form
+    // entirely and tells the visitor enquiries are closed. A single 2s budget
+    // was routinely lost to a cold API (first request after an idle pool costs
+    // seconds), so the fast path keeps its 2s and a slow one gets one longer
+    // retry rather than failing the page outright.
+    for (const timeout of [2000, 5000]) {
+      try {
+        const response = await fetch(`${base}/api/public/settings`, {
+          cache: "no-store",
+          signal: AbortSignal.timeout(timeout),
+        });
+        if (!response.ok) return null;
+        return (await response.json()) as PublicSettings;
+      } catch {
+        /* try the longer budget, then give up */
+      }
     }
+    return null;
   },
 );

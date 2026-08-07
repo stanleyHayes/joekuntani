@@ -1,10 +1,20 @@
 .menu {
+  /* Derived from the shared tokens rather than hard-coded, so the grid rules
+     and corner brackets stay legible on the cream light-theme canvas as well
+     as the near-black dark one. */
+  --menu-rule: color-mix(in srgb, var(--line) 62%, transparent);
+  --menu-bracket: color-mix(in srgb, var(--line) 85%, var(--brand-k));
+  --menu-bracket-active: var(--brand-k);
+  --menu-index: color-mix(in srgb, var(--ink-soft) 68%, transparent);
+  --menu-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
   position: fixed;
   inset: 0;
   z-index: calc(var(--layer-header) + 40);
   display: flex;
   flex-direction: column;
   overflow: auto;
+  overscroll-behavior: contain;
   background:
     radial-gradient(900px 420px at 100% 0%, var(--glow-j), transparent 55%),
     radial-gradient(700px 380px at 0% 100%, var(--glow-k), transparent 50%),
@@ -18,12 +28,13 @@
   inset: 0;
   pointer-events: none;
   background-image:
-    url("/brand/watermark-mic.svg"),
-    url("/brand/watermark-notes.svg");
+    url("/brand/watermark-mic.svg"), url("/brand/watermark-notes.svg");
   background-repeat: no-repeat;
-  background-position: 92% 18%, 8% 78%;
+  background-position:
+    92% 18%,
+    8% 78%;
   background-size: min(36vw, 9rem), min(32vw, 8rem);
-  opacity: 0.07;
+  opacity: 0.06;
 }
 
 .top {
@@ -89,74 +100,212 @@
   position: relative;
   z-index: 1;
   flex: 1;
-  padding: 0.5rem 1.25rem 2rem;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
-.eyebrow {
-  margin: 0 0 0.75rem;
-  color: var(--eyebrow-color);
-  font-family: var(--eyebrow-family);
-  font-size: var(--eyebrow-size);
-  font-weight: var(--eyebrow-weight);
-  letter-spacing: var(--eyebrow-tracking);
-  text-transform: uppercase;
-}
-
-.list {
+/* Hairline rules come from the tiles' own borders rather than a gap, so the
+   canvas gradient reads straight through the grid instead of being masked by
+   opaque cells. */
+.grid {
+  /* `flex: 1` gives the grid a definite height, which lets its auto rows take
+     the default `align-content: stretch` and absorb the leftover viewport
+     instead of leaving dead canvas under the CTA. Short viewports overflow into
+     the panel's own scroll. */
+  flex: 1;
   display: grid;
-  gap: 0.2rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
   padding: 0;
+  border-top: 1px solid var(--menu-rule);
   list-style: none;
 }
 
-.link {
+.cell {
+  display: flex;
+  border-right: 1px solid var(--menu-rule);
+  border-bottom: 1px solid var(--menu-rule);
+}
+
+.cell:nth-child(2n) {
+  border-right: 0;
+}
+
+/* An odd final nav item would otherwise sit as a half-width stub next to empty
+   space — let it take the full row instead. `nth-last-child(2)` is the last nav
+   cell, not the last cell overall: the CTA always trails the list. */
+.cell:nth-last-child(2):nth-child(odd),
+.ctaCell {
+  grid-column: 1 / -1;
+  border-right: 0;
+}
+
+.tile,
+.ctaTile {
+  position: relative;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  min-height: 3.5rem;
-  border-radius: 0.85rem;
-  padding: 0.7rem 1rem;
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: clamp(1.2rem, 4.5vw, 1.45rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  color: var(--ink-soft);
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
   transition:
-    background-color 160ms ease,
-    transform 140ms ease,
-    color 160ms ease;
+    color 180ms ease,
+    background-color 180ms ease;
 }
 
-.link:hover {
-  background: color-mix(in srgb, var(--surface-raised) 88%, var(--brand-k));
+.tile {
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.85rem;
+  min-height: clamp(6.75rem, 24vw, 9.5rem);
+  padding: 1.65rem 0.9rem 1.4rem;
 }
 
-.link[data-active="true"] {
-  background: var(--surface-raised);
-  box-shadow: var(--shadow);
+.tile:hover,
+.ctaTile:hover {
+  background: color-mix(in srgb, var(--surface-raised) 45%, transparent);
   color: var(--ink);
 }
 
-.link:active {
-  transform: scale(0.985);
+.tile:focus-visible,
+.ctaTile:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -4px;
 }
 
-.dot {
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: 999px;
-  background: var(--brand-ring);
+.tile:active,
+.ctaTile:active {
+  background: color-mix(in srgb, var(--surface-raised) 70%, transparent);
+}
+
+/* Four L-shaped corner marks drawn as eight hairline gradients on one span —
+   cheaper than eight elements and it keeps the tile's own box free for the
+   focus ring. */
+.corners {
+  --bracket-color: var(--menu-bracket);
+  --bracket-length: 0.85rem;
+  position: absolute;
+  inset: 0.55rem;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--bracket-color) 0 0) 0 0 / var(--bracket-length) 1px,
+    linear-gradient(var(--bracket-color) 0 0) 0 0 / 1px var(--bracket-length),
+    linear-gradient(var(--bracket-color) 0 0) 100% 0 / var(--bracket-length) 1px,
+    linear-gradient(var(--bracket-color) 0 0) 100% 0 / 1px var(--bracket-length),
+    linear-gradient(var(--bracket-color) 0 0) 0 100% / var(--bracket-length) 1px,
+    linear-gradient(var(--bracket-color) 0 0) 0 100% / 1px var(--bracket-length),
+    linear-gradient(var(--bracket-color) 0 0) 100% 100% / var(--bracket-length)
+      1px,
+    linear-gradient(var(--bracket-color) 0 0) 100% 100% / 1px
+      var(--bracket-length);
+  background-repeat: no-repeat;
+  transition: opacity 180ms ease;
+  opacity: 0.55;
+}
+
+.index {
+  position: absolute;
+  top: 0.85rem;
+  left: 1rem;
+  color: var(--menu-index);
+  font-family: var(--menu-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+}
+
+.icon {
+  width: 1.65rem;
+  height: 1.65rem;
   flex-shrink: 0;
+  transition:
+    color 180ms ease,
+    filter 180ms ease,
+    transform 180ms ease;
 }
 
-.cta {
-  width: 100%;
+.label,
+.ctaLabel {
+  font-family: var(--font-display);
+  font-size: clamp(0.78rem, 3.2vw, 0.92rem);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.tile[data-active="true"] {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--surface-raised) 55%, transparent);
+}
+
+.tile[data-active="true"] .corners {
+  --bracket-color: var(--menu-bracket-active);
+  opacity: 1;
+}
+
+.tile[data-active="true"] .icon {
+  color: var(--brand-k);
+  filter: drop-shadow(
+    0 0 0.7rem color-mix(in srgb, var(--brand-k) 55%, transparent)
+  );
+}
+
+.tile[data-active="true"] .label {
+  font-weight: 700;
+}
+
+/* The active cell gets a lit underline so the current page is findable at a
+   glance without relying on the icon tint alone. */
+.tile[data-active="true"]::after {
+  content: "";
+  position: absolute;
+  right: 1.75rem;
+  bottom: -1px;
+  left: 1.75rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--brand-k), transparent);
+}
+
+.ctaCell {
+  border-bottom: 0;
+}
+
+.ctaTile {
   justify-content: center;
-  margin-top: 1.5rem;
-  min-height: 3.1rem;
+  gap: 0.9rem;
+  min-height: clamp(5.5rem, 19vw, 7rem);
+  padding: 1.5rem 1.25rem;
+  color: var(--ink);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--brand-j) 12%, transparent),
+    color-mix(in srgb, var(--brand-k) 14%, transparent)
+  );
+}
+
+.ctaTile .corners {
+  --bracket-color: var(--brand-j);
+  opacity: 0.9;
+}
+
+.ctaTile .icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--brand-j);
+}
+
+.ctaTile:hover .icon {
+  transform: translate(2px, -2px);
+}
+
+.ctaLabel {
+  font-size: clamp(0.95rem, 4vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
 }
 
 @keyframes menu-in {
@@ -182,7 +331,7 @@
   }
 
   .close:hover,
-  .link:active {
+  .ctaTile:hover .icon {
     transform: none;
   }
 }

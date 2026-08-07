@@ -12,13 +12,33 @@ export async function contentMetadata(
   item: ContentItem | null,
   fallback: { title: string; description: string; path: string },
 ): Promise<Metadata> {
-  if (!item) return unavailableMetadata(fallback.title, fallback.description);
+  // Deliberately NOT unavailableMetadata here. A null item means either the
+  // content is unpublished or the API call failed — and the content fetch has a
+  // 2s timeout, so a slow response is indistinguishable from missing content.
+  // Emitting `noindex` in that case lets one blip de-index the homepage, which
+  // search engines honour aggressively and are slow to reverse. A soft-404 body
+  // with normal metadata is the far cheaper mistake. Routes that genuinely do
+  // not exist still call notFound(); pages that must never be indexed (admin,
+  // post-payment) set robots explicitly.
+  if (!item)
+    return {
+      title: fallback.title,
+      description: fallback.description,
+      alternates: { canonical: fallback.path },
+    };
   const settings = await getPublicSettings();
   const canonical = canonicalURL(
     item.seo.canonical_url || fallback.path,
     settings?.seo?.canonical_base,
   );
-  const image = await publicImage(item.seo.social_image_asset_id);
+  // Same fallback chain as pageMetadata: an approved upload, then the global
+  // one, then the generated brand card. Leaving images undefined here made the
+  // home and about pages fall back to Next's file-convention injection, which
+  // emitted a request-origin URL and no Twitter card.
+  const image =
+    (await publicImage(item.seo.social_image_asset_id)) ??
+    (await publicImage(settings?.seo?.social_image_asset_id ?? "")) ??
+    "/og";
   const title = item.seo.title.trim() || item.title;
   const description =
     item.seo.description.trim() || item.summary?.trim() || fallback.description;
@@ -28,10 +48,18 @@ export async function contentMetadata(
     alternates: canonical ? { canonical } : undefined,
     openGraph: {
       type: "website",
+      siteName: settings?.brand?.name || "Joe Kuntani",
+      locale: "en_GH",
       title,
       description,
       url: canonical,
-      images: image ? [{ url: image }] : undefined,
+      images: [{ url: image }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
     },
   };
 }
@@ -44,9 +72,14 @@ export async function pageMetadata(input: {
 }): Promise<Metadata> {
   const settings = await getPublicSettings();
   const canonical = canonicalURL(input.path, settings?.seo?.canonical_base);
+  // Falls back to the generated brand card at /opengraph-image, so a shared
+  // link always previews with an image even before real photography is
+  // uploaded. Declared explicitly rather than relying on Next's file-convention
+  // injection, which does not apply once a route declares its own openGraph.
   const image =
     (await publicImage(input.socialImageAssetID ?? "")) ??
-    (await publicImage(settings?.seo?.social_image_asset_id ?? ""));
+    (await publicImage(settings?.seo?.social_image_asset_id ?? "")) ??
+    "/og";
   return {
     title: input.title,
     description: input.description,
@@ -63,7 +96,7 @@ export async function pageMetadata(input: {
     twitter: {
       // summary_large_image only renders a card if an image resolves; without
       // one X falls back to a plain link, so the card type tracks the image.
-      card: image ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title: input.title,
       description: input.description,
       images: image ? [image] : undefined,

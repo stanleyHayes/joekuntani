@@ -38,7 +38,7 @@ Set these in the production env group (never commit real secrets):
 - `PUBLIC_WEB_URL` = exact HTTPS Vercel web origin
 - HMAC / session secrets (`MFA_ENCRYPTION_KEY`, `TICKET_TOKEN_HMAC_KEY`, `ENQUIRY_IP_HMAC_KEY`, `CRM_ATTACHMENT_HMAC_KEY`, `SESSION_SECRET`, `CSRF_SECRET`)
 - Cloudinary: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `CLOUDINARY_WEBHOOK_SECRET`, `CLOUDINARY_FOLDER=joe-kuntani/production`
-- Resend: `RESEND_API_KEY`, `RESEND_FROM_EMAIL` (verified domain preferred), `INTERNAL_NOTIFICATION_EMAIL`
+- Resend: `RESEND_API_KEY`, `RESEND_FROM_EMAIL` (`Joe Kuntani <info@joekuntani.com>` — requires the verified `joekuntani.com` domain), `INTERNAL_NOTIFICATION_EMAIL` (`booking@joekuntani.com`)
 - `PAYMENT_RETURN_URL` = `{PUBLIC_WEB_URL}/tickets/checkout` (HTTPS)
 
 ## Vercel (web)

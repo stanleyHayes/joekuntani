@@ -19,10 +19,32 @@ type ResendSender struct {
 	endpoint, key, from, adminURL string
 }
 
+// adminOriginUsable reports whether a notification email may link to this
+// admin URL. TLS is required everywhere a link could leave the machine; plain
+// http is tolerated only on loopback, so a local API can still send staff
+// notifications instead of refusing to start. The Resend endpoint itself is
+// held to https unconditionally — that call always crosses the network.
+func adminOriginUsable(admin *url.URL) bool {
+	if admin.Host == "" {
+		return false
+	}
+	if admin.Scheme == "https" {
+		return true
+	}
+	if admin.Scheme != "http" {
+		return false
+	}
+	switch admin.Hostname() {
+	case "localhost", "127.0.0.1", "::1":
+		return true
+	}
+	return false
+}
+
 func NewResendSender(db *mongo.Database, client *http.Client, endpoint, key, from, adminURL string) (*ResendSender, error) {
 	api, err := url.Parse(endpoint)
 	admin, adminErr := url.Parse(adminURL)
-	if db == nil || client == nil || err != nil || adminErr != nil || api.Scheme != "https" || api.Host == "" || admin.Scheme != "https" || admin.Host == "" || len(key) < 16 || !strings.Contains(from, "@") {
+	if db == nil || client == nil || err != nil || adminErr != nil || api.Scheme != "https" || api.Host == "" || !adminOriginUsable(admin) || len(key) < 16 || !strings.Contains(from, "@") {
 		return nil, ErrInvalid
 	}
 	return &ResendSender{db, client, endpoint, key, from, strings.TrimRight(adminURL, "/")}, nil

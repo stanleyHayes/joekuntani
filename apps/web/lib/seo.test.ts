@@ -40,7 +40,7 @@ it("fails closed when social-image fetches error or return non-OK", async () => 
   );
   await expect(
     pageMetadata({ title: "Page", description: "Description", path: "/page" }),
-  ).resolves.toMatchObject({ openGraph: { images: undefined } });
+  ).resolves.toMatchObject({ openGraph: { images: [{ url: "/og" }] } });
 
   vi.stubGlobal(
     "fetch",
@@ -55,7 +55,7 @@ it("fails closed when social-image fetches error or return non-OK", async () => 
   );
   await expect(
     pageMetadata({ title: "Page", description: "Description", path: "/page" }),
-  ).resolves.toMatchObject({ openGraph: { images: undefined } });
+  ).resolves.toMatchObject({ openGraph: { images: [{ url: "/og" }] } });
 });
 
 it("builds canonical global page metadata without an unapproved image", async () => {
@@ -85,7 +85,8 @@ it("builds canonical global page metadata without an unapproved image", async ()
     }),
   ).resolves.toMatchObject({
     alternates: { canonical: "https://example.test/page" },
-    openGraph: { images: undefined },
+    // The unapproved asset is still refused; the generated card stands in.
+    openGraph: { images: [{ url: "/og" }] },
   });
 });
 
@@ -138,14 +139,20 @@ it("escapes structured data markup breakout characters", () => {
   expect(jsonLd({ name: "</script>" })).not.toContain("</script>");
 });
 
-it("fails closed when published content is unavailable", async () => {
-  await expect(
-    contentMetadata(null, {
-      title: "Unavailable",
-      description: "Not published",
-      path: "/missing",
-    }),
-  ).resolves.toMatchObject({ robots: { index: false, follow: false } });
+// Policy change, deliberate: a null item used to emit noindex. It cannot be
+// told apart from a failed lookup — and the content fetch times out after 2s —
+// so one slow API response de-indexed live pages, which search engines honour
+// aggressively and reverse slowly. Indexing a soft-404 placeholder is the
+// cheaper mistake. Routes that truly do not exist call notFound(); pages that
+// must never be indexed set robots explicitly.
+it("does not de-index when content cannot be resolved", async () => {
+  const metadata = await contentMetadata(null, {
+    title: "Unavailable",
+    description: "Not published",
+    path: "/missing",
+  });
+  expect(metadata.robots).toBeUndefined();
+  expect(metadata.title).toBe("Unavailable");
 });
 
 it("uses approved content metadata and a ready image", async () => {

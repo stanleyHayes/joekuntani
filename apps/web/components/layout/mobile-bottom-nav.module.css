@@ -1,0 +1,141 @@
+.bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  /* Above the page and the sticky header's shadow, below the full-screen menu
+     (--layer-header + 40) so opening the menu covers the bar rather than
+     leaving it floating over the overlay. */
+  z-index: calc(var(--layer-header) + 10);
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--canvas) 88%, transparent);
+  backdrop-filter: saturate(140%) blur(14px);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.list {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  min-width: 0;
+}
+
+.link,
+.action {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  /* Comfortably past the 44px touch-target floor once the safe-area inset is
+     added below it. */
+  min-height: 3.5rem;
+  padding: 0.55rem 0.25rem 0.6rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.link:active,
+.action:active {
+  background: color-mix(in srgb, var(--surface-raised) 70%, transparent);
+}
+
+.link:focus-visible,
+.action:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -3px;
+}
+
+.icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex-shrink: 0;
+  transition: transform 160ms ease;
+}
+
+.label {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.link[data-active="true"] {
+  color: var(--ink);
+}
+
+.link[data-active="true"] .icon {
+  color: var(--brand-k);
+}
+
+/* Lit cap on the current tab, drawn on the bar's own top rule. */
+.link[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  width: 1.75rem;
+  height: 2px;
+  transform: translateX(-50%);
+  border-radius: 0 0 2px 2px;
+  background: var(--brand-k);
+}
+
+.action {
+  color: var(--ink);
+}
+
+.action .icon {
+  color: var(--brand-j);
+}
+
+.action:hover .icon {
+  transform: translate(1px, -1px);
+}
+
+/* The enquiry slot is the site's conversion target — a brand wash separates it
+   from the four navigational tabs without stealing a whole row. */
+.action::after {
+  content: "";
+  position: absolute;
+  inset: 0.4rem 0.3rem;
+  z-index: -1;
+  border-radius: 0.7rem;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--brand-j) 22%, transparent),
+    color-mix(in srgb, var(--brand-k) 22%, transparent)
+  );
+}
+
+@media (min-width: 72.01rem) {
+  .bar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action:hover .icon {
+    transform: none;
+  }
+}

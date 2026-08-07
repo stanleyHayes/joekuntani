@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { MotionShell } from "../motion/scroll-reveal";
 import { ThemeProvider } from "../theme/theme-provider";
 import { BrandWatermark } from "../ui/brand-watermark";
+import { MobileBottomNav } from "./mobile-bottom-nav";
 import { PublicFooter, type FooterCta } from "./public-footer";
 import { PublicHeader } from "./public-header";
 import type { PublicSettings } from "../../lib/settings";

@@ -17,6 +17,29 @@ type Confirmation = {
   tickets: Ticket[];
 };
 
+/**
+ * The buyer-help address. Inlined at build time, and deliberately unset-safe:
+ * a blank env var renders nothing rather than a `mailto:` to nowhere, so a
+ * misconfigured deploy loses the line instead of pointing buyers at a dead
+ * inbox. Kept separate from Settings' `public_email` — that one is the general
+ * public address, this one is where a paid order goes wrong.
+ */
+const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() ?? "";
+
+function SupportLine({ reference }: { reference?: string }) {
+  if (!SUPPORT_EMAIL) return null;
+  const subject = reference
+    ? `?subject=${encodeURIComponent(`Ticket order ${reference}`)}`
+    : "";
+  return (
+    <p>
+      Problem with this order? Email{" "}
+      <a href={`mailto:${SUPPORT_EMAIL}${subject}`}>{SUPPORT_EMAIL}</a>
+      {reference ? <> and quote {reference}.</> : "."}
+    </p>
+  );
+}
+
 export function TicketConfirmation({
   reference,
   access,
@@ -60,6 +83,7 @@ export function TicketConfirmation({
         <h1 id="tickets-heading">Ticket access unavailable</h1>
         <p role="alert">{error}</p>
         <Link href="/events">Browse events</Link>
+        <SupportLine reference={reference} />
       </section>
     );
   if (!view)
@@ -98,6 +122,7 @@ export function TicketConfirmation({
           </li>
         ))}
       </ol>
+      <SupportLine reference={view.reference} />
     </section>
   );
 }

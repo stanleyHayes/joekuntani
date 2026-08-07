@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 import { ThemeToggle } from "../theme/theme-toggle";
-import { ButtonLink } from "../ui/button-link";
 import { BrandMark } from "./brand-mark";
+import { NavIcon } from "./nav-icons";
 import styles from "./mobile-menu.module.css";
 
 type NavItem = { href: string; label: string };
@@ -25,7 +25,12 @@ function linkIsActive(currentPath: string | undefined, href: string) {
   return currentPath === href || currentPath.startsWith(`${href}/`);
 }
 
-/** Kedland-style full-screen mobile menu: focus trap, body scroll lock, Escape. */
+/**
+ * Full-screen mobile menu laid out as a bracketed tile grid. Focus trap, body
+ * scroll lock and Escape-to-close. The index number and icon inside each tile
+ * are `aria-hidden` so the link's accessible name stays the bare label — screen
+ * reader users hear "Work", not "03 Work".
+ */
 export function MobileMenu({
   open,
   onClose,
@@ -117,31 +122,39 @@ export function MobileMenu({
       </div>
 
       <nav aria-label="Mobile navigation" className={styles.nav}>
-        <p className={styles.eyebrow}>Navigate</p>
-        <ul className={styles.list}>
-          {navigation.map((item) => {
+        <ul className={styles.grid}>
+          {navigation.map((item, index) => {
             const active = linkIsActive(currentPath, item.href);
             return (
-              <li key={item.href}>
+              <li key={item.href} className={styles.cell}>
                 <Link
-                  className={styles.link}
+                  className={styles.tile}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   data-active={active ? "true" : "false"}
                   onClick={onClose}
                 >
-                  {item.label}
-                  {active ? (
-                    <span className={styles.dot} aria-hidden="true" />
-                  ) : null}
+                  <span className={styles.corners} aria-hidden="true" />
+                  <span className={styles.index} aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <NavIcon href={item.href} className={styles.icon} />
+                  <span className={styles.label}>{item.label}</span>
                 </Link>
               </li>
             );
           })}
+          <li className={`${styles.cell} ${styles.ctaCell}`}>
+            <Link className={styles.ctaTile} href={cta.href} onClick={onClose}>
+              <span className={styles.corners} aria-hidden="true" />
+              <span className={styles.index} aria-hidden="true">
+                {String(navigation.length + 1).padStart(2, "0")}
+              </span>
+              <NavIcon href="/book" className={styles.icon} />
+              <span className={styles.ctaLabel}>{cta.label}</span>
+            </Link>
+          </li>
         </ul>
-        <ButtonLink className={styles.cta} href={cta.href} onClick={onClose}>
-          {cta.label}
-        </ButtonLink>
       </nav>
     </div>
   );
