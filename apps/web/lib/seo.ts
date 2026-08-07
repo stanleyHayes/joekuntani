@@ -16,7 +16,7 @@ export async function contentMetadata(
   const settings = await getPublicSettings();
   const canonical = canonicalURL(
     item.seo.canonical_url || fallback.path,
-    settings?.seo.canonical_base,
+    settings?.seo?.canonical_base,
   );
   const image = await publicImage(item.seo.social_image_asset_id);
   const title = item.seo.title.trim() || item.title;
@@ -43,20 +43,30 @@ export async function pageMetadata(input: {
   socialImageAssetID?: string;
 }): Promise<Metadata> {
   const settings = await getPublicSettings();
-  const canonical = canonicalURL(input.path, settings?.seo.canonical_base);
+  const canonical = canonicalURL(input.path, settings?.seo?.canonical_base);
   const image =
     (await publicImage(input.socialImageAssetID ?? "")) ??
-    (await publicImage(settings?.seo.social_image_asset_id ?? ""));
+    (await publicImage(settings?.seo?.social_image_asset_id ?? ""));
   return {
     title: input.title,
     description: input.description,
     alternates: canonical ? { canonical } : undefined,
     openGraph: {
       type: "website",
+      siteName: settings?.brand?.name || "Joe Kuntani",
+      locale: "en_GH",
       title: input.title,
       description: input.description,
       url: canonical,
       images: image ? [{ url: image }] : undefined,
+    },
+    twitter: {
+      // summary_large_image only renders a card if an image resolves; without
+      // one X falls back to a plain link, so the card type tracks the image.
+      card: image ? "summary_large_image" : "summary",
+      title: input.title,
+      description: input.description,
+      images: image ? [image] : undefined,
     },
   };
 }

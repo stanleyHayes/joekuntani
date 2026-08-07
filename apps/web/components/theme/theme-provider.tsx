@@ -4,12 +4,19 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
 
 export type Theme = "light" | "dark";
+
+/**
+ * What the server puts on `<html data-theme>` in the root layout. The first
+ * client render has to start here or hydration breaks — see ThemeProviderInner.
+ */
+const SERVER_THEME: Theme = "dark";
 
 type ThemeContextValue = {
   theme: Theme;
@@ -27,7 +34,9 @@ function applyTheme(theme: Theme) {
 
 function supportsViewTransition(
   doc: Document,
-): doc is Document & { startViewTransition: (cb: () => void) => { finished: Promise<void> } } {
+): doc is Document & {
+  startViewTransition: (cb: () => void) => { finished: Promise<void> };
+} {
   return "startViewTransition" in doc;
 }
 
@@ -41,39 +50,53 @@ function readInitialTheme(): Theme {
 }
 
 function ThemeProviderInner({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(readInitialTheme);
+  // Deliberately NOT `useState(readInitialTheme)`. The layout's boot script
+  // rewrites `<html data-theme>` from storage before React hydrates, so reading
+  // it during the first render made the client disagree with the server HTML —
+  // the toggle rendered "Light"/"☀" over a server-rendered "Dark"/"◐" and React
+  // threw "server rendered text didn't match the client" for every light-theme
+  // visitor. Start from the server's value, then adopt the real one on mount.
+  const [theme, setThemeState] = useState<Theme>(SERVER_THEME);
 
-  const setTheme = useCallback((next: Theme, origin?: { x: number; y: number }) => {
-    const root = document.documentElement;
-    const reduceMotion =
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const run = () => {
-      applyTheme(next);
-      setThemeState(next);
-      try {
-        localStorage.setItem(STORAGE_KEY, next);
-      } catch {
-        /* private mode */
-      }
-    };
-
-    if (reduceMotion || !supportsViewTransition(document) || !origin) {
-      run();
-      return;
-    }
-
-    root.style.setProperty("--theme-reveal-x", `${origin.x}px`);
-    root.style.setProperty("--theme-reveal-y", `${origin.y}px`);
-    root.dataset.themeReveal = next === "dark" ? "to-dark" : "to-light";
-
-    const transition = document.startViewTransition(() => {
-      run();
-    });
-    void transition.finished.finally(() => {
-      delete root.dataset.themeReveal;
-    });
+  useEffect(() => {
+    const actual = readInitialTheme();
+    setThemeState((current) => (current === actual ? current : actual));
   }, []);
+
+  const setTheme = useCallback(
+    (next: Theme, origin?: { x: number; y: number }) => {
+      const root = document.documentElement;
+      const reduceMotion =
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const run = () => {
+        applyTheme(next);
+        setThemeState(next);
+        try {
+          localStorage.setItem(STORAGE_KEY, next);
+        } catch {
+          /* private mode */
+        }
+      };
+
+      if (reduceMotion || !supportsViewTransition(document) || !origin) {
+        run();
+        return;
+      }
+
+      root.style.setProperty("--theme-reveal-x", `${origin.x}px`);
+      root.style.setProperty("--theme-reveal-y", `${origin.y}px`);
+      root.dataset.themeReveal = next === "dark" ? "to-dark" : "to-light";
+
+      const transition = document.startViewTransition(() => {
+        run();
+      });
+      void transition.finished.finally(() => {
+        delete root.dataset.themeReveal;
+      });
+    },
+    [],
+  );
 
   const toggleTheme = useCallback(
     (origin?: { x: number; y: number }) => {
@@ -87,7 +110,9 @@ function ThemeProviderInner({ children }: { children: ReactNode }) {
     [theme, setTheme, toggleTheme],
   );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }
 
 /** Nestable: if a provider already exists (root layout), shells pass through. */

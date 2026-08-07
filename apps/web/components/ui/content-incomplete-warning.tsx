@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type ContentIncompleteWarningProps = {
   missingCount?: number;
 };
@@ -21,8 +23,7 @@ export function ContentIncompleteWarning({
           are recorded.{countLabel}
         </p>
       </div>
-      <Link href="/admin/settings/content">Review content status</Link>
+      <Link href="/admin/content">Review content status</Link>
     </section>
   );
 }
-import Link from "next/link";

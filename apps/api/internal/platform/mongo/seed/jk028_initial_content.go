@@ -30,7 +30,7 @@ const initialContentSeedName = "202608071200_jk028_initial_content"
 func initialContentSeed() Seed {
 	return Seed{
 		Name:     initialContentSeedName,
-		Checksum: "jk028-initial-content-v5",
+		Checksum: "jk028-initial-content-v6",
 		Apply:    applyInitialContent,
 	}
 }
@@ -102,7 +102,13 @@ func settingsValues() bson.M {
 			"phone":        "",
 			"location":     "Accra, Ghana",
 		},
+		// Verified public profiles. Add or remove them in Settings → Contact
+		// and social; the footer, contact page and Person structured data all
+		// read from this one list.
 		"social": bson.A{
+			bson.M{"platform": "Instagram", "url": "https://www.instagram.com/joe_kuntani/"},
+			bson.M{"platform": "TikTok", "url": "https://www.tiktok.com/@joekuntani_"},
+			bson.M{"platform": "YouTube", "url": "https://www.youtube.com/c/joekuntani"},
 			bson.M{"platform": "Facebook", "url": "https://www.facebook.com/joekuntanii/"},
 		},
 		"brand": bson.M{

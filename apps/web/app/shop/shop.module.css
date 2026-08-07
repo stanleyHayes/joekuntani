@@ -1,0 +1,139 @@
+.page {
+  min-width: 0;
+}
+
+.hero {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+  padding-block: clamp(3.5rem, 9vw, 7rem);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(3rem, 10vw, 6rem);
+  letter-spacing: -0.06em;
+  line-height: 0.92;
+}
+
+.lede {
+  max-width: 42ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: clamp(1.02rem, 2vw, 1.22rem);
+  line-height: 1.6;
+}
+
+.section {
+  padding-bottom: clamp(4rem, 9vw, 8rem);
+}
+
+.sectionHead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  margin-bottom: clamp(2rem, 5vw, 3.5rem);
+}
+
+.sectionHead > span {
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.sectionHead h2 {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  letter-spacing: -0.05em;
+}
+
+.sectionHead p {
+  grid-column: 2;
+  max-width: 40rem;
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  min-width: 0;
+}
+
+.cardLink {
+  display: grid;
+  gap: 1.15rem;
+  height: 100%;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+  background: var(--surface-raised);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 180ms ease;
+}
+
+.cardLink:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.cardLink:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.cardIndex {
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+}
+
+.cardBody {
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
+}
+
+.cardName {
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.cardSummary {
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.cardFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  margin-top: 0.35rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.cardPrice {
+  font-size: 1.05rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardStock {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}

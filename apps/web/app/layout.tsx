@@ -50,6 +50,20 @@ export async function generateMetadata(): Promise<Metadata> {
       ? new URL(settings.seo.canonical_base)
       : undefined,
     icons: brandIcons,
+    alternates: settings.seo.canonical_base ? { canonical: "/" } : undefined,
+    openGraph: {
+      type: "website",
+      siteName: settings.brand.name || "Joe Kuntani",
+      locale: "en_GH",
+      title: settings.seo.default_title || settings.brand.name,
+      description: settings.seo.description || undefined,
+      url: canonicalURL("/", settings.seo.canonical_base),
+    },
+    twitter: {
+      card: "summary",
+      title: settings.seo.default_title || settings.brand.name,
+      description: settings.seo.description || undefined,
+    },
   };
 }
 
@@ -67,7 +81,7 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   const settings = await getPublicSettings();
-  const website = canonicalURL("/", settings?.seo.canonical_base);
+  const website = canonicalURL("/", settings?.seo?.canonical_base);
   return (
     <html
       lang="en"
@@ -79,15 +93,44 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
       <body>
-        {website && settings?.brand.name ? (
+        {website && settings?.brand?.name ? (
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
               __html: jsonLd({
                 "@context": "https://schema.org",
-                "@type": "WebSite",
-                name: settings.brand.name,
-                url: website,
+                "@graph": [
+                  {
+                    "@type": "WebSite",
+                    "@id": `${website}#website`,
+                    name: settings.brand.name,
+                    url: website,
+                    publisher: { "@id": `${website}#person` },
+                  },
+                  {
+                    // A performer is a Person, not an Organization — this is the
+                    // entity search engines attach a knowledge panel to, and
+                    // sameAs is how they reconcile it with the social profiles.
+                    "@type": "Person",
+                    "@id": `${website}#person`,
+                    name: settings.brand.name,
+                    url: website,
+                    description: settings.seo.description || undefined,
+                    jobTitle: "Music-comedian",
+                    sameAs: (settings.social ?? [])
+                      .map((profile) => profile.url)
+                      .filter(Boolean),
+                    address: settings.contact?.location
+                      ? {
+                          "@type": "PostalAddress",
+                          addressLocality: settings.contact?.location,
+                        }
+                      : undefined,
+                    email: settings.contact?.public_email
+                      ? `mailto:${settings.contact?.public_email}`
+                      : undefined,
+                  },
+                ],
               }),
             }}
           />
