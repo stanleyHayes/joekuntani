@@ -86,6 +86,8 @@ type Options struct {
 	AdminNewsletter          http.Handler
 	PublicSupport            http.Handler
 	AdminSupport             http.Handler
+	PublicMerch              http.Handler
+	AdminMerch               http.Handler
 }
 
 func NewHandler(options ...Options) http.Handler {
@@ -283,6 +285,12 @@ func NewHandler(options ...Options) http.Handler {
 	}
 	if configuration.AdminSupport != nil {
 		router.Mount("/api/admin/support", configuration.AdminSupport)
+	}
+	if configuration.PublicMerch != nil {
+		router.Mount("/api/public/merch", configuration.PublicMerch)
+	}
+	if configuration.AdminMerch != nil {
+		router.Mount("/api/admin/merch", configuration.AdminMerch)
 	}
 	return router
 }

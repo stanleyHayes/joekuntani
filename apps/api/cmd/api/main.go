@@ -28,6 +28,7 @@ import (
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/httpapi"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/issuance"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/media"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/merch"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/newsletter"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/payments"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/platform/config"
@@ -364,6 +365,26 @@ func main() {
 		os.Exit(1)
 	}
 	paymentService.SetDonationApplier(supportService, support.IsDonationReference)
+
+	// Merchandise shares the provider and the single webhook endpoint; it is
+	// routed by its own JKM- reference prefix.
+	merchStore := merch.NewMongoStore(mongoClient.Database())
+	merchService, merchErr := merch.NewService(merchStore, paymentProvider, envOrDefault("PUBLIC_WEB_URL", paymentReturnURL), envOrDefault("SUPPORT_CURRENCY", "GHS"))
+	if merchErr != nil {
+		logger.Error("merchandise configuration failed", "error", merchErr)
+		os.Exit(1)
+	}
+	paymentService.RegisterApplier(merch.IsMerchReference, merchService)
+	merchHandler := merch.NewHandler(merchService)
+	merchAdminRead := authHandler.Protect(auth.PermissionContentEdit, false, merchHandler.AdminRoutes())
+	merchAdminWrite := authHandler.Protect(auth.PermissionContentEdit, true, merchHandler.AdminRoutes())
+	merchAdminRoutes := http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet {
+			merchAdminRead.ServeHTTP(response, request)
+			return
+		}
+		merchAdminWrite.ServeHTTP(response, request)
+	})
 	supportHandler := support.NewHandler(supportService)
 	supportAdminRoutes := authHandler.Protect(auth.PermissionAdminAccess, false, supportHandler.AdminRoutes())
 
@@ -528,6 +549,8 @@ func main() {
 			AdminNewsletter:          newsletterAdminRoutes,
 			PublicSupport:            supportHandler.PublicRoutes(),
 			AdminSupport:             supportAdminRoutes,
+			PublicMerch:              merchHandler.PublicRoutes(),
+			AdminMerch:               merchAdminRoutes,
 			ReadinessChecks: []httpapi.ReadinessCheck{func(ctx context.Context) error {
 				return mongoClient.Database().RunCommand(ctx, bson.D{{Key: "ping", Value: 1}}).Err()
 			}},

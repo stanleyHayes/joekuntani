@@ -159,11 +159,14 @@
   font-size: clamp(2.8rem, 7vw, 6rem);
   letter-spacing: -0.065em;
 }
+/* Same reason: "View all work ↗" / "All services ↗" must not orphan the arrow
+   when the flex row tightens. */
 .sectionHead > a {
   color: inherit;
   font-size: 0.75rem;
   font-weight: 750;
   text-decoration: none;
+  white-space: nowrap;
 }
 .workGrid {
   display: grid;
@@ -244,11 +247,17 @@
   color: var(--ink-soft);
   line-height: 1.55;
 }
+/* `nowrap` because the trailing ↗ is a separate word: in the mobile grid this
+   link sits in an `auto` track that can shrink to min-content — the width of
+   "Enquire" alone — which dropped the arrow onto its own line. The `1fr` title
+   track absorbs the difference, so nothing overflows.
+   `.button-link` already carries this; these bare links did not. */
 .services li > a {
   color: inherit;
   font-size: 0.72rem;
   font-weight: 750;
   text-decoration: none;
+  white-space: nowrap;
 }
 .testimonials > h2 {
   max-width: 10ch;

@@ -91,7 +91,7 @@ func (d *Domain) Submit(ctx context.Context, input Submission) (Receipt, error) 
 	if err != nil || !service.Active || service.RetiredAt != nil {
 		return Receipt{}, ErrInvalid
 	}
-	if err = validate(input, service.FormSchema); err != nil {
+	if err = validate(input, service.FormSchema, d.now()); err != nil {
 		return Receipt{}, err
 	}
 	risk := Risk{}
@@ -147,10 +147,10 @@ func (d *Domain) Submit(ctx context.Context, input Submission) (Receipt, error) 
 	return receipt, nil
 }
 
-func validate(input Submission, schema services.FormSchema) error {
+func validate(input Submission, schema services.FormSchema, now time.Time) error {
 	input.Contact.Name = strings.TrimSpace(input.Contact.Name)
 	input.Contact.Email = strings.TrimSpace(input.Contact.Email)
-	if len(input.Contact.Name) < 2 || len(input.Contact.Name) > 120 || len(input.Contact.Email) > 254 || len(input.Contact.Phone) > 40 || len(input.Contact.Organization) > 160 || len(strings.TrimSpace(input.Contact.Role)) < 2 || len(input.Contact.Role) > 120 || !validAlpha2(input.Contact.Country) || len(input.ProjectBrief) > 8000 || len(input.Budget) < 1 || len(input.Budget) > 120 || len(input.Timeline) > 120 || !supportedCurrency(input.Currency) || !validDecisionDate(input.DecisionDeadline) || len(input.AdditionalNotes) > 8000 || !input.Consent || input.ConsentText != ConsentTextCurrent || input.ConsentVersion != ConsentVersionCurrent {
+	if len(input.Contact.Name) < 2 || len(input.Contact.Name) > 120 || len(input.Contact.Email) > 254 || len(input.Contact.Phone) > 40 || len(input.Contact.Organization) > 160 || len(strings.TrimSpace(input.Contact.Role)) < 2 || len(input.Contact.Role) > 120 || !validAlpha2(input.Contact.Country) || len(input.ProjectBrief) > 8000 || len(input.Budget) < 1 || len(input.Budget) > 120 || len(input.Timeline) > 120 || !supportedCurrency(input.Currency) || !validDecisionDate(input.DecisionDeadline, now) || len(input.AdditionalNotes) > 8000 || !input.Consent || input.ConsentText != ConsentTextCurrent || input.ConsentVersion != ConsentVersionCurrent {
 		return ErrInvalid
 	}
 	if !map[string]bool{"event": true, "brand": true}[input.EnquiryType] || !map[string]bool{"search": true, "social": true, "referral": true, "press": true, "other": true}[input.Source] || !validDetails(input.EnquiryType, input.Details) {
@@ -202,9 +202,14 @@ func supportedCurrency(value string) bool {
 func validAlpha2(value string) bool {
 	return len(value) == 2 && value[0] >= 'A' && value[0] <= 'Z' && value[1] >= 'A' && value[1] <= 'Z'
 }
-func validDecisionDate(value string) bool {
+
+// validDecisionDate takes the caller's clock rather than reading time.Now.
+// The domain is otherwise fully clock-injectable; this validator reaching for
+// the wall clock made submissions untestable and left the suite time-bombed —
+// a fixture deadline that was valid when written started failing the next day.
+func validDecisionDate(value string, now time.Time) bool {
 	parsed, err := time.Parse("2006-01-02", value)
-	return err == nil && !parsed.Before(time.Now().UTC().Truncate(24*time.Hour))
+	return err == nil && !parsed.Before(now.UTC().Truncate(24*time.Hour))
 }
 func validDetails(kind string, d Details) bool {
 	if kind == "event" {

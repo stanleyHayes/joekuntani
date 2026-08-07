@@ -128,8 +128,8 @@ func TestRegistryHasStableChecksum(t *testing.T) {
 	t.Parallel()
 
 	registry := Registry()
-	if len(registry) != 32 {
-		t.Fatalf("Registry() length = %d, want 32", len(registry))
+	if len(registry) != 33 {
+		t.Fatalf("Registry() length = %d, want 33", len(registry))
 	}
 	if registry[0].Name != bootstrapChangeName || len(registry[0].Checksum) != 64 {
 		t.Fatalf("unexpected registry entry: name=%q checksum=%q", registry[0].Name, registry[0].Checksum)

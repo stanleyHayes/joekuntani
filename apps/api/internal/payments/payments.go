@@ -73,11 +73,20 @@ type Telemetry interface {
 	PaymentFailed(string, string)
 }
 
-// DonationApplier receives verified provider events whose reference belongs to
-// a donation rather than a ticket order. Paystack posts every event to one
-// endpoint, so the service routes by reference prefix.
-type DonationApplier interface {
+// ExternalApplier receives verified provider events whose reference belongs to
+// something other than a ticket order — a donation, a merchandise order.
+// Paystack posts every event to one endpoint, so the service routes by
+// reference prefix to whichever sink claims it.
+type ExternalApplier interface {
 	ApplyWebhook(ctx context.Context, provider string, event VerifiedEvent, bodyHash string) (bool, error)
+}
+
+// DonationApplier is retained as an alias so existing wiring keeps compiling.
+type DonationApplier = ExternalApplier
+
+type referenceRoute struct {
+	claims  func(string) bool
+	applier ExternalApplier
 }
 
 type Service struct {
@@ -86,19 +95,31 @@ type Service struct {
 	now        func() time.Time
 	returnBase string
 	telemetry  Telemetry
-	donations  DonationApplier
-	donationIs func(string) bool
+	routes     []referenceRoute
 }
 
-// SetDonationApplier registers the donation sink and the predicate that decides
-// which references belong to it.
+// RegisterApplier routes events whose reference satisfies claims to applier.
+// Routes are checked in registration order; a ticket order is the fallback.
+func (s *Service) RegisterApplier(claims func(string) bool, applier ExternalApplier) {
+	if claims == nil || applier == nil {
+		return
+	}
+	s.routes = append(s.routes, referenceRoute{claims: claims, applier: applier})
+}
+
+// SetDonationApplier is the original single-sink entry point, kept so callers
+// that predate merchandise continue to work.
 func (s *Service) SetDonationApplier(applier DonationApplier, isDonation func(string) bool) {
-	s.donations = applier
-	s.donationIs = isDonation
+	s.RegisterApplier(isDonation, applier)
 }
 
-func (s *Service) isDonationReference(reference string) bool {
-	return s.donations != nil && s.donationIs != nil && s.donationIs(reference)
+func (s *Service) routeFor(reference string) ExternalApplier {
+	for _, route := range s.routes {
+		if route.claims(reference) {
+			return route.applier
+		}
+	}
+	return nil
 }
 
 func NewService(store Store, provider PaymentProvider, returnBase string, telemetry Telemetry) (*Service, error) {
@@ -153,8 +174,8 @@ func (s *Service) Webhook(ctx context.Context, headers http.Header, body []byte)
 		return false, ErrInvalid
 	}
 	h := sha256.Sum256(body)
-	if s.isDonationReference(event.OrderReference) {
-		return s.donations.ApplyWebhook(ctx, s.provider.Name(), event, hex.EncodeToString(h[:]))
+	if applier := s.routeFor(event.OrderReference); applier != nil {
+		return applier.ApplyWebhook(ctx, s.provider.Name(), event, hex.EncodeToString(h[:]))
 	}
 	if !validReference(event.OrderReference) {
 		return false, ErrInvalid
