@@ -30,7 +30,7 @@ const initialContentSeedName = "202608071200_jk028_initial_content"
 func initialContentSeed() Seed {
 	return Seed{
 		Name:     initialContentSeedName,
-		Checksum: "jk028-initial-content-v4",
+		Checksum: "jk028-initial-content-v5",
 		Apply:    applyInitialContent,
 	}
 }
@@ -71,6 +71,7 @@ func settingsValues() bson.M {
 			bson.M{"label": "Events", "href": "/events"},
 			bson.M{"label": "Videos", "href": "/videos"},
 			bson.M{"label": "Press", "href": "/press"},
+			bson.M{"label": "Shop", "href": "/shop"},
 			bson.M{"label": "About", "href": "/about"},
 		},
 		"footer": bson.A{

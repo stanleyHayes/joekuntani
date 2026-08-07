@@ -1,4 +1,5 @@
 import { getPublicContent } from "../../components/content/data";
+import { getPublicSettings } from "../../lib/settings";
 import {
   ContentEmpty,
   contentFooterCta,
@@ -27,12 +28,17 @@ export async function generateMetadata() {
     : unavailableMetadata(input.title, input.description);
 }
 export default async function PressPage() {
+  const shellSettings = await getPublicSettings();
   const itemsRaw = await getPublicContent("press");
   const demo = demoContentEnabled();
   const usingDemo = demo && itemsRaw.length === 0;
   const items = itemsRaw.length ? itemsRaw : demo ? demoPress : [];
   return (
-    <PublicShell currentPath="/press" footerCta={contentFooterCta}>
+    <PublicShell
+      settings={shellSettings}
+      currentPath="/press"
+      footerCta={contentFooterCta}
+    >
       {usingDemo ? <DemoBanner /> : null}
       <main id="main-content" className={styles.page}>
         <header

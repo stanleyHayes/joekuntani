@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getPublicSettings } from "../lib/settings";
 import {
   getPublicContent,
   getPublicContentBySlug,
@@ -40,6 +41,7 @@ export async function generateMetadata() {
 }
 
 export default async function HomePage() {
+  const shellSettings = await getPublicSettings();
   const [homeRaw, workRaw, testimonialsRaw, events, servicesRaw] =
     await Promise.all([
       getPublicContentBySlug("page", "home"),
@@ -63,6 +65,7 @@ export default async function HomePage() {
     (demo ? activeFeaturedEvent(demoEvents) : undefined);
   return (
     <PublicShell
+      settings={shellSettings}
       currentPath="/"
       footerCta={{
         href: "/book",

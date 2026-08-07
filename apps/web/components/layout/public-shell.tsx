@@ -22,16 +22,21 @@ export function PublicShell({
   settings,
   showWatermark = true,
 }: PublicShellProps) {
-  const globalCTA = settings?.ctas.find((item) => item.key === "global");
+  // Pages must fetch and pass published settings. Resolving them here instead
+  // would make the shell async, and an async shell cannot be rendered by the
+  // synchronous test harness — see public-settings.test.tsx, which fails the
+  // build if a public page forgets to pass them.
+  const resolved = settings;
+  const globalCTA = resolved?.ctas?.find((item) => item.key === "global");
   const effectiveCTA = globalCTA || footerCta;
   return (
     <ThemeProvider>
       <div className="public-shell">
         <PublicHeader
           currentPath={currentPath}
-          navigation={settings?.navigation}
-          brandName={settings?.brand.name}
-          cta={settings?.ctas.find((item) => item.key === "header")}
+          navigation={resolved?.navigation}
+          brandName={resolved?.brand?.name}
+          cta={resolved?.ctas?.find((item) => item.key === "header")}
         />
         <div className="public-shell__stage">
           {showWatermark ? <BrandWatermark /> : null}
@@ -39,10 +44,10 @@ export function PublicShell({
         </div>
         <PublicFooter
           cta={effectiveCTA}
-          links={settings?.footer}
-          social={settings?.social}
-          brandName={settings?.brand.name}
-          statusText={settings ? settings.brand.tagline : undefined}
+          links={resolved?.footer}
+          social={resolved?.social}
+          brandName={resolved?.brand?.name}
+          statusText={resolved?.brand?.tagline}
         />
       </div>
     </ThemeProvider>

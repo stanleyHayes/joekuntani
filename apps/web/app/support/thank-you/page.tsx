@@ -47,8 +47,8 @@ export default async function SupportThankYouPage({
             </dl>
           ) : null}
           <p className={styles.note}>
-            Payments confirm within a few moments. If anything looks wrong, reply
-            to your receipt email and we&apos;ll sort it.
+            Payments confirm within a few moments. If anything looks wrong,
+            reply to your receipt email and we&apos;ll sort it.
           </p>
           <div className={styles.actions}>
             <Link className={styles.primary} href="/events">

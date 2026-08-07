@@ -59,15 +59,14 @@ export default async function EventDetailPage({
   ]);
   const demo = demoContentEnabled();
   const demoEvent =
-    demo && !result.data
-      ? demoEvents.find((item) => item.slug === slug)
-      : null;
+    demo && !result.data ? demoEvents.find((item) => item.slug === slug) : null;
   const usingDemo = Boolean(demoEvent);
   const event = result.data ?? demoEvent ?? null;
   const url = canonicalURL(`/events/${slug}`, settings?.seo.canonical_base);
   const cover = usingDemo && event ? demoEventCovers[event.slug] : undefined;
   return (
     <PublicShell
+      settings={settings}
       currentPath="/events"
       footerCta={{
         href: "/events",
@@ -246,7 +245,9 @@ export default async function EventDetailPage({
               <div className={styles.sectionHead}>
                 <span>03</span>
                 <h2 id="tickets-title">Tickets</h2>
-                <p>Published ticket types, live availability and order limits.</p>
+                <p>
+                  Published ticket types, live availability and order limits.
+                </p>
               </div>
               {event.tickets.length ? (
                 <div className={styles.tickets}>

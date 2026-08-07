@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getPublicSettings } from "../../lib/settings";
 
 import { getPublicContentBySlug } from "../../components/content/data";
 import {
@@ -28,12 +29,17 @@ export async function generateMetadata() {
 }
 
 export default async function AboutPage() {
+  const shellSettings = await getPublicSettings();
   const pageRaw = await getPublicContentBySlug("page", "about");
   const demo = demoContentEnabled();
   const usingDemo = demo && !pageRaw;
   const page = pageRaw || (demo ? demoAbout : null);
   return (
-    <PublicShell currentPath="/about" footerCta={contentFooterCta}>
+    <PublicShell
+      settings={shellSettings}
+      currentPath="/about"
+      footerCta={contentFooterCta}
+    >
       {usingDemo ? <DemoBanner /> : null}
       <main id="main-content" className={styles.about}>
         {page ? (

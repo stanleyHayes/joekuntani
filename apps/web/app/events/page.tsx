@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getPublicSettings } from "../../lib/settings";
 import { EventCard } from "../../components/events/event-ui";
 import { EventFilters } from "../../components/events/event-filters";
 import { getPublicEvents } from "../../components/events/data";
@@ -41,6 +42,7 @@ export default async function EventsPage({
 }: {
   searchParams: Promise<Filters>;
 }) {
+  const shellSettings = await getPublicSettings();
   const [result, filters] = await Promise.all([
     getPublicEvents(),
     searchParams,
@@ -52,6 +54,7 @@ export default async function EventsPage({
   const cities = [...new Set(source.map((event) => event.venue.city))].sort();
   return (
     <PublicShell
+      settings={shellSettings}
       currentPath="/events"
       footerCta={{
         href: "/contact",

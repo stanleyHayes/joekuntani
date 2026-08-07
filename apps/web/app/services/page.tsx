@@ -1,4 +1,5 @@
 import { PublicShell } from "../../components/layout/public-shell";
+import { getPublicSettings } from "../../lib/settings";
 import { getPublicServices } from "../../components/services/data";
 import styles from "../../components/services/services.module.css";
 import { ButtonLink } from "../../components/ui/button-link";
@@ -22,12 +23,14 @@ export async function generateMetadata() {
 export const dynamic = "force-dynamic";
 
 export default async function ServicesPage() {
+  const shellSettings = await getPublicSettings();
   const published = await getPublicServices();
   const demo = demoContentEnabled();
   const services = published.length ? published : demo ? demoServices : [];
   const usingDemo = demo && !published.length;
   return (
     <PublicShell
+      settings={shellSettings}
       currentPath="/services"
       footerCta={{
         href: "/book",

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getPublicSettings } from "../../lib/settings";
 import { getPublicContent } from "../../components/content/data";
 import {
   ContentEmpty,
@@ -32,6 +33,7 @@ export default async function VideosPage({
 }: {
   searchParams: Promise<{ category?: string }>;
 }) {
+  const shellSettings = await getPublicSettings();
   const filters = await searchParams;
   const [itemsRaw, allItemsRaw] = await Promise.all([
     getPublicContent("video", filters),
@@ -54,7 +56,11 @@ export default async function VideosPage({
     ),
   ] as string[];
   return (
-    <PublicShell currentPath="/videos" footerCta={contentFooterCta}>
+    <PublicShell
+      settings={shellSettings}
+      currentPath="/videos"
+      footerCta={contentFooterCta}
+    >
       {usingDemo ? <DemoBanner /> : null}
       <main id="main-content" className={styles.page}>
         <header className={`${styles.hero} shell-container`}>

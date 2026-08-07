@@ -52,8 +52,8 @@ export function PublicFooter({
         <div>
           <p className="footer-support__eyebrow">Support the artist</p>
           <p className="footer-support__copy">
-            Not booking today? A one-off contribution keeps the rehearsals,
-            gear and road time going.
+            Not booking today? A one-off contribution keeps the rehearsals, gear
+            and road time going.
           </p>
         </div>
         <SupportButton variant="ghost" />
@@ -94,7 +94,9 @@ export function PublicFooter({
           ))}
         </nav>
         <p className="footer-status">
-          <span>© {new Date().getFullYear()} {brandName || "Joe Kuntani"}</span>
+          <span>
+            © {new Date().getFullYear()} {brandName || "Joe Kuntani"}
+          </span>
           <span aria-hidden="true">·</span>
           <span>{statusText || "Official content awaiting approval."}</span>
         </p>

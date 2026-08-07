@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getPublicSettings } from "../../lib/settings";
 import { getPublicContent } from "../../components/content/data";
 import {
   ContentEmpty,
@@ -34,6 +35,7 @@ export default async function WorkPage({
 }: {
   searchParams: Promise<{ category?: string; tag?: string }>;
 }) {
+  const shellSettings = await getPublicSettings();
   const filters = await searchParams;
   const [itemsRaw, allItemsRaw] = await Promise.all([
     getPublicContent("portfolio", filters),
@@ -59,7 +61,11 @@ export default async function WorkPage({
     ...new Set(categorySource.map((item) => item.category).filter(Boolean)),
   ] as string[];
   return (
-    <PublicShell currentPath="/work" footerCta={contentFooterCta}>
+    <PublicShell
+      settings={shellSettings}
+      currentPath="/work"
+      footerCta={contentFooterCta}
+    >
       {usingDemo ? <DemoBanner /> : null}
       <main id="main-content" className={styles.work}>
         <header className={`${styles.hero} shell-container`}>

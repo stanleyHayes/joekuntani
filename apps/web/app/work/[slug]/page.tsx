@@ -49,7 +49,11 @@ export default async function WorkDetailPage({ params }: Props) {
     settings?.seo.canonical_base,
   );
   return (
-    <PublicShell currentPath="/work" footerCta={contentFooterCta}>
+    <PublicShell
+      settings={settings}
+      currentPath="/work"
+      footerCta={contentFooterCta}
+    >
       {usingDemo ? <DemoBanner /> : null}
       {url && !usingDemo ? (
         <script

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getPublicSettings } from "../../lib/settings";
 import { getMediaKit } from "../../components/public-info/data";
 import styles from "../../components/public-info/public-info.module.css";
 import { PublicShell } from "../../components/layout/public-shell";
@@ -20,9 +21,11 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 export default async function MediaKitPage() {
+  const shellSettings = await getPublicSettings();
   const { page, download } = await getMediaKit();
   return (
     <PublicShell
+      settings={shellSettings}
       currentPath="/media-kit"
       footerCta={{
         href: "/contact",

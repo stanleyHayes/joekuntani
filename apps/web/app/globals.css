@@ -1128,3 +1128,20 @@ h2 {
     animation: none !important;
   }
 }
+
+.footer-social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.footer-social a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.footer-social a:hover {
+  color: var(--accent);
+}

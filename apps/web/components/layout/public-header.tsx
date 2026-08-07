@@ -26,7 +26,46 @@ const fallbackNavigation = [
   { href: "/events", label: "Events" },
 ] as const;
 
-type NavItem = { href: string; label: string };
+type NavItem = { href: string; label: string; children?: readonly NavItem[] };
+
+/**
+ * Folds flat navigation into groups so the bar stays short as sections are
+ * added. Settings still owns the links themselves; this only decides which of
+ * them sit behind a shared trigger.
+ */
+const NAV_GROUPS: readonly { label: string; hrefs: readonly string[] }[] = [
+  { label: "Media", hrefs: ["/videos", "/press"] },
+];
+
+function groupNavigation(navigation: readonly NavItem[]): NavItem[] {
+  const grouped: NavItem[] = [];
+  const claimed = new Set<string>();
+
+  for (const group of NAV_GROUPS) {
+    const children = navigation.filter((item) =>
+      group.hrefs.includes(item.href),
+    );
+    // A group with one surviving child is just that link — don't hide a single
+    // page behind a menu.
+    if (children.length < 2) continue;
+    children.forEach((child) => claimed.add(child.href));
+    grouped.push({ href: children[0].href, label: group.label, children });
+  }
+
+  const result: NavItem[] = [];
+  let inserted = false;
+  for (const item of navigation) {
+    if (!claimed.has(item.href)) {
+      result.push(item);
+      continue;
+    }
+    if (!inserted) {
+      result.push(...grouped);
+      inserted = true;
+    }
+  }
+  return inserted ? result : [...navigation, ...grouped];
+}
 
 type PublicHeaderProps = {
   currentPath?: string;
@@ -39,6 +78,90 @@ function linkIsActive(currentPath: string | undefined, href: string) {
   if (!currentPath) return false;
   if (href === "/") return currentPath === "/";
   return currentPath === href || currentPath.startsWith(`${href}/`);
+}
+
+function NavGroup({
+  item,
+  currentPath,
+  tone,
+  registerRef,
+  onHover,
+}: {
+  item: NavItem;
+  currentPath?: string;
+  tone: (href: string) => string;
+  registerRef: (node: HTMLElement | null) => void;
+  onHover: (href: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const groupRef = useRef<HTMLLIElement>(null);
+  const children = item.children ?? [];
+  const childActive = children.some((child) =>
+    linkIsActive(currentPath, child.href),
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: PointerEvent) {
+      if (!groupRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <li
+      ref={groupRef}
+      className={styles.navGroup}
+      // Pointer users get hover; keyboard and touch users get the click target.
+      onMouseEnter={() => {
+        setOpen(true);
+        onHover(item.href);
+      }}
+      onMouseLeave={() => {
+        setOpen(false);
+        onHover(null);
+      }}
+    >
+      <button
+        ref={registerRef}
+        type="button"
+        className={`${styles.navLink} ${styles.navTrigger} ${tone(item.href)}`}
+        aria-expanded={open}
+        aria-haspopup="true"
+        aria-current={childActive ? "true" : undefined}
+        onClick={() => setOpen((value) => !value)}
+      >
+        {item.label}
+        <span aria-hidden="true" className={styles.navChevron}>
+          ▾
+        </span>
+      </button>
+      <ul className={styles.navMenu} data-open={open} aria-label={item.label}>
+        {children.map((child) => (
+          <li key={child.href}>
+            <Link
+              href={child.href}
+              className={styles.navMenuLink}
+              aria-current={
+                linkIsActive(currentPath, child.href) ? "page" : undefined
+              }
+              onClick={() => setOpen(false)}
+            >
+              {child.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </li>
+  );
 }
 
 function NavCapsule({
@@ -97,11 +220,7 @@ function NavCapsule({
   }
 
   return (
-    <ul
-      ref={capsuleRef}
-      className={styles.navList}
-      data-testid="nav-capsule"
-    >
+    <ul ref={capsuleRef} className={styles.navList} data-testid="nav-capsule">
       {indicator ? (
         <span
           aria-hidden="true"
@@ -115,27 +234,41 @@ function NavCapsule({
           }}
         />
       ) : null}
-      {navigation.map((item) => (
-        <li key={item.href}>
-          <Link
-            ref={(node) => {
+      {navigation.map((item) =>
+        item.children?.length ? (
+          <NavGroup
+            key={item.label}
+            item={item}
+            currentPath={currentPath}
+            tone={tone}
+            registerRef={(node) => {
               if (node) itemRefs.current.set(item.href, node);
               else itemRefs.current.delete(item.href);
             }}
-            className={`${styles.navLink} ${tone(item.href)}`}
-            aria-current={
-              linkIsActive(currentPath, item.href) ? "page" : undefined
-            }
-            href={item.href}
-            onMouseEnter={() => setHovered(item.href)}
-            onMouseLeave={() => setHovered(null)}
-            onFocus={() => setHovered(item.href)}
-            onBlur={() => setHovered(null)}
-          >
-            {item.label}
-          </Link>
-        </li>
-      ))}
+            onHover={setHovered}
+          />
+        ) : (
+          <li key={item.href}>
+            <Link
+              ref={(node) => {
+                if (node) itemRefs.current.set(item.href, node);
+                else itemRefs.current.delete(item.href);
+              }}
+              className={`${styles.navLink} ${tone(item.href)}`}
+              aria-current={
+                linkIsActive(currentPath, item.href) ? "page" : undefined
+              }
+              href={item.href}
+              onMouseEnter={() => setHovered(item.href)}
+              onMouseLeave={() => setHovered(null)}
+              onFocus={() => setHovered(item.href)}
+              onBlur={() => setHovered(null)}
+            >
+              {item.label}
+            </Link>
+          </li>
+        ),
+      )}
     </ul>
   );
 }
@@ -180,6 +313,7 @@ export function PublicHeader({
   brandName,
   cta,
 }: PublicHeaderProps) {
+  const groupedNavigation = groupNavigation(navigation);
   const safeBrandName = brandName || "Joe Kuntani";
   const safeCTA = cta || { href: "/book", label: "Make an enquiry" };
   const [scrolled, setScrolled] = useState(false);
@@ -198,7 +332,8 @@ export function PublicHeader({
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => {
-      if (scrollFrame.current !== null) cancelAnimationFrame(scrollFrame.current);
+      if (scrollFrame.current !== null)
+        cancelAnimationFrame(scrollFrame.current);
       window.removeEventListener("scroll", onScroll);
     };
   }, []);
@@ -222,7 +357,10 @@ export function PublicHeader({
           </Link>
 
           <nav className={styles.desktopNav} aria-label="Primary navigation">
-            <NavCapsule currentPath={currentPath} navigation={navigation} />
+            <NavCapsule
+              currentPath={currentPath}
+              navigation={groupedNavigation}
+            />
           </nav>
 
           <div className={styles.actions}>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MetricWatermark } from "../../components/admin/metric-watermark";
+import { OverviewCharts } from "../../components/admin/overview/overview-charts";
 import styles from "./overview.module.css";
 
 export const metadata: Metadata = {
@@ -124,21 +125,7 @@ export default function AdminOverviewPage() {
         </div>
       </section>
 
-      <section className={styles.lanes} aria-label="Quick lanes">
-        {lanes.map((lane, index) => (
-          <Link
-            key={lane.href}
-            href={lane.href}
-            className={styles.lane}
-            data-lane={lane.tone}
-          >
-            <MetricWatermark variant={watermarkVariants[index]} />
-            <span className={styles.laneLabel}>{lane.label}</span>
-            <span className={styles.laneValue}>{lane.value}</span>
-            <span className={styles.laneSub}>{lane.sub}</span>
-          </Link>
-        ))}
-      </section>
+      <OverviewCharts />
 
       <div className={styles.grid}>
         {sections.map((section) => (
