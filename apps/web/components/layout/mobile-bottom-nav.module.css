@@ -31,7 +31,7 @@
   list-style: none;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
-  border-radius: 1rem;
+  border-radius: 999px;
   background: color-mix(in srgb, var(--canvas) 84%, transparent);
   backdrop-filter: saturate(150%) blur(18px);
   transition:
