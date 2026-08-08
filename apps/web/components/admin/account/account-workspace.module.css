@@ -2,6 +2,8 @@
   display: grid;
   gap: 1.35rem;
   min-width: 0;
+  width: 100%;
+  max-width: 72rem;
 }
 
 .layout {
@@ -249,4 +251,22 @@
   .layout {
     grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.6fr);
   }
+}
+
+/* Section-level redesign: editorial masthead and a warmer account summary rail. */
+.workspace :global(.stage-head) {
+  padding: clamp(1.4rem, 4vw, 2.4rem);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--ink) 5%, var(--surface));
+}
+.workspace :global(.stage-head h2) {
+  font-size: clamp(2.25rem, 6vw, 4.6rem);
+  letter-spacing: -0.055em;
+}
+.formCard {
+  border-radius: 1.25rem;
+}
+.identity {
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--brand-j) 7%, var(--surface));
 }

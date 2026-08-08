@@ -23,7 +23,7 @@ export async function generateMetadata() {
   const input = {
     title: "Videos",
     description: "Approved video appearances and work.",
-    path: "/videos",
+    path: "/media/videos",
   };
   return items.length || demo
     ? pageMetadata(input)
@@ -62,7 +62,7 @@ export default async function VideosPage({
   return (
     <PublicShell
       settings={shellSettings}
-      currentPath="/videos"
+      currentPath="/media/videos"
       footerCta={contentFooterCta}
     >
       {usingDemo ? <DemoBanner /> : null}

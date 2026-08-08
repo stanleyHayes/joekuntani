@@ -51,9 +51,9 @@ describe("MobileBottomNav", () => {
   });
 
   it("falls back to the shared default navigation when settings are missing", () => {
-    render(<MobileBottomNav currentPath="/videos" />);
-    expect(slots()).toEqual(["Home", "Events", "Videos", "Work", "Book"]);
-    expect(screen.getByRole("link", { name: "Videos" })).toHaveAttribute(
+    render(<MobileBottomNav currentPath="/about" />);
+    expect(slots()).toEqual(["Home", "Events", "Work", "About", "Book"]);
+    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute(
       "aria-current",
       "page",
     );

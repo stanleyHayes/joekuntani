@@ -7,6 +7,7 @@ import { PublicShell } from "../../components/layout/public-shell";
 import { getPublicServices } from "../../components/services/data";
 import { pageMetadata, unavailableMetadata } from "../../lib/seo";
 import { getPublicSettings } from "../../lib/settings";
+import { PublicInfoNav } from "../../components/public-info/public-info-nav";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
@@ -42,23 +43,39 @@ export default async function ContactPage() {
       }}
     >
       <main id="main-content">
-        <header className={`${styles.hero} shell-container`}>
-          <div>
-            <p className="eyebrow">Contact</p>
-            <h1>Route your enquiry.</h1>
+        <header
+          className={`${styles.hero} ${styles.contactHero} shell-container`}
+        >
+          <div className={styles.heroTitle}>
+            <p className="eyebrow">Start a conversation</p>
+            <h1>Bring us the brief.</h1>
+            <span className={styles.heroCode} aria-hidden="true">
+              C/02
+            </span>
           </div>
           <p className={styles.lede}>
-            Choose an approved service so your request can be routed
-            appropriately. Submission is not a booking confirmation.
+            Dates, rooms, ideas, partnerships. Give the team enough context to
+            put your enquiry in the right hands.
           </p>
         </header>
+        <div className="shell-container">
+          <PublicInfoNav currentPath="/contact" />
+        </div>
         <section
           className={`${styles.section} shell-container`}
           aria-labelledby="contact-form"
         >
           <div className={styles.contactLayout}>
             <div className={styles.contactMain}>
-              <h2 id="contact-form">Send an enquiry</h2>
+              <div className={styles.sectionIntro}>
+                <p className={styles.sectionIndex}>Enquiry desk / 02</p>
+                <h2 id="contact-form">Tell us what you&apos;re planning.</h2>
+                <p>
+                  Choose the closest route and share the useful details.
+                  Submission starts a conversation; it does not confirm a
+                  booking.
+                </p>
+              </div>
               <ContactForm services={services} settings={settings} />
             </div>
             <ContactDetails settings={publishedSettings} />

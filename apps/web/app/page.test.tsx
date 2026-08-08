@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import FoundationPage from "./page";
 
 describe("FoundationPage", () => {
-  it("identifies visual and written content as non-production placeholders", async () => {
+  it("renders the approved performance hero and labels unpublished content", async () => {
     render(await FoundationPage());
 
     expect(
@@ -11,10 +11,10 @@ describe("FoundationPage", () => {
     ).toBeVisible();
     expect(
       screen.getByRole("img", {
-        name: /hero media\. placeholder - content awaiting approval/i,
+        name: /live comedy and music performance/i,
       }),
     ).toBeVisible();
-    expect(screen.getAllByText(/awaiting approval/i).length).toBeGreaterThan(1);
+    expect(screen.getAllByText(/awaiting approval/i).length).toBeGreaterThan(0);
     expect(
       screen.getByRole("link", { name: "Explore the work" }),
     ).toHaveAttribute("href", "/work");
@@ -26,11 +26,7 @@ describe("FoundationPage", () => {
       render(await FoundationPage());
 
       expect(screen.getByText("Demo preview")).toBeVisible();
-      expect(
-        screen.getByAltText(
-          "Demo stage atmosphere placeholder. Replace via CMS.",
-        ),
-      ).toBeVisible();
+      expect(screen.getByAltText(/performing live/i)).toBeVisible();
       expect(
         screen.getByRole("heading", { name: "Selected work" }),
       ).toBeVisible();

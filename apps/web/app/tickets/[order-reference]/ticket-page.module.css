@@ -1,0 +1,50 @@
+.page {
+  min-height: 100dvh;
+  padding-block: clamp(3rem, 8vw, 7rem);
+  background:
+    radial-gradient(
+      circle at 82% 8%,
+      color-mix(in srgb, var(--brand-j) 10%, transparent),
+      transparent 28rem
+    ),
+    var(--canvas);
+}
+.page section {
+  width: min(100%, 58rem);
+  margin-inline: auto;
+  padding: clamp(1.5rem, 5vw, 4rem);
+  border-top: 3px solid var(--ink);
+  background: var(--surface-raised);
+}
+.page h1 {
+  max-width: 9ch;
+  margin: 0.4rem 0 1.5rem;
+  font-size: clamp(3.5rem, 9vw, 7rem);
+  letter-spacing: -0.07em;
+  line-height: 0.85;
+}
+.page ol {
+  display: grid;
+  gap: 1px;
+  margin: 2rem 0;
+  padding: 1px;
+  background: var(--line);
+  list-style: none;
+}
+.page li {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1.25rem;
+  background: var(--surface);
+}
+.page code {
+  overflow-wrap: anywhere;
+  padding: 0.75rem;
+  background: var(--canvas);
+  font-size: 0.75rem;
+}
+.page a {
+  color: var(--accent);
+  font-weight: 750;
+  text-underline-offset: 0.25rem;
+}

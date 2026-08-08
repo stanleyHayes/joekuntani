@@ -2,6 +2,7 @@
 
 import { FormEvent, useId, useState } from "react";
 import type { MerchProduct, MerchVariant } from "./data";
+import { LocationFields } from "./location-fields";
 import styles from "./product-purchase.module.css";
 
 type Props = {
@@ -151,30 +152,10 @@ export function ProductPurchase({ product, currency, enabled }: Props) {
             <span className={styles.label}>Phone</span>
             <input name="phone" type="tel" autoComplete="tel" maxLength={40} />
           </label>
-          <label className={styles.field}>
-            <span className={styles.label}>Country</span>
-            <input
-              name="country_code"
-              defaultValue="GH"
-              maxLength={2}
-              required
-              aria-describedby={`${fieldId}-country-hint`}
-            />
-            <span className={styles.hint} id={`${fieldId}-country-hint`}>
-              Two-letter code
-            </span>
-          </label>
+          <LocationFields />
           <label className={`${styles.field} ${styles.wide}`}>
             <span className={styles.label}>Delivery address</span>
             <input name="address" required maxLength={300} />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.label}>City</span>
-            <input name="city" required maxLength={120} />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.label}>Region</span>
-            <input name="region" maxLength={120} />
           </label>
           <label className={`${styles.field} ${styles.wide}`}>
             <span className={styles.label}>Delivery notes (optional)</span>

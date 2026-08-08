@@ -110,3 +110,137 @@
     align-items: end;
   }
 }
+
+/* ---- Public work detail v2 -------------------------------------------- */
+.workDetail {
+  overflow: clip;
+  background: radial-gradient(
+    circle at 88% 4%,
+    color-mix(in srgb, var(--brand-j) 9%, transparent),
+    transparent 30rem
+  );
+}
+.workDetailHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 0.5fr);
+  gap: clamp(2rem, 8vw, 8rem);
+  align-items: end;
+  min-height: calc(78dvh - var(--header-height));
+  padding-block: clamp(3rem, 8vw, 7rem);
+}
+.detailBack {
+  grid-column: 1 / -1;
+  align-self: start;
+  display: flex;
+  gap: 0.6rem;
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.detailBack a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.detailTitleBlock h1 {
+  max-width: 10ch;
+  margin: 1rem 0 0;
+  font-size: clamp(4.5rem, 11vw, 10rem);
+  letter-spacing: -0.08em;
+  line-height: 0.78;
+  text-wrap: balance;
+}
+.detailSummary {
+  max-width: 34rem;
+  margin: 0;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  line-height: 1.65;
+}
+.workDetailMedia {
+  margin-block: 0;
+}
+.workDetailMedia img {
+  display: block;
+  width: 100%;
+  max-height: 78dvh;
+  object-fit: cover;
+}
+.workDetailMedia figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.7rem;
+  color: var(--ink-soft);
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.detailNarrative,
+.detailResults {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.38fr) minmax(0, 1fr);
+  gap: clamp(2rem, 8vw, 8rem);
+  padding-block: clamp(5rem, 12vw, 11rem);
+  border-bottom: 1px solid var(--line);
+}
+.detailNarrative > div:first-child,
+.detailResults > div:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+}
+.detailNarrative > div:first-child span,
+.detailResults > div:first-child span {
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+.detailNarrative h2,
+.detailResults h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 4rem);
+  letter-spacing: -0.055em;
+}
+.detailBody {
+  max-width: 60ch;
+  white-space: pre-wrap;
+  font-size: clamp(1.05rem, 1.65vw, 1.25rem);
+  line-height: 1.85;
+}
+.detailResults ul {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+.detailResults li {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.35fr) 1fr;
+  align-items: baseline;
+  gap: 1rem;
+  padding-block: 1.4rem;
+  border-bottom: 1px solid var(--line);
+}
+.detailResults strong {
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  letter-spacing: -0.06em;
+}
+.detailResults li span {
+  color: var(--ink-soft);
+}
+@media (max-width: 52rem) {
+  .workDetailHero,
+  .detailNarrative,
+  .detailResults {
+    grid-template-columns: 1fr;
+  }
+  .workDetailHero {
+    min-height: auto;
+  }
+}

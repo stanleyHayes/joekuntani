@@ -3,6 +3,7 @@
 import { FormEvent, useRef, useState } from "react";
 import { AdminErrorState, ButtonPending } from "../admin-feedback";
 import styles from "./audit-workspace.module.css";
+import { SectionSwitcher } from "../section-switcher";
 
 type AuditEntry = {
   id: string;
@@ -60,6 +61,7 @@ export function AuditWorkspace() {
   const count = response?.items.length ?? 0;
   return (
     <section className={styles.workspace} aria-labelledby="audit-heading">
+      <SectionSwitcher section="governance" current="/admin/audit" />
       <header className={styles.header}>
         <p className={styles.eyebrow}>Administrator only</p>
         <h2 id="audit-heading">Search the audit log</h2>
@@ -70,6 +72,14 @@ export function AuditWorkspace() {
       </header>
 
       <form className={styles.form} role="search" onSubmit={submit}>
+        <div className={styles.queryIntro}>
+          <span>Query builder</span>
+          <h3>Find a recorded action</h3>
+          <p>
+            Combine any filters below. Leave a field empty to keep the search
+            broad.
+          </p>
+        </div>
         <div className={styles.fields}>
           <label htmlFor="audit-query">
             Free-text filter
@@ -138,34 +148,40 @@ export function AuditWorkspace() {
       ) : null}
 
       {count > 0 ? (
-        <table className={styles.table}>
-          <caption className={styles.caption}>Audit events</caption>
-          <thead>
-            <tr>
-              <th scope="col">When</th>
-              <th scope="col">Action</th>
-              <th scope="col">Entity</th>
-              <th scope="col">Outcome</th>
-            </tr>
-          </thead>
-          <tbody>
-            {response?.items.map((item) => (
-              <tr key={item.id}>
-                <td>
-                  <time dateTime={item.created_at}>
-                    {new Date(item.created_at).toUTCString()}
-                  </time>
-                </td>
-                <td>{item.action}</td>
-                <td>
-                  {item.entity_type}
-                  {item.entity_id ? ` · ${item.entity_id}` : ""}
-                </td>
-                <td>{item.outcome || "—"}</td>
+        <div className={styles.results}>
+          <div className={styles.resultsHead}>
+            <span>Results register</span>
+            <strong>{count} matched</strong>
+          </div>
+          <table className={styles.table}>
+            <caption className={styles.caption}>Audit events</caption>
+            <thead>
+              <tr>
+                <th scope="col">When</th>
+                <th scope="col">Action</th>
+                <th scope="col">Entity</th>
+                <th scope="col">Outcome</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {response?.items.map((item) => (
+                <tr key={item.id}>
+                  <td>
+                    <time dateTime={item.created_at}>
+                      {new Date(item.created_at).toUTCString()}
+                    </time>
+                  </td>
+                  <td>{item.action}</td>
+                  <td>
+                    {item.entity_type}
+                    {item.entity_id ? ` · ${item.entity_id}` : ""}
+                  </td>
+                  <td>{item.outcome || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : null}
       {response?.limited ? (
         <p className={styles.notice}>

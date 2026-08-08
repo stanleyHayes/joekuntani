@@ -22,9 +22,10 @@ export function ContactDetails({
   if (!email && !phone && !location && social.length === 0) return null;
 
   return (
-    <aside className={styles.contactAside} aria-labelledby="contact-direct">
+    <aside className={styles.contactAside} aria-label="Reach out directly">
+      <p className={styles.sectionIndex}>Direct lines</p>
       <h2 className={styles.asideTitle} id="contact-direct">
-        Reach out directly
+        Prefer a direct note?
       </h2>
       <dl className={styles.contactList}>
         {email ? (

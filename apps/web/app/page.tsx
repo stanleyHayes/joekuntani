@@ -6,7 +6,6 @@ import {
 } from "../components/content/data";
 import { ContentEmpty } from "../components/content/public-content";
 import { PublicShell } from "../components/layout/public-shell";
-import { ContentPlaceholder } from "../components/ui/content-placeholder";
 import { DemoBanner } from "../components/ui/demo-banner";
 import {
   getPublicEvents,
@@ -18,7 +17,6 @@ import {
   demoCovers,
   demoEvents,
   demoHome,
-  demoImages,
   demoServices,
   demoTestimonials,
   demoWork,
@@ -64,7 +62,8 @@ export default async function HomePage() {
   // The hero photograph comes from the first gallery image on the Home page
   // record, the same field the About portrait uses, so both are managed from
   // Content and media without an operator ever handling an asset id.
-  const heroImage = await publicImageURL(home?.gallery_asset_ids?.[0] ?? "");
+  const managedHero = await publicImageURL(home?.gallery_asset_ids?.[0] ?? "");
+  const heroArtwork = managedHero ?? "/brand/home-performance-hero-v2.png";
   // Published work carries its own imagery; the demo map is only a fallback
   // for the fixture path.
   const covers = await contentCovers(work);
@@ -111,40 +110,24 @@ export default async function HomePage() {
                 corner crops the monogram, rather than letting it trail off
                 across the page background where it has no contrast to sit on. */}
             <span className={styles.heroFrame}>
-              {heroImage ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={heroImage}
-                  alt={home?.title ? `${home.title} hero image` : ""}
-                  width={1600}
-                  height={1200}
-                />
-              ) : usingDemo ? (
-                /* SVG demo asset; CMS will replace with approved Cloudinary media. */
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={demoImages.hero}
-                  alt="Demo stage atmosphere placeholder. Replace via CMS."
-                  width={1600}
-                  height={1200}
-                />
-              ) : (
-                <ContentPlaceholder
-                  label="Hero media"
-                  detail="Approved photography or video will appear here."
-                />
-              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={heroArtwork}
+                alt={
+                  home?.title
+                    ? `${home.title} performing live`
+                    : "Live comedy and music performance"
+                }
+                width={1600}
+                height={1000}
+              />
               {/* Only over photography: on the empty-state placeholder the
                   monogram has nothing to read against. */}
-              {heroImage || usingDemo ? (
-                <span className={styles.heroStamp} aria-hidden="true">
-                  JK
-                </span>
-              ) : null}
+              <span className={styles.heroStamp} aria-hidden="true">
+                LIVE / ACCRA
+              </span>
             </span>
-            {!heroImage && usingDemo ? (
-              <figcaption>Demo media — replace via CMS</figcaption>
-            ) : null}
+            <figcaption>Comedy · live music · Accra</figcaption>
           </figure>
         </header>
         <div className={styles.signal} aria-label="Joe Kuntani disciplines">

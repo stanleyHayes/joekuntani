@@ -7,6 +7,7 @@ import {
   ButtonPending,
 } from "../admin-feedback";
 import { MetricWatermark } from "../metric-watermark";
+import { SectionSwitcher } from "../section-switcher";
 import styles from "./privacy-workspace.module.css";
 
 type Status = {
@@ -177,6 +178,7 @@ export function PrivacyWorkspace() {
 
   return (
     <section className={styles.workspace} aria-labelledby="privacy-heading">
+      <SectionSwitcher section="governance" current="/admin/privacy" />
       <header className={styles.header}>
         <p className={styles.eyebrow}>Governance</p>
         <h2 id="privacy-heading">Privacy and retention</h2>
@@ -211,56 +213,61 @@ export function PrivacyWorkspace() {
         </dl>
       ) : null}
 
-      <form className={styles.form} onSubmit={placeHold}>
-        <h3>Place legal hold</h3>
-        <label htmlFor="privacy-contact-id">Contact ID</label>
-        <input
-          id="privacy-contact-id"
-          name="contact_id"
-          required
-          minLength={36}
-          maxLength={36}
-          disabled={busy}
-        />
-        <label htmlFor="privacy-reason">Reason</label>
-        <textarea
-          id="privacy-reason"
-          name="reason"
-          required
-          minLength={8}
-          maxLength={500}
-          rows={3}
-          disabled={busy}
-        />
-        <button type="submit" disabled={busy}>
-          {busyTarget === "hold" ? (
-            <ButtonPending label="Placing legal hold" />
-          ) : (
-            "Place hold"
-          )}
-        </button>
-      </form>
+      <div className={styles.operations}>
+        <form className={styles.form} onSubmit={placeHold}>
+          <span className={styles.cardIndex}>01 / Legal control</span>
+          <h3>Place legal hold</h3>
+          <label htmlFor="privacy-contact-id">Contact ID</label>
+          <input
+            id="privacy-contact-id"
+            name="contact_id"
+            required
+            minLength={36}
+            maxLength={36}
+            disabled={busy}
+          />
+          <label htmlFor="privacy-reason">Reason</label>
+          <textarea
+            id="privacy-reason"
+            name="reason"
+            required
+            minLength={8}
+            maxLength={500}
+            rows={3}
+            disabled={busy}
+          />
+          <button type="submit" disabled={busy}>
+            {busyTarget === "hold" ? (
+              <ButtonPending label="Placing legal hold" />
+            ) : (
+              "Place hold"
+            )}
+          </button>
+        </form>
 
-      <div className={styles.form}>
-        <h3>Retention job</h3>
-        <p>
-          Anonymizes enquiry personal data older than the default retention
-          window unless a legal hold applies.
-        </p>
-        <button
-          type="button"
-          onClick={() => void runRetention()}
-          disabled={busy || !status}
-        >
-          {busyTarget === "retention" ? (
-            <ButtonPending label="Running retention batch" />
-          ) : (
-            "Run retention batch"
-          )}
-        </button>
+        <div className={styles.form}>
+          <span className={styles.cardIndex}>02 / Data lifecycle</span>
+          <h3>Retention job</h3>
+          <p>
+            Anonymizes enquiry personal data older than the default retention
+            window unless a legal hold applies.
+          </p>
+          <button
+            type="button"
+            onClick={() => void runRetention()}
+            disabled={busy || !status}
+          >
+            {busyTarget === "retention" ? (
+              <ButtonPending label="Running retention batch" />
+            ) : (
+              "Run retention batch"
+            )}
+          </button>
+        </div>
       </div>
 
-      <div className={styles.form}>
+      <div className={`${styles.form} ${styles.register}`}>
+        <span className={styles.cardIndex}>03 / Hold register</span>
         <h3>Active holds</h3>
         {holds.length === 0 ? (
           <p className={styles.status}>No active legal holds.</p>

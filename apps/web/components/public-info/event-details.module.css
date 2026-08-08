@@ -3,6 +3,149 @@
   overflow: clip;
 }
 
+/* Detail v2: an event poster with a decision rail, followed by flat registers. */
+.hero {
+  grid-template-columns: minmax(0, 1.15fr) minmax(22rem, 0.65fr);
+  min-height: calc(82dvh - var(--header-height));
+  align-items: end;
+}
+.title {
+  max-width: 10ch;
+  font-size: clamp(4.5rem, 10vw, 9rem);
+  letter-spacing: -0.075em;
+  line-height: 0.8;
+}
+.heroAside {
+  position: relative;
+  align-self: stretch;
+  align-content: end;
+}
+.cover {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(5, 8, 10, 0.88), transparent 65%);
+}
+.cover img {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+.cover figcaption {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  z-index: 1;
+  color: white;
+}
+.buyBox {
+  position: relative;
+  z-index: 1;
+  margin: 1rem;
+  border: 0;
+  border-top: 2px solid var(--brand-j);
+  border-radius: 0;
+  background: color-mix(in srgb, #0b0d11 88%, transparent);
+  color: #f5f0e7;
+  box-shadow: none;
+  backdrop-filter: blur(0.8rem);
+}
+.buyBox .buyNote {
+  color: rgba(245, 240, 231, 0.68);
+}
+.section {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.38fr) minmax(0, 1fr);
+  gap: clamp(2rem, 7vw, 7rem);
+  border-bottom: 1px solid var(--line);
+}
+.sectionHead {
+  align-content: start;
+  margin: 0;
+}
+.prose {
+  font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+  line-height: 1.85;
+}
+.venuePanel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.facts > div {
+  grid-template-columns: minmax(7rem, 0.3fr) 1fr;
+  gap: 1rem;
+  padding-block: 1rem;
+  border-top: 1px solid var(--line);
+}
+.tiers {
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+}
+.tier {
+  grid-template-columns: 1fr auto;
+  height: auto;
+  padding: 1.4rem 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent !important;
+}
+.tierFacts,
+.tierCopy {
+  grid-column: 1;
+}
+.tierCta {
+  grid-column: 2;
+  grid-row: 1 / span 4;
+  align-self: center;
+}
+.policyGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+}
+.policy {
+  display: grid;
+  grid-template-columns: minmax(9rem, 0.3fr) 1fr;
+  gap: 1.5rem;
+  padding: 1.3rem 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+}
+.policy h3,
+.policy p {
+  margin: 0;
+}
+@media (max-width: 58rem) {
+  .hero,
+  .section {
+    grid-template-columns: 1fr;
+  }
+  .heroAside {
+    min-height: 32rem;
+  }
+}
+@media (max-width: 40rem) {
+  .tier {
+    grid-template-columns: 1fr;
+  }
+  .tierCta {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
 /* ---- Hero ---------------------------------------------------------------
    Two columns on desktop: the decision copy on the left, the buy box on the
    right so the price and the call to action stay in the first screenful.

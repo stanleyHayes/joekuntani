@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getPublicContentBySlug } from "../../../components/content/data";
 import { contentFooterCta } from "../../../components/content/public-content";
 import styles from "../../../components/content/content.module.css";
@@ -75,14 +76,25 @@ export default async function WorkDetailPage({ params }: Props) {
           }}
         />
       ) : null}
-      <main id="main-content" className={`${styles.detail} shell-container`}>
-        <p className="eyebrow">
-          {usingDemo ? "Demo case study" : item.category || "Work"}
-        </p>
-        <h1>{item.title}</h1>
-        {item.summary ? <p className={styles.lede}>{item.summary}</p> : null}
+      <main id="main-content" className={styles.workDetail}>
+        <header className={`${styles.workDetailHero} shell-container`}>
+          <nav className={styles.detailBack} aria-label="Breadcrumb">
+            <Link href="/work">Work index</Link>
+            <span aria-hidden="true">/</span>
+            <span>{item.category || "Case study"}</span>
+          </nav>
+          <div className={styles.detailTitleBlock}>
+            <p className="eyebrow">
+              {usingDemo ? "Demo case study" : item.category || "Work"}
+            </p>
+            <h1>{item.title}</h1>
+          </div>
+          {item.summary ? (
+            <p className={styles.detailSummary}>{item.summary}</p>
+          ) : null}
+        </header>
         {cover ? (
-          <figure className={styles.demoMedia}>
+          <figure className={`${styles.workDetailMedia} shell-container`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={cover}
@@ -90,14 +102,31 @@ export default async function WorkDetailPage({ params }: Props) {
               width={1600}
               height={1000}
             />
-            <figcaption>Demo media — replace via CMS</figcaption>
+            <figcaption>
+              <span>
+                {String(item.category || "Selected work").toUpperCase()}
+              </span>
+              <span>{usingDemo ? "Demo media" : "Project archive"}</span>
+            </figcaption>
           </figure>
         ) : null}
-        <div className={styles.body}>{item.body}</div>
+        <section className={`${styles.detailNarrative} shell-container`}>
+          <div>
+            <span>01</span>
+            <h2>The work</h2>
+          </div>
+          <div className={styles.detailBody}>{item.body}</div>
+        </section>
         {item.results.length ? (
-          <section aria-labelledby="results">
-            <h2 id="results">Published results</h2>
-            <ul className={styles.results}>
+          <section
+            className={`${styles.detailResults} shell-container`}
+            aria-labelledby="results"
+          >
+            <div>
+              <span>02</span>
+              <h2 id="results">What changed</h2>
+            </div>
+            <ul>
               {item.results.map((result) => (
                 <li key={`${result.label}-${result.value}`}>
                   <strong>{result.value}</strong>

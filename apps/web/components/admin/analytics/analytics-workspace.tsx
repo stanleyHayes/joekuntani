@@ -8,6 +8,7 @@ import {
   formatAdminTimestamp,
 } from "../admin-feedback";
 import { MetricWatermark } from "../metric-watermark";
+import { SectionSwitcher } from "../section-switcher";
 import styles from "./analytics-workspace.module.css";
 
 type NamedCount = { name: string; count: number };
@@ -65,6 +66,7 @@ export function AnalyticsWorkspace() {
 
   return (
     <section className={styles.workspace} aria-labelledby="analytics-heading">
+      <SectionSwitcher section="governance" current="/admin/analytics" />
       <header className={styles.header}>
         <p className={styles.eyebrow}>Dashboards</p>
         <h2 id="analytics-heading">Operations overview</h2>
@@ -113,6 +115,14 @@ export function AnalyticsWorkspace() {
               <span>Published content</span>
             </li>
           </ul>
+
+          <div className={styles.sectionLabel}>
+            <span>02 / Operational breakdown</span>
+            <p>
+              Current distribution across the workflow, acquisition paths and
+              publishing activity.
+            </p>
+          </div>
 
           <div className={styles.grid}>
             <MetricList

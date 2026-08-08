@@ -19,14 +19,13 @@ describe("ExportsWorkspace", () => {
       .mockResolvedValueOnce({ ok: true, blob: async () => blob });
     vi.stubGlobal("fetch", fetchMock);
     const click = vi.fn();
-    const anchor = {
-      click,
-      set href(_value: string) {},
-      set download(_value: string) {},
-    } as unknown as HTMLAnchorElement;
     const createElement = document.createElement.bind(document);
     vi.spyOn(document, "createElement").mockImplementation(((tag: string) => {
-      if (tag === "a") return anchor;
+      if (tag === "a") {
+        const anchor = createElement("a");
+        anchor.click = click;
+        return anchor;
+      }
       return createElement(tag);
     }) as typeof document.createElement);
     vi.stubGlobal("URL", {

@@ -1,5 +1,10 @@
 .page {
   overflow: clip;
+  background: radial-gradient(
+    circle at 14% 5%,
+    color-mix(in srgb, var(--brand-j) 10%, transparent),
+    transparent 30rem
+  );
 }
 .hero {
   display: grid;
@@ -80,7 +85,7 @@
   display: grid;
   margin: 0;
   gap: 1px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   padding: 1px;
   background: var(--line);
   list-style: none;
@@ -92,6 +97,26 @@
   flex-direction: column;
   background: var(--surface-raised);
   padding: clamp(1.4rem, 4vw, 3rem);
+  transition:
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 240ms ease;
+}
+.card:nth-child(odd) {
+  grid-column: span 7;
+}
+.card:nth-child(even) {
+  grid-column: span 5;
+}
+.card:nth-child(3n) {
+  grid-column: 3 / span 8;
+}
+.card:hover {
+  z-index: 1;
+  transform: scale(1.018);
+  background: color-mix(in srgb, var(--brand-j) 8%, var(--surface-raised));
+}
+.card:hover .cta {
+  transform: translateX(0.35rem);
 }
 
 .card:nth-child(4n + 2),
@@ -136,6 +161,7 @@
   margin-top: 1.5rem;
   color: var(--accent-strong);
   font-weight: 800;
+  transition: transform 220ms ease;
 }
 
 .empty {
@@ -214,6 +240,9 @@
   .process ol {
     grid-template-columns: 1fr;
   }
+  .card:nth-child(n) {
+    grid-column: 1;
+  }
   .card {
     min-height: 21rem;
   }
@@ -223,5 +252,55 @@
   }
   .process li:last-child {
     border-bottom: 0;
+  }
+}
+
+/* V2 service index: one scanning surface instead of a card grid. */
+.list {
+  display: block;
+  padding: 0;
+  background: transparent;
+  border-bottom: 1px solid var(--line);
+}
+.card,
+.card:nth-child(n) {
+  display: grid;
+  grid-template-columns: 1.2fr 3fr 3fr auto;
+  gap: clamp(1rem, 3vw, 3rem);
+  align-items: center;
+  min-height: 0;
+  padding: clamp(1.5rem, 4vw, 3rem) 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+}
+.card:hover {
+  transform: translateX(0.55rem);
+  background: transparent;
+}
+.cardTop {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+.card h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3.2vw, 3.1rem);
+}
+.summary {
+  margin: 0;
+}
+.cta {
+  margin: 0;
+  white-space: nowrap;
+}
+@media (max-width: 52rem) {
+  .card,
+  .card:nth-child(n) {
+    grid-template-columns: auto 1fr;
+  }
+  .card h2,
+  .summary,
+  .cta {
+    grid-column: 2;
   }
 }

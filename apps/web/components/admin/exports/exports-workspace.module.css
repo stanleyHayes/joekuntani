@@ -67,6 +67,55 @@
   color: var(--color-text-muted);
   font-size: 0.9rem;
 }
+.exportDesk {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
+  gap: 1rem;
+}
+.form h3,
+.assurance h3 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  letter-spacing: -0.035em;
+}
+.step {
+  color: var(--accent);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.formCopy {
+  max-width: 48ch;
+  margin: 0 0 1.2rem;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+}
+.assurance {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  padding: clamp(1.25rem, 3vw, 1.8rem);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--brand-j) 8%, var(--surface));
+}
+.assurance ul {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.assurance li {
+  display: grid;
+  gap: 0.2rem;
+  padding-block: 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.assurance li span {
+  color: var(--color-text-muted);
+  font-size: 0.84rem;
+}
 @media (max-width: 42rem) {
   .controls {
     grid-template-columns: 1fr;
@@ -74,4 +123,27 @@
   .controls button {
     width: 100%;
   }
+}
+@media (max-width: 58rem) {
+  .exportDesk {
+    grid-template-columns: 1fr;
+  }
+}
+
+.workspace {
+  max-width: 72rem;
+}
+.header {
+  padding: clamp(1.4rem, 4vw, 2.4rem);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--ink) 5%, var(--surface));
+}
+.header h2 {
+  font-size: clamp(2.25rem, 6vw, 4.6rem);
+  letter-spacing: -0.055em;
+}
+.form {
+  min-height: 15rem;
+  align-content: center;
+  border-radius: 1.25rem;
 }

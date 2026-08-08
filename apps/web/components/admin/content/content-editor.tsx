@@ -141,7 +141,8 @@ export function ContentEditor({
           const body = (await itemsResponse.json()) as {
             items?: ContentItem[];
           };
-          found = (body.items ?? []).find((item) => item.id === contentID) ?? null;
+          found =
+            (body.items ?? []).find((item) => item.id === contentID) ?? null;
         }
         if (!current) return;
         setRole(staff.role);
@@ -476,12 +477,18 @@ export function ContentEditor({
                 and copy an id from another screen to add a picture. */}
             <AssetUploadList
               label={
-                kind === "page" ? "Hero & gallery images" : "Gallery images"
+                kind === "page" && draft.slug === "home"
+                  ? "Homepage hero & gallery"
+                  : kind === "page"
+                    ? "Hero & gallery images"
+                    : "Gallery images"
               }
               hint={
-                kind === "page"
-                  ? "The first image is this page's hero — the large picture at the top. Add one, or use “Make hero” to promote another."
-                  : "Shown with this item on the public site. The first one is used as its main picture."
+                kind === "page" && draft.slug === "home"
+                  ? "The first image becomes the homepage hero. Recommended: 2400 × 1500 px landscape (8:5), JPG or WebP, with Joe positioned near the centre or right so the title remains readable on the left. Use “Make hero” to promote another image."
+                  : kind === "page"
+                    ? "The first image is this page's hero — the large picture at the top. Add one, or use “Make hero” to promote another."
+                    : "Shown with this item on the public site. The first one is used as its main picture."
               }
               folder="content"
               values={split(gallery, "\n")}
@@ -605,7 +612,9 @@ export function ContentEditor({
                 {stage === "draft" || stage === "review" ? (
                   <button
                     className={styles.decide}
-                    disabled={pending || !canApprove || missingFields.length > 0}
+                    disabled={
+                      pending || !canApprove || missingFields.length > 0
+                    }
                     onClick={() => void approval(true)}
                     type="button"
                   >
@@ -770,7 +779,8 @@ function blockerFor(
     return missing.length
       ? `Add ${listOf(missing)}, then save it.`
       : "Ready to save. Approval and publication open once it exists.";
-  if (missing.length) return `Add ${listOf(missing)} before it can be approved.`;
+  if (missing.length)
+    return `Add ${listOf(missing)} before it can be approved.`;
   if (!item.approved)
     return canApprove
       ? "Complete and ready for approval."

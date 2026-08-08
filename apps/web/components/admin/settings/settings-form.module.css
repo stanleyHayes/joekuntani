@@ -1,14 +1,17 @@
 .form {
   display: grid;
   gap: 1.5rem;
+  width: 100%;
+  max-width: 90rem;
+  min-width: 0;
 }
-.form section {
+.form > section {
   background: var(--surface-raised);
   border: 1px solid var(--line);
   border-radius: 1rem;
   padding: clamp(1rem, 3vw, 1.75rem);
 }
-.form h2 {
+.form > section > h2 {
   font-size: 1.15rem;
   margin: 0 0 1rem;
 }
@@ -220,6 +223,7 @@
   position: sticky;
   top: 0.75rem;
   z-index: 2;
+  min-width: 0;
 }
 .toolbar strong,
 .toolbar span {
@@ -461,5 +465,39 @@
 @media (prefers-reduced-motion: reduce) {
   .form .checkbox input[type="checkbox"] {
     transition: none;
+  }
+}
+
+@media (min-width: 76rem) {
+  .form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .toolbar,
+  .error,
+  .notice,
+  .confirm {
+    grid-column: 1 / -1;
+  }
+  .form > section {
+    min-width: 0;
+    height: 100%;
+  }
+}
+
+@media (max-width: 48rem) {
+  .toolbar {
+    position: static;
+    align-items: stretch;
+  }
+  .toolbar,
+  .actions {
+    flex-direction: column;
+  }
+  .actions button {
+    width: 100%;
+  }
+  .listRow {
+    padding-inline: 0.75rem;
   }
 }

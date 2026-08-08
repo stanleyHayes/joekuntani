@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { AdminErrorState, AdminSkeleton } from "../admin-feedback";
+import { SectionSwitcher } from "../section-switcher";
 import styles from "./account-workspace.module.css";
 
 function csrfCookie() {
@@ -72,6 +73,7 @@ export function ProfileWorkspace() {
 
   return (
     <section className={styles.workspace} aria-labelledby="profile-heading">
+      <SectionSwitcher section="account" current="/admin/account" />
       <header className="stage-head">
         <div className="stage-head__copy">
           <p className="stage-head__eyebrow">Your account</p>
@@ -182,6 +184,7 @@ export function SecurityWorkspace() {
 
   return (
     <section className={styles.workspace} aria-labelledby="security-heading">
+      <SectionSwitcher section="account" current="/admin/account/security" />
       <header className="stage-head">
         <div className="stage-head__copy">
           <p className="stage-head__eyebrow">Your account</p>
@@ -350,6 +353,7 @@ export function PreferencesWorkspace() {
 
   return (
     <section className={styles.workspace} aria-labelledby="prefs-heading">
+      <SectionSwitcher section="account" current="/admin/account/preferences" />
       <header className="stage-head">
         <div className="stage-head__copy">
           <p className="stage-head__eyebrow">Your account</p>

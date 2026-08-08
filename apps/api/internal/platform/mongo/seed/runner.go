@@ -112,3 +112,9 @@ func Run(ctx context.Context, database *mongo.Database, environment string, regi
 func Registry() []Seed {
 	return []Seed{initialContentSeed(), eventFixturesSeed()}
 }
+
+// LocalShowcaseRegistry is deliberately separate from Registry so temporary
+// visual-review records can never reach preview, staging or production.
+func LocalShowcaseRegistry() []Seed {
+	return append(Registry(), localShowcaseSeed())
+}

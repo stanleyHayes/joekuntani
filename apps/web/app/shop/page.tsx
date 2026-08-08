@@ -37,6 +37,9 @@ export default async function ShopPage() {
       assetID: product.image_asset_ids?.[0],
     })),
   );
+  const availableProducts = catalogue.products.filter(
+    (product) => totalStock(product) > 0,
+  ).length;
 
   return (
     <PublicShell
@@ -46,21 +49,50 @@ export default async function ShopPage() {
     >
       <main id="main-content" className={styles.page}>
         <header className={`${styles.hero} shell-container`}>
-          <p className="eyebrow">Shop</p>
-          <h1 className={styles.title}>Wear the set.</h1>
-          <p className={styles.lede}>
-            Official merchandise. Every order is packed and shipped from Ghana.
-          </p>
+          <div className={styles.heroTopline}>
+            <p className="eyebrow">Joe Kuntani goods · Drop 01</p>
+            <span>{String(availableProducts).padStart(2, "0")} available</span>
+          </div>
+          <div className={styles.heroCopy}>
+            <h1 className={styles.title}>
+              Wear the <span>set.</span>
+            </h1>
+            <p className={styles.lede}>
+              Official merchandise, made to leave the room with you. Every order
+              is packed and shipped from Ghana.
+            </p>
+          </div>
+          <div className={styles.heroStamp} aria-hidden="true">
+            <span>JK</span>
+            <small>Official goods</small>
+          </div>
         </header>
+
+        <div className={styles.marquee} aria-hidden="true">
+          <div>
+            <span>Live comedy</span>
+            <b>✦</b>
+            <span>Official goods</span>
+            <b>✦</b>
+            <span>Packed in Ghana</span>
+            <b>✦</b>
+            <span>Live comedy</span>
+            <b>✦</b>
+            <span>Official goods</span>
+          </div>
+        </div>
 
         <section
           className={`${styles.section} shell-container`}
           aria-labelledby="shop-items"
         >
           <div className={styles.sectionHead}>
-            <span>01</span>
-            <h2 id="shop-items">Available now</h2>
-            <p>Pick a size at checkout. Stock updates as orders come in.</p>
+            <span>Collection / 01</span>
+            <h2 id="shop-items">From stage to street.</h2>
+            <p>
+              Choose a piece, then pick the available size or option on its
+              product page. Stock updates as orders come in.
+            </p>
           </div>
 
           {catalogue.products.length ? (
@@ -79,16 +111,32 @@ export default async function ShopPage() {
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={covers[product.id]}
-                            alt=""
+                            alt={product.name}
                             width={800}
                             height={800}
                           />
                         </span>
-                      ) : null}
-                      <span className={styles.cardIndex}>
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
+                      ) : (
+                        <span
+                          className={styles.cardFallback}
+                          aria-hidden="true"
+                        >
+                          <span>JK</span>
+                          <strong>{product.category || "Goods"}</strong>
+                          <small>Official merchandise</small>
+                        </span>
+                      )}
                       <span className={styles.cardBody}>
+                        <span className={styles.cardMeta}>
+                          <span>
+                            Product {String(index + 1).padStart(2, "0")}
+                          </span>
+                          <span
+                            data-sold-out={stock === 0 ? "true" : undefined}
+                          >
+                            {stock > 0 ? "Available" : "Sold out"}
+                          </span>
+                        </span>
                         <span className={styles.cardName}>{product.name}</span>
                         {product.summary ? (
                           <span className={styles.cardSummary}>
@@ -96,13 +144,16 @@ export default async function ShopPage() {
                           </span>
                         ) : null}
                         <span className={styles.cardFoot}>
-                          <span className={styles.cardPrice}>
-                            {lead
-                              ? `${catalogue.currency} ${lead.price}`
-                              : "Sold out"}
+                          <span>
+                            <small>{lead ? "From" : "Status"}</small>
+                            <span className={styles.cardPrice}>
+                              {lead
+                                ? `${catalogue.currency} ${lead.price}`
+                                : "Back soon"}
+                            </span>
                           </span>
-                          <span className={styles.cardStock}>
-                            {stock > 0 ? `${stock} in stock` : "Back soon"}
+                          <span className={styles.cardCta}>
+                            View piece <span aria-hidden="true">↗</span>
                           </span>
                         </span>
                       </span>

@@ -175,50 +175,57 @@ export function MerchWorkspace() {
               </div>
 
               {product.variants.length ? (
-                <table className={styles.variants}>
-                  <thead>
-                    <tr>
-                      <th>Variant</th>
-                      <th>SKU</th>
-                      <th>Price</th>
-                      <th>Stock</th>
-                      <th>State</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {product.variants.map((variant) => (
-                      <tr key={variant.id}>
-                        <td>{variant.label}</td>
-                        <td>{variant.sku || "—"}</td>
-                        <td>
-                          {variant.currency} {variant.price}
-                        </td>
-                        <td data-low={variant.stock === 0 ? "true" : undefined}>
-                          {variant.stock}
-                        </td>
-                        <td>{variant.active ? "Active" : "Inactive"}</td>
-                        <td>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setVariantDraft(variant);
-                              setVariantOpen(true);
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void removeVariant(variant.id)}
-                          >
-                            Remove
-                          </button>
-                        </td>
+                <div className={styles.tableScroll}>
+                  <table className={styles.variants}>
+                    <thead>
+                      <tr>
+                        <th>Variant</th>
+                        <th>SKU</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>State</th>
+                        <th>Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {product.variants.map((variant) => (
+                        <tr key={variant.id}>
+                          <td>{variant.label}</td>
+                          <td>{variant.sku || "—"}</td>
+                          <td>
+                            {variant.currency} {variant.price}
+                          </td>
+                          <td
+                            data-low={variant.stock === 0 ? "true" : undefined}
+                          >
+                            {variant.stock}
+                          </td>
+                          <td>{variant.active ? "Active" : "Inactive"}</td>
+                          <td>
+                            <div className={styles.variantActions}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setVariantDraft(variant);
+                                  setVariantOpen(true);
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className={styles.removeVariant}
+                                type="button"
+                                onClick={() => void removeVariant(variant.id)}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 <p className={styles.blank}>
                   No variants yet. A product needs at least one before it can be

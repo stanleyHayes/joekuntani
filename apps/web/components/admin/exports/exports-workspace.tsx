@@ -8,6 +8,7 @@ import {
   ButtonPending,
 } from "../admin-feedback";
 import styles from "./exports-workspace.module.css";
+import { SectionSwitcher } from "../section-switcher";
 
 type Resource = "enquiries" | "contacts" | "bookings" | "campaigns";
 
@@ -92,6 +93,7 @@ export function ExportsWorkspace() {
 
   return (
     <section className={styles.workspace} aria-labelledby="exports-heading">
+      <SectionSwitcher section="governance" current="/admin/exports" />
       <header className={styles.header}>
         <p className={styles.eyebrow}>Governance</p>
         <h2 id="exports-heading">Role-filtered CSV exports</h2>
@@ -112,38 +114,64 @@ export function ExportsWorkspace() {
       ) : null}
 
       {state !== "loading" ? (
-        <form className={styles.form} onSubmit={download}>
-          <label htmlFor="export-resource">Resource</label>
-          <div className={styles.controls}>
-            <Select
-              id="export-resource"
-              name="resource"
-              required
-              disabled={resources.length === 0}
-              placeholder={
-                resources.length === 0
-                  ? "No exports available"
-                  : "Choose resource"
-              }
-              options={resources.map((resource) => ({
-                value: resource,
-                label: labels[resource],
-              }))}
-              aria-label="Export resource"
-            />
-            <button
-              className={styles.download}
-              type="submit"
-              disabled={state === "exporting" || resources.length === 0}
-            >
-              {state === "exporting" ? (
-                <ButtonPending label="Preparing CSV export" />
-              ) : (
-                "Download CSV"
-              )}
-            </button>
-          </div>
-        </form>
+        <div className={styles.exportDesk}>
+          <form className={styles.form} onSubmit={download}>
+            <span className={styles.step}>01 / Select data</span>
+            <h3>Build a clean export</h3>
+            <p className={styles.formCopy}>
+              Choose one approved record set. The download is generated as CSV
+              and recorded automatically.
+            </p>
+            <label htmlFor="export-resource">Resource</label>
+            <div className={styles.controls}>
+              <Select
+                id="export-resource"
+                name="resource"
+                required
+                disabled={resources.length === 0}
+                placeholder={
+                  resources.length === 0
+                    ? "No exports available"
+                    : "Choose resource"
+                }
+                options={resources.map((resource) => ({
+                  value: resource,
+                  label: labels[resource],
+                }))}
+                aria-label="Export resource"
+              />
+              <button
+                className={styles.download}
+                type="submit"
+                disabled={state === "exporting" || resources.length === 0}
+              >
+                {state === "exporting" ? (
+                  <ButtonPending label="Preparing CSV export" />
+                ) : (
+                  "Download CSV"
+                )}
+              </button>
+            </div>
+          </form>
+          <aside className={styles.assurance} aria-label="Export safeguards">
+            <span className={styles.step}>02 / Safeguards</span>
+            <h3>Every download leaves a trail</h3>
+            <ul>
+              <li>
+                <strong>Role checked</strong>
+                <span>Only authorized resources appear.</span>
+              </li>
+              <li>
+                <strong>CSV formatted</strong>
+                <span>Ready for review or controlled transfer.</span>
+              </li>
+              <li>
+                <strong>Audit recorded</strong>
+                <span>The resource and operator are logged.</span>
+              </li>
+            </ul>
+          </aside>
+        </div>
       ) : null}
 
       {state !== "loading" ? (

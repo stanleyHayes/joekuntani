@@ -1,11 +1,11 @@
 .form {
   display: grid;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 .group {
   display: grid;
-  gap: 0.85rem;
+  gap: 1rem;
   margin: 0;
   padding: 0;
   border: 0;
@@ -20,27 +20,40 @@
   text-transform: uppercase;
 }
 
+.group + .group {
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
 .variants {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.6rem;
 }
 
 .variant {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  min-height: 3rem;
-  padding: 0.65rem 1.05rem;
+  display: grid;
+  gap: 0.25rem;
+  min-height: 4rem;
+  align-content: center;
+  padding: 0.7rem 0.85rem;
   border: 1px solid var(--line);
-  border-radius: var(--radius-control);
+  border-radius: 0.35rem;
   cursor: pointer;
-  transition: border-color 160ms ease;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.variant:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
 }
 
 .variant[data-checked="true"] {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--canvas);
 }
 
 /* The radio stays in the accessibility tree and keyboard order; the label is
@@ -68,6 +81,10 @@
   font-variant-numeric: tabular-nums;
 }
 
+.variant[data-checked="true"] .variantPrice {
+  color: color-mix(in srgb, var(--canvas) 62%, transparent);
+}
+
 .fields {
   display: grid;
   gap: 0.85rem;
@@ -82,6 +99,10 @@
 
 .wide {
   grid-column: 1 / -1;
+}
+
+.locationFields {
+  display: contents;
 }
 
 .label {
@@ -99,11 +120,12 @@
 
 .field input {
   width: 100%;
-  min-height: 2.9rem;
-  padding: 0.7rem 0.9rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  background: var(--canvas);
+  min-height: 3rem;
+  padding: 0.75rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
   font: inherit;
 }
@@ -111,7 +133,12 @@
 .field input:focus {
   outline: none;
   border-color: var(--focus);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 24%, transparent);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--focus) 45%, transparent);
+}
+
+.field input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .submitRow {
@@ -120,8 +147,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding-top: 1.15rem;
-  border-top: 1px solid var(--line);
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--ink);
 }
 
 .total {
@@ -143,7 +170,7 @@
 .submit {
   min-height: 3.1rem;
   border: 0;
-  border-radius: var(--radius-control);
+  border-radius: 999px;
   padding-inline: 1.6rem;
   background: var(--accent);
   color: var(--accent-contrast);
@@ -151,6 +178,19 @@
   font-size: 1rem;
   font-weight: 800;
   cursor: pointer;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--canvas);
+}
+
+.submit:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .submit:disabled {
@@ -187,4 +227,25 @@
   margin: 0;
   color: var(--ink-soft);
   font-size: 0.78rem;
+}
+
+@media (max-width: 35rem) {
+  .fields {
+    grid-template-columns: 1fr;
+  }
+
+  .submitRow {
+    align-items: stretch;
+  }
+
+  .submit {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .variant,
+  .submit {
+    transition: none;
+  }
 }

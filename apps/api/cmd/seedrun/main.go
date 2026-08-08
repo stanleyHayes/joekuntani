@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	mongoplatform "github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/platform/mongo"
@@ -40,7 +41,11 @@ func main() {
 	}
 	defer func() { _ = client.Close(context.Background()) }()
 
-	if err := seed.Run(ctx, client.Database(), environment, seed.Registry()); err != nil {
+	registry := seed.Registry()
+	if strings.EqualFold(strings.TrimSpace(environment), "local") {
+		registry = seed.LocalShowcaseRegistry()
+	}
+	if err := seed.Run(ctx, client.Database(), environment, registry); err != nil {
 		fmt.Fprintln(os.Stderr, "seed:", err)
 		os.Exit(1)
 	}

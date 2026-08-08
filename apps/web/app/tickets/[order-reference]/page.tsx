@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { TicketConfirmation } from "../../../components/tickets/ticket-confirmation";
+import styles from "./ticket-page.module.css";
 
 export const metadata: Metadata = {
   title: "Your tickets",
@@ -18,11 +19,13 @@ export default async function TicketPage({
   const route = await params;
   const search = await searchParams;
   return (
-    <main className="shell-container" id="main-content">
-      <TicketConfirmation
-        reference={route["order-reference"]}
-        access={typeof search.access === "string" ? search.access : ""}
-      />
+    <main className={styles.page} id="main-content">
+      <div className="shell-container">
+        <TicketConfirmation
+          reference={route["order-reference"]}
+          access={typeof search.access === "string" ? search.access : ""}
+        />
+      </div>
     </main>
   );
 }

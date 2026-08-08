@@ -1,0 +1,79 @@
+.page {
+  overflow: clip;
+  background: radial-gradient(
+    circle at 84% 8%,
+    color-mix(in srgb, var(--brand-j) 10%, transparent),
+    transparent 30rem
+  );
+}
+.hero {
+  padding-block: clamp(4rem, 10vw, 8rem);
+  border-bottom: 1px solid var(--line);
+}
+.kicker {
+  margin: 0 0 clamp(3rem, 8vw, 7rem);
+  color: var(--eyebrow-color);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+.heroGrid {
+  display: grid;
+  align-items: end;
+  gap: clamp(3rem, 9vw, 9rem);
+}
+.hero h1 {
+  margin: 0;
+  max-width: 10ch;
+  font-size: clamp(4rem, 10vw, 8.5rem);
+  letter-spacing: -0.075em;
+  line-height: 0.83;
+}
+.hero h1 span {
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--ink) 55%, transparent);
+}
+.heroGrid > div {
+  display: grid;
+  gap: 2rem;
+}
+.heroGrid > div > p {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: clamp(1rem, 1.7vw, 1.25rem);
+  line-height: 1.65;
+}
+.hero dl {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+.hero dl div {
+  display: grid;
+  grid-template-columns: 6rem 1fr;
+  gap: 1rem;
+  padding-block: 0.75rem;
+  border-top: 1px solid var(--line);
+}
+.hero dt {
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.hero dd {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+.formStage {
+  padding-block: clamp(4rem, 9vw, 8rem);
+}
+@media (min-width: 60rem) {
+  .heroGrid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 0.55fr);
+  }
+}

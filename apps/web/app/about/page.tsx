@@ -51,6 +51,9 @@ export default async function AboutPage() {
         {page ? (
           <>
             <section className={`${styles.hero} shell-container`}>
+              <span className={styles.heroWord} aria-hidden="true">
+                About
+              </span>
               <div className={styles.heroCopy}>
                 <p className={styles.kicker}>
                   <span>01</span>
@@ -74,6 +77,9 @@ export default async function AboutPage() {
                 className={styles.portrait}
                 data-placeholder={portrait || usingDemo ? "false" : "true"}
               >
+                <span className={styles.portraitNumber} aria-hidden="true">
+                  JK / 01
+                </span>
                 {portrait ? (
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img
@@ -106,6 +112,7 @@ export default async function AboutPage() {
                     <span>{page.title}</span>
                   </div>
                 )}
+                <p className={styles.portraitNote}>Comedy · guitar · live</p>
               </figure>
             </section>
 
@@ -128,6 +135,9 @@ export default async function AboutPage() {
                 <p>The story so far</p>
               </aside>
               <article className={styles.storyBody}>
+                <span className={styles.storyMark} aria-hidden="true">
+                  “
+                </span>
                 <p className={styles.pullQuote}>
                   Not a comic with background music. Not a musician waiting for
                   the punchline.

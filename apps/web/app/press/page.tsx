@@ -22,7 +22,7 @@ export async function generateMetadata() {
   const input = {
     title: "Press",
     description: "Approved press coverage and appearances.",
-    path: "/press",
+    path: "/media/press",
   };
   return items.length || demo
     ? pageMetadata(input)
@@ -40,7 +40,7 @@ export default async function PressPage() {
   return (
     <PublicShell
       settings={shellSettings}
-      currentPath="/press"
+      currentPath="/media/press"
       footerCta={contentFooterCta}
     >
       {usingDemo ? <DemoBanner /> : null}
