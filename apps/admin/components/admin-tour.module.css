@@ -1,0 +1,106 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+}
+
+.dim,
+.shade {
+  position: fixed;
+  background: rgba(8, 12, 16, 0.58);
+  pointer-events: none;
+}
+
+.dim {
+  inset: 0;
+}
+
+.ring {
+  position: fixed;
+  border-radius: 0.9rem;
+  box-shadow:
+    0 0 0 2px var(--brand-j),
+    0 0 0 8px color-mix(in srgb, var(--brand-j) 25%, transparent);
+  pointer-events: none;
+}
+
+.card {
+  position: fixed;
+  z-index: 81;
+  display: grid;
+  gap: 0.55rem;
+  padding: 1.05rem 1.1rem;
+  border-radius: 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  background: var(--surface);
+  box-shadow: 0 22px 56px color-mix(in srgb, var(--ink) 22%, transparent);
+}
+
+.step {
+  margin: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--brand-j) 40%, var(--ink));
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+.body {
+  margin: 0;
+  color: color-mix(in srgb, var(--ink) 68%, transparent);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.nav {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.ghost,
+.primary {
+  min-height: 2.25rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.ghost {
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  background: transparent;
+  color: inherit;
+}
+
+.ghost:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.primary {
+  border: 0;
+  background: linear-gradient(
+    115deg,
+    var(--brand-j),
+    color-mix(in srgb, var(--brand-j) 50%, var(--brand-k))
+  );
+  color: #14110c;
+}

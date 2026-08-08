@@ -1,0 +1,204 @@
+.workspace {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  width: 100%;
+  max-width: 72rem;
+}
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.45fr);
+  gap: 0.5rem clamp(2rem, 7vw, 7rem);
+  padding-block: 1.5rem 2.5rem;
+  border-bottom: 1px solid var(--color-border, #d8d5cf);
+}
+.header .eyebrow,
+.header h2 {
+  grid-column: 1;
+}
+.header > p:last-child {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: end;
+  max-width: 34rem;
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+.header h2 {
+  margin: 0.2rem 0 0;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+}
+.eyebrow {
+  margin: 0;
+  color: var(--eyebrow-color);
+  font: var(--eyebrow-weight) var(--eyebrow-size) / 1 var(--eyebrow-family);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+.exportDesk {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.35fr) minmax(0, 1fr);
+  min-height: 29rem;
+  border-block: 1px solid var(--color-border, #d8d5cf);
+  animation: desk-in 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.guide {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  border-right: 1px solid var(--color-border, #d8d5cf);
+  background: color-mix(in srgb, var(--color-surface, #fff) 72%, transparent);
+}
+.guide > span,
+.formIntro > span {
+  color: var(--eyebrow-color);
+  font:
+    700 0.63rem/1 ui-monospace,
+    monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.guide h3,
+.formIntro h3 {
+  margin: 1rem 0 0.75rem;
+  font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+.guide p,
+.formIntro p {
+  max-width: 38ch;
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+}
+.guide ul {
+  display: grid;
+  gap: 0;
+  margin: auto 0 0;
+  padding: 0;
+  list-style: none;
+}
+.guide li {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.8rem 0;
+  border-top: 1px solid var(--color-border, #d8d5cf);
+}
+.guide li strong {
+  font-size: 0.78rem;
+}
+.guide li span {
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+}
+.form {
+  display: grid;
+  align-content: center;
+  gap: 1rem;
+  min-width: 0;
+  padding: clamp(2rem, 6vw, 5rem);
+}
+.formIntro {
+  margin-bottom: 1.5rem;
+}
+.form label {
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.confirmRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border, #d8d5cf);
+}
+.confirmRow p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+}
+.download {
+  min-height: 3rem;
+  padding: 0 1.4rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    filter 160ms ease;
+}
+.download:hover {
+  filter: brightness(1.05);
+  transform: translateY(-2px);
+}
+.download:active {
+  transform: scale(0.97);
+}
+.download:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+.download:focus-visible {
+  outline: 3px solid var(--color-focus, #0f766e);
+  outline-offset: 3px;
+}
+.status {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-left: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+@keyframes desk-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 48rem) {
+  .header,
+  .exportDesk {
+    grid-template-columns: 1fr;
+  }
+  .header > p:last-child {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .guide {
+    min-height: 20rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border, #d8d5cf);
+  }
+  .confirmRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .download {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .exportDesk {
+    animation: none;
+  }
+  .download {
+    transition: none;
+  }
+}

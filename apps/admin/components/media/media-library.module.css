@@ -1,0 +1,894 @@
+.library {
+  --media-panel: color-mix(
+    in srgb,
+    var(--surface-raised) 86%,
+    var(--surface) 14%
+  );
+  --media-soft: color-mix(in srgb, var(--surface) 78%, var(--ink) 22%);
+  --media-line: color-mix(in srgb, var(--ink) 13%, transparent);
+  --media-muted: color-mix(in srgb, var(--ink) 62%, transparent);
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.heading,
+.summary,
+.assetTools,
+.sectionHead,
+.uploadIntro,
+.uploadFooter,
+.selectedFile,
+.notice,
+.dangerZone {
+  display: flex;
+  align-items: center;
+}
+
+/* The header itself is the shared `.stage-head` now, so this only has to keep
+   the icon beside the copy and let the flex row give the action its own end. */
+.heading {
+  flex: 1 1 auto;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.library .uploadToggle {
+  flex: 0 0 auto;
+}
+
+.headingIcon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--brand-j) 15%, var(--media-soft));
+  color: var(--accent);
+}
+
+/* `.libraryHead` is gone — the header is the shared `.stage-head`, which brings
+   its own heading and lede type — so its rules were dropped rather than left to
+   rot as selectors that match nothing. */
+.sectionHead h3,
+.upload h3,
+.noResults h3 {
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.sectionHead p,
+.uploadIntro p,
+.selectedFile p,
+.dangerZone p,
+.noResults p {
+  margin: 0.2rem 0 0;
+  color: var(--media-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.library .uploadToggle,
+.library .primaryAction,
+.library .retry button,
+.library .danger,
+.library .empty button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.library .uploadToggle,
+.library .primaryAction,
+.library .empty button {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.library .uploadToggle:hover,
+.library .primaryAction:hover,
+.library .empty button:hover {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.library .uploadToggle:active,
+.library .primaryAction:active,
+.library .retry button:active,
+.library .danger:active,
+.library .empty button:active {
+  transform: translateY(1px);
+}
+
+.summary {
+  align-items: stretch;
+  border: 1px solid var(--media-line);
+  border-radius: var(--radius-panel);
+  background: var(--media-panel);
+  overflow: hidden;
+}
+
+.summary > div {
+  display: grid;
+  flex: 1;
+  gap: 0.2rem;
+  padding: 0.8rem 1rem;
+}
+
+.summary > div + div {
+  border-left: 1px solid var(--media-line);
+}
+
+.summary span {
+  color: var(--media-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.summary strong {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.notice {
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--brand-k) 30%, var(--media-line));
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--brand-k) 8%, var(--media-panel));
+  color: var(--ink);
+  font-size: 0.84rem;
+}
+
+.notice svg {
+  flex: 0 0 auto;
+  color: var(--accent-2);
+}
+
+.upload {
+  display: grid;
+  grid-template-columns: minmax(11rem, 0.55fr) minmax(0, 2fr);
+  gap: 1.15rem;
+  padding: 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--brand-k) 30%, var(--media-line));
+  border-radius: var(--radius-panel);
+  background:
+    radial-gradient(
+      circle at 0 0,
+      color-mix(in srgb, var(--brand-k) 9%, transparent),
+      transparent 28rem
+    ),
+    var(--media-panel);
+}
+
+.uploadIntro {
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.uploadIntro > svg {
+  flex: 0 0 auto;
+  color: var(--accent-2);
+}
+
+.uploadFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.altField {
+  grid-column: 1 / -1;
+}
+
+.uploadFooter {
+  grid-column: 2;
+  justify-content: flex-end;
+}
+
+.library label {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.library label > span {
+  color: var(--media-muted);
+  font-size: 0.72rem;
+  font-weight: 450;
+}
+
+.library input,
+.library textarea {
+  width: 100%;
+  min-height: 2.55rem;
+  padding: 0.62rem 0.7rem;
+  border: 1px solid var(--media-line);
+  border-radius: var(--radius-control);
+  outline: none;
+  background: color-mix(in srgb, var(--canvas) 38%, var(--surface-raised));
+  color: var(--ink);
+  font: inherit;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.library textarea {
+  min-height: 5.2rem;
+  resize: vertical;
+}
+
+.library input:focus,
+.library textarea:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 18%, transparent);
+}
+
+.library input[type="file"] {
+  padding: 0.45rem;
+  font-size: 0.76rem;
+}
+
+/* Local preview of the pending upload, so the operator confirms they picked the
+   right picture before it ever leaves the machine. */
+.filePreview {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--media-line);
+  border-radius: var(--radius-control);
+  background: var(--media-soft);
+}
+
+.filePreviewThumb {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3.25rem;
+  height: 3.25rem;
+  overflow: hidden;
+  border-radius: calc(var(--radius-control) - 0.15rem);
+  background: var(--media-panel);
+  color: var(--media-muted);
+}
+
+.filePreviewThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.filePreviewMeta {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.filePreviewMeta strong {
+  overflow: hidden;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filePreviewMeta > span {
+  color: var(--media-muted);
+}
+
+.library input[type="file"]::file-selector-button {
+  margin-right: 0.65rem;
+  padding: 0.45rem 0.65rem;
+  border: 0;
+  border-radius: calc(var(--radius-control) - 0.15rem);
+  background: var(--media-soft);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.assetTools {
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--media-line);
+  border-radius: var(--radius-panel);
+  background: var(--media-panel);
+}
+
+.search {
+  position: relative;
+  flex: 1 1 18rem;
+}
+
+.search > svg {
+  position: absolute;
+  z-index: 1;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--media-muted);
+  pointer-events: none;
+}
+
+/* Specificity must beat the global `.admin-stage input` padding shorthand. */
+.search input[type="search"] {
+  padding-left: 2.6rem;
+}
+
+.folderTabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: calc(var(--radius-control) + 0.25rem);
+  background: var(--media-soft);
+}
+
+/* Scoped through `.library` (0-2-1). A bare `.folderTabs button` is 0-1-1 —
+   only a TIE with the shared `.admin-stage button`, so the winner came down to
+   stylesheet order and the tabs picked up its 0.65rem corners and 1px border
+   instead of following the curve of their own track.
+   Concentric radius: track = inner + 0.25rem padding, so inner is the token. */
+.library .folderTabs button {
+  min-height: 2rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--media-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.folderTabs button[aria-pressed="true"] {
+  background: var(--surface-raised);
+  color: var(--ink);
+  box-shadow: 0 0.2rem 0.8rem color-mix(in srgb, var(--canvas) 20%, transparent);
+}
+
+.resultCount {
+  flex: 0 0 auto;
+  color: var(--media-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.contentLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  min-width: 0;
+}
+
+.assetCollection,
+.editor {
+  min-width: 0;
+  border: 1px solid var(--media-line);
+  border-radius: var(--radius-panel);
+  background: var(--media-panel);
+}
+
+.sectionHead {
+  min-height: 4.25rem;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--media-line);
+}
+
+.sectionHead h3 {
+  font-size: 0.95rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  gap: 0.85rem;
+  list-style: none;
+  margin: 0;
+  padding: 1rem;
+}
+
+.grid li {
+  position: relative;
+  min-width: 0;
+}
+
+/* Sibling of the card button, not a child — nested buttons are invalid, and the
+   card itself already opens the details dialog. */
+.cardDelete.cardDelete {
+  position: absolute;
+  z-index: 1;
+  top: 0.45rem;
+  left: 0.45rem;
+  display: grid;
+  place-items: center;
+  width: 1.85rem;
+  /* `.admin-stage button` sets min-height: 2.4rem, which outranks `height` and
+     would stretch the circle into an upright ellipse. */
+  min-height: 0;
+  height: 1.85rem;
+  padding: 0;
+  border: 1px solid var(--media-line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--media-panel) 88%, transparent);
+  color: var(--media-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease;
+}
+
+/* Revealed on hover or focus so the grid stays calm, but never hidden from
+   keyboards or touch, where there is no hover to reveal it. */
+.grid li:hover .cardDelete,
+.cardDelete:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .cardDelete.cardDelete {
+    opacity: 1;
+  }
+}
+
+.cardDelete.cardDelete:hover {
+  border-color: color-mix(in srgb, #e45d68 60%, transparent);
+  color: color-mix(in srgb, #e45d68 78%, var(--ink));
+}
+
+.pending {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--warning-line) 45%, transparent);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--warning-surface) 40%, transparent);
+  color: var(--warning);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.pending button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.1rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--warning-line) 60%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirm {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.confirm p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.confirmName {
+  overflow-wrap: anywhere;
+  font-weight: 750;
+}
+
+.confirmActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding-top: 0.35rem;
+}
+
+.grid button {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--media-line);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--surface) 72%, var(--surface-raised));
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.grid button:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--brand-k) 38%, var(--media-line));
+  background: var(--surface-raised);
+}
+
+.grid button[aria-pressed="true"] {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
+.preview {
+  position: relative;
+  display: grid;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  place-items: center;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--brand-k) 7%, transparent),
+      transparent
+    ),
+    var(--media-soft);
+  color: var(--media-muted);
+}
+
+.preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.grid button:hover .preview img {
+  transform: scale(1.025);
+}
+
+.status {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  padding: 0.25rem 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--canvas) 78%, transparent);
+  backdrop-filter: blur(8px);
+  color: var(--ink);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.status[data-status="ready"] {
+  border-color: color-mix(in srgb, var(--brand-k) 48%, transparent);
+  color: color-mix(in srgb, var(--brand-k) 80%, white);
+}
+
+.status[data-status="failed"] {
+  border-color: color-mix(in srgb, #e35d6a 50%, transparent);
+  color: #ffb2b9;
+}
+
+.assetCopy {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.7rem;
+}
+
+.assetCopy strong {
+  overflow: hidden;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assetCopy > span {
+  overflow: hidden;
+  color: var(--media-muted);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  min-height: 21rem;
+}
+
+.empty button {
+  font: inherit;
+}
+
+.noResults,
+.noSelection {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-height: 18rem;
+  padding: 2rem;
+  color: var(--media-muted);
+  text-align: center;
+}
+
+.noResults h3 {
+  margin-top: 0.7rem;
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.editor {
+  position: static;
+}
+
+.editor form {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+}
+
+.selectedFile {
+  align-items: flex-start;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.7rem;
+  border-radius: 0.7rem;
+  background: var(--media-soft);
+}
+
+.selectedFile > span {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--accent-2);
+}
+
+.selectedFile > div {
+  min-width: 0;
+}
+
+.filename {
+  overflow: hidden;
+  margin: 0;
+  color: var(--ink) !important;
+  font-size: 0.8rem !important;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metadata {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--media-line);
+  border-bottom: 1px solid var(--media-line);
+}
+
+.metadata div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.76rem;
+}
+
+.metadata dt {
+  color: var(--media-muted);
+}
+
+.metadata dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: right;
+  text-transform: capitalize;
+}
+
+.retry {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  border: 1px solid
+    color-mix(in srgb, var(--warning-line) 40%, var(--media-line));
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--warning-surface) 35%, transparent);
+}
+
+.library .retry button {
+  border-color: var(--media-line);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font: inherit;
+}
+
+.dangerZone {
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.15rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--media-line);
+}
+
+.dangerZone strong {
+  font-size: 0.78rem;
+}
+
+.dangerZone p {
+  font-size: 0.7rem;
+}
+
+.library .danger {
+  flex: 0 0 auto;
+  border-color: color-mix(in srgb, #d84f5f 45%, var(--media-line));
+  background: transparent;
+  color: color-mix(in srgb, #d84f5f 82%, var(--ink));
+  font: inherit;
+}
+
+.library .danger:hover {
+  background: color-mix(in srgb, #d84f5f 10%, transparent);
+}
+
+.library button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+.library button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 70rem) {
+  .upload {
+    grid-template-columns: 1fr;
+  }
+
+  .uploadFooter {
+    grid-column: 1;
+  }
+
+  .contentLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .editor {
+    position: static;
+  }
+}
+
+@media (max-width: 52rem) {
+  .assetTools {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .search {
+    flex-basis: 100%;
+  }
+
+  .folderTabs {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .resultCount {
+    align-self: center;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 40rem) {
+  /* `.stage-head` already wraps and stacks on narrow viewports, so the header
+     itself needs no override here — only the action still wants full width. */
+  .uploadToggle {
+    width: 100%;
+  }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .summary > div {
+    padding: 0.7rem;
+  }
+
+  .summary strong {
+    font-size: 1.05rem;
+  }
+
+  .uploadFields {
+    grid-template-columns: 1fr;
+  }
+
+  .altField {
+    grid-column: auto;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    padding: 0.75rem;
+  }
+
+  .dangerZone {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .danger {
+    width: 100%;
+  }
+}
+
+@media (max-width: 25rem) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .library *,
+  .library *::before,
+  .library *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

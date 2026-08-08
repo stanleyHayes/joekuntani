@@ -1,0 +1,107 @@
+.manager {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  padding: clamp(1rem, 3vw, 1.75rem);
+}
+
+.panel h2 {
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
+.list {
+  display: grid;
+  margin: 0;
+  gap: 0.65rem;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 0.8rem;
+}
+
+.item strong,
+.item span {
+  display: block;
+}
+
+.item span {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.itemActions button,
+.rowLink {
+  min-height: 2.5rem;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  padding: 0.5rem 0.8rem;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.itemActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* The editor is a page now, so Add and Edit are links wearing the shape the
+   buttons used to have. */
+.addService,
+.rowLink {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.addService {
+  min-height: 2.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: var(--accent-strong);
+  padding: 0.5rem 0.9rem;
+  color: var(--accent-contrast);
+  font-weight: 750;
+}
+
+.addService:hover,
+.rowLink:hover {
+  filter: brightness(1.06);
+}
+
+.status,
+.error,
+.empty {
+  color: var(--ink-soft);
+}
+
+.error {
+  color: var(--warning);
+}
+
+@media (max-width: 60rem) {
+  .manager {
+    grid-template-columns: 1fr;
+  }
+}

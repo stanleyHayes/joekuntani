@@ -1,0 +1,540 @@
+.workspace {
+  display: grid;
+  gap: 1.5rem;
+  min-width: 0;
+  max-width: 78rem;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.summary li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.35rem 1fr auto;
+  align-items: center;
+  gap: 0.15rem 0.75rem;
+  min-height: 7.4rem;
+  padding: 1rem 1.1rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 11%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface) 96%, var(--brand-j) 4%);
+}
+
+.summary li::after {
+  content: "";
+  position: absolute;
+  right: -2rem;
+  bottom: -3rem;
+  width: 8rem;
+  height: 8rem;
+  border: 1.5rem solid color-mix(in srgb, var(--brand-j) 8%, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.summary li[data-attention="true"]::after {
+  border-color: color-mix(in srgb, var(--warning) 10%, transparent);
+}
+
+.summaryIcon {
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  grid-row: 1 / span 2;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--brand-j) 13%, transparent);
+  color: var(--brand-j);
+}
+
+.summaryCopy {
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.summary strong {
+  position: relative;
+  z-index: 1;
+  grid-row: 1 / span 2;
+  font-size: clamp(1.75rem, 3vw, 2.35rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+
+.summary small {
+  color: color-mix(in srgb, var(--ink) 48%, transparent);
+  font-size: 0.72rem;
+}
+
+.catalogue,
+.ordersBlock {
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 11%, transparent);
+  border-radius: 1.15rem;
+  background: var(--surface);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.3rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.sectionHead p,
+.sectionHead h3 {
+  margin: 0;
+}
+
+.sectionHead p {
+  margin-bottom: 0.2rem;
+  color: var(--brand-j);
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.sectionHead h3 {
+  font-size: 1.05rem;
+  letter-spacing: -0.025em;
+}
+
+.sectionHead > span {
+  color: color-mix(in srgb, var(--ink) 48%, transparent);
+  font-size: 0.74rem;
+}
+
+.rows {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem 1.3rem 1.35rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.rowHead {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr auto;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.productMark {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--ink) 6%, var(--surface));
+  color: color-mix(in srgb, var(--ink) 68%, transparent);
+}
+
+.rowBody {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-size: 1.05rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.rowMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.7rem;
+  color: color-mix(in srgb, var(--ink) 60%, transparent);
+  font-size: 0.8rem;
+}
+
+.rowSlug {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.76rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0.35rem;
+  padding: 0.2rem 0.48rem;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge[data-state="live"] {
+  background: color-mix(in srgb, var(--brand-j) 26%, transparent);
+  color: var(--ink);
+}
+
+.rowTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* Editing a product is a navigation now, not a dialog, so these are links.
+   They borrow the button chrome so the row does not read as two kinds of
+   control sitting next to each other. */
+.addProduct,
+.rowLink,
+.variantButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.addProduct {
+  border: 1px solid transparent;
+  background: var(--brand-j);
+  color: var(--on-brand, #fff);
+}
+
+.addProduct svg,
+.rowLink svg,
+.variantButton svg {
+  flex: none;
+  margin-right: 0.38rem;
+}
+
+.addProduct:hover {
+  filter: brightness(1.06);
+}
+
+.rowLink {
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  background: color-mix(in srgb, var(--surface) 92%, var(--ink) 8%);
+  color: inherit;
+}
+
+.variantButton {
+  border: 1px solid transparent;
+  background: transparent;
+  color: color-mix(in srgb, var(--ink) 67%, transparent);
+}
+
+.variantButton:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink);
+}
+
+.addProduct:active,
+.rowLink:active,
+.variantButton:active,
+.iconButton:active {
+  transform: translateY(1px);
+}
+
+.variants,
+.orders {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.variants th,
+.variants td,
+.orders th,
+.orders td {
+  padding: 0.78rem 0.72rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.variants th,
+.orders th {
+  color: color-mix(in srgb, var(--ink) 45%, transparent);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.variants td,
+.orders td {
+  font-size: 0.8rem;
+}
+
+.variants tbody tr:last-child td,
+.orders tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.money,
+.stockCount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.stockLabel {
+  display: block;
+  margin-top: 0.08rem;
+  color: color-mix(in srgb, var(--ink) 44%, transparent);
+  font-size: 0.65rem;
+}
+
+.rowLink:hover {
+  border-color: color-mix(in srgb, var(--brand-j) 50%, transparent);
+  background: color-mix(in srgb, var(--brand-j) 10%, var(--surface));
+}
+
+.variants td[data-low="true"] {
+  color: var(--warning);
+  font-weight: 750;
+}
+
+.state,
+.orderState {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+
+.state::before,
+.orderState::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink) 36%, transparent);
+}
+
+.state[data-active="true"]::before {
+  background: var(--brand-j);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--brand-j) 12%, transparent);
+}
+
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-right: 0.2rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 0.55rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.iconButton:hover {
+  border-color: color-mix(in srgb, var(--brand-j) 35%, transparent);
+  background: color-mix(in srgb, var(--brand-j) 8%, transparent);
+  color: var(--ink);
+}
+
+.iconButton[data-danger="true"]:hover {
+  border-color: color-mix(in srgb, var(--warning) 35%, transparent);
+  background: color-mix(in srgb, var(--warning) 8%, transparent);
+  color: var(--warning);
+}
+.iconButton[data-danger="true"] {
+  border-color: color-mix(in srgb, var(--warning) 48%, transparent);
+  background: color-mix(in srgb, var(--warning) 15%, transparent);
+  color: var(--warning);
+}
+.iconButton[data-danger="true"]:active {
+  background: var(--warning);
+  color: #fff;
+}
+
+.blank {
+  margin: 0;
+  color: color-mix(in srgb, var(--ink) 58%, transparent);
+  font-size: 0.86rem;
+}
+
+.ordersBlock {
+  overflow-x: auto;
+}
+
+.blockTitle {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 58%, transparent);
+}
+
+.orders td:nth-child(1) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+}
+
+.orders td:nth-child(2) {
+  min-width: 12rem;
+  line-height: 1.5;
+}
+
+.orders td:last-child {
+  white-space: nowrap;
+}
+
+.orderArrow {
+  margin-left: 0.55rem;
+  color: color-mix(in srgb, var(--ink) 38%, transparent);
+  vertical-align: middle;
+}
+
+.form {
+  display: grid;
+  gap: 1.05rem;
+}
+
+.fieldGrid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.hint {
+  color: color-mix(in srgb, var(--ink) 58%, transparent);
+  font-weight: 400;
+}
+
+.check {
+  display: flex !important;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.notice {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--brand-k) 12%, transparent);
+  font-size: 0.88rem;
+}
+
+.error {
+  margin: 0;
+  color: var(--warning);
+  font-size: 0.88rem;
+}
+
+@media (max-width: 58rem) {
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
+  .summary li {
+    min-height: 5.8rem;
+  }
+
+  .variants thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .variants tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem 1rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  }
+
+  .variants td {
+    display: grid;
+    gap: 0.12rem;
+    padding: 0;
+    border: 0;
+  }
+
+  .variants td::before {
+    content: attr(data-label);
+    color: color-mix(in srgb, var(--ink) 44%, transparent);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}
+
+@media (max-width: 38rem) {
+  .row,
+  .sectionHead {
+    padding-inline: 1rem;
+  }
+
+  .rowHead {
+    grid-template-columns: 2.6rem 1fr;
+  }
+
+  .rowTools {
+    grid-column: 1 / -1;
+  }
+
+  .variants tr {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .addProduct,
+  .rowLink,
+  .variantButton,
+  .iconButton {
+    transition: none;
+  }
+}

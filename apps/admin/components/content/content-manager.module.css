@@ -1,0 +1,329 @@
+.manager {
+  display: grid;
+  gap: 1.35rem;
+  min-width: 0;
+}
+
+.stack {
+  min-width: 0;
+  display: grid;
+  gap: 1.15rem;
+}
+
+/* ---- Header ---- */
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.headerCopy {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 42rem;
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--eyebrow-color);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+
+.headerCopy h2 {
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(1.5rem, 2.6vw, 1.95rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.help {
+  margin: 0;
+  color: var(--text-muted, var(--ink-soft));
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quickLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.quickLinks a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  padding: 0.4rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: 999px;
+  color: var(--text-muted, var(--ink-soft));
+  font-size: 0.85rem;
+  font-weight: 650;
+  text-decoration: none;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.quickLinks a:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--brand-k) 55%, transparent);
+}
+
+/* Both row controls are links now that the editor is a route, so they carry
+   button chrome rather than button semantics. */
+.newDraft {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.4rem;
+  border-radius: 999px;
+  padding: 0.4rem 1.15rem;
+  background: var(--brand-j);
+  color: var(--on-brand, #14110c);
+  font-size: 0.86rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.newDraft:hover {
+  filter: brightness(1.05);
+}
+
+.newDraft:focus-visible,
+.editLink:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- Role notice ---- */
+
+.permission {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  color: var(--text-muted, var(--ink-soft));
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.permission::before {
+  content: "";
+  flex: none;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+/* ---- Control bar ---- */
+
+.controls {
+  display: grid;
+  gap: 0.9rem 1rem;
+  padding: 1.05rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 1rem;
+  background: color-mix(
+    in srgb,
+    var(--surface-raised, var(--surface-canvas)) 78%,
+    transparent
+  );
+}
+
+.controlsHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.controlsTitle {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--ink-soft));
+}
+
+.controlsMeta {
+  margin: 0;
+  color: var(--text-muted, var(--ink-soft));
+  font-size: 0.82rem;
+}
+
+.fieldGrid {
+  display: grid;
+  gap: 0.75rem 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: 0.8rem;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.8rem;
+  color: inherit;
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: var(--radius-control, 0.55rem);
+  background: var(--surface-canvas);
+  font: inherit;
+}
+
+.field input:focus-visible,
+.field select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+/* ---- List ---- */
+
+.list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(
+    in srgb,
+    var(--surface-raised, var(--surface-canvas)) 62%,
+    transparent
+  );
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.row:hover {
+  border-color: color-mix(in srgb, var(--brand-k) 40%, transparent);
+}
+
+.rowBody {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.rowMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.7rem;
+  color: var(--text-muted, var(--ink-soft));
+  font-size: 0.8rem;
+}
+
+.rowSlug {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge[data-state="live"] {
+  background: color-mix(in srgb, var(--brand-j) 26%, transparent);
+  color: var(--ink);
+}
+
+.badge[data-state="pending"] {
+  background: color-mix(in srgb, var(--brand-k) 20%, transparent);
+  color: var(--ink);
+}
+
+.editLink {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  min-height: 2.35rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  color: inherit;
+  font-size: 0.84rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.editLink:hover {
+  border-color: color-mix(in srgb, var(--brand-j) 60%, transparent);
+}
+
+/* Two up on tablet: four controls in one row only becomes legible once there
+   is room for the search field to stay usable beside three selects. */
+@media (min-width: 48rem) {
+  .fieldGrid {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    align-items: end;
+  }
+}
+
+/* Search, content type, status and category all on one row. */
+@media (min-width: 64rem) {
+  .fieldGrid {
+    grid-template-columns: minmax(0, 1.7fr) repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 78rem) {
+  .list {
+    grid-template-columns: repeat(auto-fill, minmax(25rem, 1fr));
+  }
+}

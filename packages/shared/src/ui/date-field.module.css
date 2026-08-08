@@ -1,0 +1,219 @@
+.root {
+  position: relative;
+  width: 100%;
+}
+
+.trigger {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 2.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 0.7rem 0.9rem;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--brand-j) 8%, transparent),
+      color-mix(in srgb, var(--brand-k) 8%, transparent)
+    ),
+    var(--surface-raised);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.trigger:hover:not(:disabled) {
+  border-color: var(--brand-k);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.trigger span[data-empty="true"] {
+  color: var(--ink-soft);
+  font-weight: 550;
+}
+
+.icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1.5px solid currentColor;
+  border-radius: 0.2rem;
+  opacity: 0.7;
+  position: relative;
+}
+
+.icon::before {
+  content: "";
+  position: absolute;
+  top: -0.28rem;
+  left: 0.12rem;
+  right: 0.12rem;
+  height: 0.18rem;
+  background: currentColor;
+  border-radius: 999px;
+}
+
+.panel {
+  position: fixed;
+  z-index: var(--layer-popover, 95);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius-panel) + 0.15rem);
+  padding: 0.85rem;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+}
+
+.monthBar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.monthLabel {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.monthNav {
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.monthNav:hover {
+  border-color: var(--brand-k);
+}
+
+.weekdays,
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.2rem;
+}
+
+.weekdays {
+  margin-bottom: 0.35rem;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.day {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 120ms ease;
+}
+
+.day[data-in-month="false"] {
+  color: color-mix(in srgb, var(--ink-soft) 55%, transparent);
+}
+
+.day:hover {
+  background: color-mix(in srgb, var(--brand-k) 16%, transparent);
+}
+
+.day[data-today="true"] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-j) 70%, transparent);
+}
+
+.day[data-selected="true"] {
+  color: var(--accent-contrast);
+  background: linear-gradient(
+    120deg,
+    var(--brand-j),
+    color-mix(in srgb, var(--brand-j) 40%, var(--brand-k))
+  );
+}
+
+.day:active {
+  transform: scale(0.94);
+}
+
+.timeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.timeRow label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.timeRow input {
+  min-height: 2.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 0.45rem 0.65rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.ghost,
+.today {
+  border: 0;
+  background: transparent;
+  color: var(--brand-k);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.35rem 0.2rem;
+}
+
+.ghost:hover,
+.today:hover {
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .day,
+  .trigger {
+    transition: none;
+  }
+
+  .day:active {
+    transform: none;
+  }
+}

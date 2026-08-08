@@ -1,0 +1,611 @@
+.form {
+  display: grid;
+  grid-template-columns: minmax(10rem, 13rem) minmax(0, 1fr);
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  align-items: start;
+  max-width: 80rem;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+.form > *,
+.form section,
+.grid,
+.listField,
+.listRows,
+.listRow,
+.listFields {
+  min-width: 0;
+  max-width: 100%;
+}
+.form input:not([type="checkbox"]),
+.form textarea {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.toolbar,
+.form > p,
+.confirm {
+  grid-column: 1/-1;
+}
+.sectionNav {
+  position: sticky;
+  top: 6rem;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.65rem 0;
+  min-width: 0;
+  max-width: 100%;
+}
+.sectionNav a {
+  display: grid;
+  grid-template-columns: 1.8rem 1fr;
+  gap: 0.55rem;
+  align-items: center;
+  min-height: 2.65rem;
+  padding: 0.55rem 0.7rem;
+  border-left: 2px solid transparent;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    transform 180ms cubic-bezier(0.23, 1, 0.32, 1),
+    color 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+.sectionNav a span {
+  font:
+    650 0.6rem/1 ui-monospace,
+    monospace;
+  color: color-mix(in srgb, var(--ink) 38%, transparent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sectionNav a:hover {
+    transform: translateX(0.35rem);
+    border-color: var(--brand-j);
+    background: color-mix(in srgb, var(--brand-j) 7%, transparent);
+    color: var(--ink);
+  }
+}
+.form section {
+  grid-column: 2;
+  scroll-margin-top: 7rem;
+  background: color-mix(in srgb, var(--surface-raised) 72%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  animation: settings-section-in 420ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.form section:nth-of-type(2) {
+  animation-delay: 50ms;
+}
+.form section:nth-of-type(3) {
+  animation-delay: 100ms;
+}
+.form section:nth-of-type(4) {
+  animation-delay: 150ms;
+}
+.form section:nth-of-type(5) {
+  animation-delay: 200ms;
+}
+.form h2 {
+  max-width: 18ch;
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  letter-spacing: -0.045em;
+  line-height: 1;
+  margin: 0 0 clamp(1.5rem, 3vw, 2.5rem);
+}
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+.form label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 650;
+}
+.form input:not([type="checkbox"]),
+.form textarea {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  color: inherit;
+  font: inherit;
+  padding: 0.75rem;
+}
+.form textarea {
+  min-height: 9rem;
+  resize: vertical;
+}
+.json {
+  margin-top: 1rem;
+}
+.json small,
+.help {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+/* Rows in `.grid` only line up if every label is the same height, so the label
+   stays a single short line and the explanation moves below the input. */
+.field {
+  align-content: start;
+}
+
+.fieldLabel {
+  font-weight: 650;
+  text-wrap: balance;
+}
+
+.fieldHint {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* ---- Repeatable list editor ---- */
+
+.listField {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.35rem;
+}
+
+.listHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.listTitle {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.listTitle strong {
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.listTitle span {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.listRows {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listRow {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  transition:
+    transform 180ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 160ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .listRow:hover {
+    transform: translateY(-0.2rem);
+    border-color: color-mix(in srgb, var(--brand-k) 45%, var(--line));
+  }
+}
+
+.listRowTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.listIndex {
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.listRowTools {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.listRowTools button {
+  min-width: 2.1rem;
+  min-height: 2.1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  padding: 0.2rem 0.55rem;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.listRowTools button:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--brand-k);
+}
+
+.listRowTools button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.listRowTools .removeRow:hover {
+  color: var(--warning);
+  border-color: var(--warning-line);
+}
+
+.listFields {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+
+.listFields label {
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.listFields label span {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.listWide {
+  grid-column: 1 / -1;
+}
+
+.listEmpty {
+  margin: 0;
+  padding: 1.1rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.85rem;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.addRow {
+  justify-self: start;
+  min-height: 2.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.45rem 1.1rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.addRow:hover {
+  border-color: var(--brand-j);
+}
+.toolbar {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 1rem;
+  position: sticky;
+  top: 0.75rem;
+  z-index: 2;
+}
+.actions button {
+  transition:
+    transform 140ms cubic-bezier(0.23, 1, 0.32, 1),
+    filter 140ms ease;
+}
+.actions button:hover {
+  transform: translateY(-1px);
+}
+.actions button:active {
+  transform: scale(0.97);
+}
+@keyframes settings-section-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.8rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 56rem) {
+  .form {
+    grid-template-columns: 1fr;
+  }
+  .sectionNav {
+    position: relative;
+    top: auto;
+    display: flex;
+    overflow-x: auto;
+    grid-column: 1;
+    padding: 0.35rem 0;
+    width: 100%;
+    overscroll-behavior-inline: contain;
+  }
+  .sectionNav a {
+    flex: 0 0 auto;
+    min-width: 8.5rem;
+  }
+  .form section {
+    grid-column: 1;
+  }
+}
+.toolbar strong,
+.toolbar span {
+  display: block;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.actions button {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.65rem 1rem;
+}
+.publish {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.incomplete,
+.error {
+  color: var(--warning);
+}
+.complete,
+.notice {
+  color: var(--focus);
+}
+.state {
+  padding: 2rem;
+}
+
+/* ---- Environment keys ---- */
+
+.secrets {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1.6rem;
+}
+
+.secretsHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 1rem;
+}
+
+.secretsTitle {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.secretsCount {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.secretsCount strong {
+  color: var(--ink);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.statusList {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  margin: 0;
+}
+
+/* The top rule carries the state, so a missing key is legible at a glance:
+   solid accent where a key is present, dashed hairline where the slot is open. */
+.statusItem {
+  display: grid;
+  gap: 0.35rem;
+  padding-top: 0.7rem;
+  border-top: 2px solid var(--line);
+}
+
+.statusItem dt {
+  color: var(--ink-soft);
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.statusItem dd {
+  align-items: center;
+  display: flex;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.statusItem dd::before {
+  border-radius: 50%;
+  content: "";
+  flex: none;
+  height: 0.5rem;
+  width: 0.5rem;
+}
+
+.statusOn {
+  border-top-color: var(--accent);
+}
+
+.statusOn dd {
+  color: var(--ink);
+}
+
+.statusOn dd::before {
+  background: var(--accent);
+}
+
+.statusOff {
+  border-top-style: dashed;
+  border-top-width: 1px;
+  padding-top: calc(0.7rem + 1px);
+}
+
+.statusOff dd {
+  color: var(--ink-soft);
+}
+
+.statusOff dd::before {
+  border: 1.5px solid currentColor;
+}
+
+/* ---- Publish confirmation ---- */
+
+/* Same language as the key slots above: the rule over the content carries the
+   state, so confirmed and unconfirmed never read alike. */
+.confirm {
+  display: grid;
+  gap: 0.8rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--line);
+  border-radius: 1rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.confirmOn {
+  border-top-color: var(--accent);
+}
+
+.confirmHead {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  justify-content: space-between;
+}
+
+.confirmStep {
+  color: var(--ink-soft);
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.confirmState {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+}
+
+.confirmOn .confirmState {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  color: var(--accent);
+}
+
+.confirmHint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+.form .checkbox {
+  align-items: start;
+  cursor: pointer;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: auto 1fr;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.form .checkbox input[type="checkbox"] {
+  appearance: none;
+  background: var(--surface);
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 0.4rem;
+  cursor: pointer;
+  display: grid;
+  height: 1.3rem;
+  margin: 0.08rem 0 0;
+  padding: 0;
+  place-content: center;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+  width: 1.3rem;
+}
+
+.form .checkbox input[type="checkbox"]::after {
+  border: 0 solid var(--accent-contrast);
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+  content: "";
+  height: 0.32rem;
+  opacity: 0;
+  transform: rotate(-45deg) translate(1px, -2px);
+  width: 0.62rem;
+}
+
+.form .checkbox input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.form .checkbox input[type="checkbox"]:checked::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form section {
+    animation: none;
+  }
+  .sectionNav a,
+  .listRow,
+  .actions button {
+    transition: none;
+  }
+  .form .checkbox input[type="checkbox"] {
+    transition: none;
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "name": "@joe-kuntani/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./ui/*": {
+      "types": "./src/ui/*.tsx",
+      "default": "./src/ui/*.tsx"
+    },
+    "./theme/*": {
+      "types": "./src/theme/*.tsx",
+      "default": "./src/theme/*.tsx"
+    },
+    "./lib/*": {
+      "types": "./src/lib/*.ts",
+      "default": "./src/lib/*.ts"
+    },
+    "./styles/*": "./src/styles/*",
+    "./types/*": {
+      "types": "./src/types/*.ts",
+      "default": "./src/types/*.ts"
+    }
+  },
+  "peerDependencies": {
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.10"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.5",
+    "@vitest/coverage-v8": "4.1.10",
+    "jsdom": "30.0.1",
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  },
+  "scripts": {
+    "test": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  }
+}

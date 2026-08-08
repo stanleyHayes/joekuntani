@@ -1,0 +1,337 @@
+.wrap {
+  display: grid;
+  gap: 1.35rem;
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.35rem 1.4rem;
+  border-radius: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  background: var(--admin-rail, #0c1218);
+  color: #f4efe6;
+  box-shadow: 0 18px 48px color-mix(in srgb, #0c1218 28%, transparent);
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  background-image:
+    linear-gradient(#fff 1px, transparent 1px),
+    linear-gradient(90deg, #fff 1px, transparent 1px);
+  background-size: 2.5rem 2.5rem;
+  pointer-events: none;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset-inline: 1.5rem;
+  top: 0;
+  height: 1px;
+  background: color-mix(in srgb, var(--brand-j) 55%, transparent);
+  pointer-events: none;
+}
+.hero > svg {
+  right: -4rem;
+  bottom: -6rem;
+  width: 19rem;
+  height: 19rem;
+  color: var(--brand-j);
+  opacity: 0.11;
+}
+
+.heroCopy {
+  position: relative;
+  display: grid;
+  gap: 0.4rem;
+  flex: 1 1 20rem;
+  min-width: 0;
+  max-width: 36rem;
+}
+
+/* Sits on the fixed near-black hero, so it takes the on-dark gold rather than
+   --accent (which resolves to a dark gold in the light theme). */
+.eyebrow {
+  margin: 0;
+  color: var(--eyebrow-color-on-dark);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+
+/* Doubled up on purpose: `.admin-stage h2` would otherwise out-specify this. */
+.heroCopy .title {
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(1.55rem, 3vw, 2rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.lede {
+  margin: 0;
+  color: rgba(244, 239, 230, 0.68);
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+
+.heroActions {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  flex: 0 1 auto;
+  gap: 0.55rem;
+}
+
+.primaryAction,
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 650;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.primaryAction {
+  background: var(--brand-j);
+  color: #14110c;
+  border: 1px solid color-mix(in srgb, var(--brand-j) 80%, white);
+}
+
+.secondaryAction {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f4efe6;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.primaryAction:hover,
+.secondaryAction:hover {
+  transform: translateY(-1px);
+}
+
+.lanes {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lane {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 0.2rem;
+  padding: 1rem 1.05rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  background: color-mix(in srgb, var(--surface) 92%, var(--ink) 8%);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+.lane > span {
+  position: relative;
+  z-index: 1;
+}
+.lane > svg {
+  color: var(--brand-j);
+}
+.lane[data-lane="k"] > svg {
+  color: var(--brand-k);
+}
+
+.lane::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.85rem;
+  bottom: 0.85rem;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--brand-j);
+}
+
+.lane[data-lane="k"]::before {
+  background: var(--brand-k);
+}
+
+.lane:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--brand-k) 35%, transparent);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.laneLabel {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+  padding-inline-start: 0.55rem;
+}
+
+.laneValue {
+  font-family: var(--font-display), var(--font-sans);
+  font-size: 1.35rem;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  padding-inline-start: 0.55rem;
+}
+
+.laneSub {
+  font-size: 0.82rem;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  line-height: 1.35;
+  padding-inline-start: 0.55rem;
+}
+
+.grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+/* Named `group`, not `card`: `.admin-stage [class*="card"]` would force its
+   panel treatment onto the title and copy elements too. */
+.group {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 1.15rem 1.2rem;
+  border-radius: 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  background: color-mix(in srgb, var(--surface) 96%, var(--brand-j) 4%);
+}
+
+.group .groupTitle {
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: 1.12rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.groupCopy {
+  margin: 0;
+  color: color-mix(in srgb, var(--ink) 65%, transparent);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.links a {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: inherit;
+  font-size: 0.84rem;
+  font-weight: 650;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.links a:hover {
+  border-color: color-mix(in srgb, var(--brand-k) 50%, transparent);
+  background: color-mix(in srgb, var(--brand-k) 10%, var(--surface));
+}
+
+.links a:focus-visible {
+  outline: 2px solid var(--brand-k);
+  outline-offset: 2px;
+}
+
+@media (max-width: 46rem) {
+  .hero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1.15rem 1.1rem;
+  }
+
+  .heroActions {
+    width: 100%;
+  }
+
+  .primaryAction,
+  .secondaryAction {
+    flex: 1 1 9rem;
+    justify-content: center;
+  }
+
+  .hero > svg {
+    right: -3.5rem;
+    bottom: -4.5rem;
+    width: 13rem;
+    height: 13rem;
+  }
+
+  .group {
+    padding: 1rem 1.05rem;
+  }
+}
+
+@media (max-width: 26rem) {
+  .lanes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 52rem) {
+  .lanes {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lane,
+  .primaryAction,
+  .secondaryAction {
+    transition: none;
+  }
+
+  .lane:hover,
+  .primaryAction:hover,
+  .secondaryAction:hover {
+    transform: none;
+  }
+}

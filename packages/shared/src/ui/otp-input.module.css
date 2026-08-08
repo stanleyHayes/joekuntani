@@ -1,0 +1,51 @@
+.root {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.cell {
+  min-height: 3.15rem;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 750;
+  text-align: center;
+  caret-color: var(--brand-k);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease,
+    transform 120ms ease;
+}
+
+.cell:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--brand-k) 45%, var(--line));
+}
+
+.cell:focus {
+  outline: none;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 25%, transparent);
+  background: var(--surface-raised);
+  transform: translateY(-1px);
+}
+
+.cell:disabled {
+  opacity: 0.55;
+}
+
+.root[data-complete="true"] .cell {
+  border-color: color-mix(in srgb, var(--brand-j) 55%, var(--line));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell:focus {
+    transform: none;
+  }
+}

@@ -1,0 +1,55 @@
+.detail {
+  display: grid;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+/* The workflow component carries no styles of its own — it took its layout
+   from the dialog it used to sit in. Its stacked forms and lists get their
+   rhythm here instead. */
+.workflow > section {
+  display: grid;
+  gap: 1.1rem;
+  min-width: 0;
+}
+
+.workflow form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 42rem;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface) 92%, var(--ink) 8%);
+}
+
+.workflow table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.workflow th,
+.workflow td {
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border-radius: 999px;
+  color: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.back:hover {
+  border-color: color-mix(in srgb, var(--brand-j) 50%, transparent);
+  background: color-mix(in srgb, var(--brand-j) 10%, var(--surface));
+}
