@@ -323,6 +323,21 @@
   flex-shrink: 0;
 }
 
+.navBadge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  margin-left: auto;
+  padding-inline: 0.25rem;
+  border-radius: 999px;
+  background: var(--brand-j);
+  color: #171208;
+  font: 800 0.58rem/1 var(--font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 2px var(--admin-rail);
+}
+
 .sidebarFoot {
   position: relative;
   z-index: 2;
@@ -375,6 +390,16 @@
 .frame[data-collapsed="true"] .tick,
 .frame[data-collapsed="true"] .connector {
   display: none;
+}
+
+.frame[data-collapsed="true"] .navBadge {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.45rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding-inline: 0.15rem;
+  font-size: 0.5rem;
 }
 
 .frame[data-collapsed="true"] .brandBlock {

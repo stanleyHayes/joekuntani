@@ -1,0 +1,310 @@
+.root {
+  position: relative;
+}
+
+.trigger {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  border: 1px solid var(--admin-edge);
+  border-radius: 50%;
+  background: var(--admin-panel);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.trigger:hover,
+.trigger[aria-expanded="true"] {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--brand-j) 65%, var(--admin-edge));
+  background: color-mix(in srgb, var(--brand-j) 10%, var(--admin-panel));
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--brand-k);
+  outline-offset: 3px;
+}
+
+.count {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  display: grid;
+  place-items: center;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  padding-inline: 0.22rem;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--brand-j);
+  color: #171208;
+  font: 800 0.58rem/1 var(--font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 0.7rem);
+  right: 0;
+  z-index: 35;
+  width: min(25rem, calc(100vw - 2rem));
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border-radius: 1.2rem;
+  background: var(--surface);
+  box-shadow: 0 24px 70px color-mix(in srgb, #071017 32%, transparent);
+  animation: notification-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.05rem 0.85rem;
+  border-bottom: 1px solid var(--admin-edge);
+}
+
+.head p,
+.head h2 {
+  margin: 0;
+}
+
+.head p {
+  color: var(--eyebrow-color);
+  font: 750 0.58rem/1 var(--font-mono, ui-monospace, monospace);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.head h2 {
+  margin-top: 0.25rem;
+  font: 750 1.25rem/1.1 var(--font-display, inherit);
+  letter-spacing: -0.03em;
+}
+
+.head button,
+.state button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--brand-j);
+  text-underline-offset: 0.22rem;
+}
+
+.feed {
+  max-height: min(27rem, calc(100dvh - 11rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 0.5rem minmax(0, 1fr);
+  gap: 0.7rem;
+  padding: 0.85rem 1.05rem;
+  border-bottom: 1px solid var(--admin-edge);
+  color: inherit;
+  text-decoration: none;
+  transition: background 160ms ease;
+}
+
+.item:hover {
+  background: color-mix(in srgb, var(--brand-k) 7%, var(--surface));
+}
+
+.item[data-unread="true"] {
+  background: color-mix(in srgb, var(--brand-j) 7%, var(--surface));
+}
+
+.dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-top: 0.35rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink) 22%, transparent);
+}
+
+.item[data-unread="true"] .dot {
+  background: var(--brand-j);
+  box-shadow: 0 0 0 0.22rem color-mix(in srgb, var(--brand-j) 12%, transparent);
+}
+
+.itemCopy {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.itemCopy strong {
+  font-size: 0.86rem;
+}
+
+.itemCopy > span,
+.itemCopy time {
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.itemCopy time {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.62rem;
+}
+
+.state,
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  min-height: 12rem;
+  align-content: center;
+  padding: 1.5rem;
+  margin: 0;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.empty strong,
+.empty p {
+  margin: 0;
+}
+
+.empty svg {
+  color: var(--brand-j);
+}
+
+.foot {
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--surface) 94%, var(--ink) 6%);
+}
+
+.foot a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.toast {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 80;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.75rem;
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--brand-k) 36%, var(--admin-edge));
+  border-radius: 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 20px 60px color-mix(in srgb, #071017 32%, transparent);
+  animation: toast-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.toastIcon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--brand-k) 12%, transparent);
+  color: var(--brand-k);
+}
+
+.toast strong,
+.toast p {
+  margin: 0;
+}
+
+.toast strong {
+  font-size: 0.84rem;
+}
+
+.toast p {
+  margin-top: 0.2rem;
+  color: color-mix(in srgb, var(--ink) 64%, transparent);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.toast > button {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+@keyframes notification-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 46rem) {
+  .popover {
+    position: fixed;
+    top: 4.4rem;
+    right: 0.75rem;
+    left: 0.75rem;
+    width: auto;
+  }
+
+  .toast {
+    right: 0.75rem;
+    bottom: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popover,
+  .toast {
+    animation: none;
+  }
+  .trigger {
+    transition: none;
+  }
+}
