@@ -110,6 +110,73 @@ func (store *MongoStore) ProvisionUser(ctx context.Context, name, email, passwor
 	return publicID, nil
 }
 
+// ResetProvisionedUser deliberately restores an existing bootstrap account.
+// It is kept separate from ProvisionUser so ordinary provisioning can never
+// silently take over an active email address.
+func (store *MongoStore) ResetProvisionedUser(ctx context.Context, name, email, password string, role Role, mfaSecret string) (string, error) {
+	name, email = strings.TrimSpace(name), strings.ToLower(strings.TrimSpace(email))
+	if name == "" || email == "" || !strings.Contains(email, "@") {
+		return "", errors.New("valid staff name and email are required")
+	}
+	if role != RoleAdministrator && role != RoleBookingManager && role != RoleContentEditor && role != RoleAnalyst {
+		return "", errors.New("role must be administrator, booking_manager, content_editor, or analyst")
+	}
+	if role == RoleAdministrator && strings.TrimSpace(mfaSecret) == "" {
+		return "", errors.New("administrator reset requires an MFA secret")
+	}
+	passwordHash, err := HashPassword(password)
+	if err != nil {
+		return "", err
+	}
+	encryptedSecret := ""
+	if mfaSecret != "" {
+		encryptedSecret, err = store.secrets.Encrypt(strings.TrimSpace(mfaSecret))
+		if err != nil {
+			return "", err
+		}
+	}
+
+	now := time.Now().UTC()
+	session, err := store.database.Client().StartSession()
+	if err != nil {
+		return "", err
+	}
+	defer session.EndSession(ctx)
+	publicID := ""
+	_, err = session.WithTransaction(ctx, func(transaction context.Context) (any, error) {
+		var existing struct {
+			ID       bson.ObjectID `bson:"_id"`
+			PublicID string        `bson:"public_id"`
+		}
+		if err := store.database.Collection("users").FindOne(transaction, bson.M{"email": email}).Decode(&existing); err != nil {
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				return nil, ErrUserNotFound
+			}
+			return nil, err
+		}
+		publicID = existing.PublicID
+		result, err := store.database.Collection("users").UpdateOne(transaction, bson.M{"_id": existing.ID}, bson.M{"$set": bson.M{
+			"name": name, "password_hash": passwordHash, "role": role,
+			"mfa_enabled": mfaSecret != "", "mfa_secret_encrypted": encryptedSecret,
+			"last_mfa_counter": int64(0), "status": "active", "updated_at": now,
+		}})
+		if err != nil {
+			return nil, err
+		}
+		if result.MatchedCount != 1 {
+			return nil, ErrUserNotFound
+		}
+		if _, err = store.database.Collection("auth_sessions").UpdateMany(transaction, bson.M{"user_id": existing.ID, "revoked_at": nil}, bson.M{"$set": bson.M{"revoked_at": now}}); err != nil {
+			return nil, err
+		}
+		return nil, store.appendAudit(transaction, AuditEvent{Action: "user.bootstrap_reset", EntityID: publicID, Outcome: "accepted", CreatedAt: now})
+	})
+	if err != nil {
+		return "", fmt.Errorf("reset staff user: %w", err)
+	}
+	return publicID, nil
+}
+
 type userDocument struct {
 	ID             bson.ObjectID `bson:"_id"`
 	PublicID       string        `bson:"public_id"`

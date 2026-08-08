@@ -20,7 +20,13 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
-	publicID, err := auth.NewMongoStore(client.Database(), box).ProvisionUser(ctx, os.Getenv("STAFF_NAME"), os.Getenv("STAFF_EMAIL"), os.Getenv("STAFF_PASSWORD"), auth.Role(os.Getenv("STAFF_ROLE")), os.Getenv("STAFF_MFA_SECRET"))
+	store := auth.NewMongoStore(client.Database(), box)
+	var publicID string
+	if os.Getenv("STAFF_RESET_EXISTING") == "yes" {
+		publicID, err = store.ResetProvisionedUser(ctx, os.Getenv("STAFF_NAME"), os.Getenv("STAFF_EMAIL"), os.Getenv("STAFF_PASSWORD"), auth.Role(os.Getenv("STAFF_ROLE")), os.Getenv("STAFF_MFA_SECRET"))
+	} else {
+		publicID, err = store.ProvisionUser(ctx, os.Getenv("STAFF_NAME"), os.Getenv("STAFF_EMAIL"), os.Getenv("STAFF_PASSWORD"), auth.Role(os.Getenv("STAFF_ROLE")), os.Getenv("STAFF_MFA_SECRET"))
+	}
 	if err != nil {
 		fail(err)
 	}
