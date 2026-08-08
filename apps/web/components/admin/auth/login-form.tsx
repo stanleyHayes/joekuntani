@@ -25,7 +25,7 @@ export function LoginForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: String(form.get("email") ?? "").trim(),
-          password: form.get("password"),
+          password: String(form.get("password") ?? "").trim(),
         }),
       });
       if (!response.ok) {
@@ -92,6 +92,9 @@ export function LoginForm() {
               name="email"
               type="email"
               autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               placeholder="you@example.com"
               required
             />
@@ -104,6 +107,9 @@ export function LoginForm() {
                 name="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 placeholder="Enter your password"
                 minLength={12}
                 required

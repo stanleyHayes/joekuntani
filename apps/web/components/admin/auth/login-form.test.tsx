@@ -20,10 +20,10 @@ describe("LoginForm", () => {
       );
     render(<LoginForm />);
     fireEvent.change(screen.getByLabelText("Email address"), {
-      target: { value: "staff@example.invalid" },
+      target: { value: " staff@example.invalid " },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
-      target: { value: "correct horse battery staple" },
+      target: { value: " correct horse battery staple " },
     });
     fireEvent.click(screen.getByRole("button", { name: "Continue securely" }));
     await waitFor(() =>
@@ -31,7 +31,14 @@ describe("LoginForm", () => {
     );
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/admin/auth/login",
-      expect.objectContaining({ method: "POST", credentials: "include" }),
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({
+          email: "staff@example.invalid",
+          password: "correct horse battery staple",
+        }),
+      }),
     );
     expect(
       screen.queryByText("correct horse battery staple"),
