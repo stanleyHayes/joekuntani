@@ -5,7 +5,11 @@ import { ROLE_LABELS } from "../../lib/admin-nav";
 import { AdminDialog } from "../admin-dialog";
 import { EmptyState } from "@joe-kuntani/shared/ui/empty-state";
 import { Select } from "@joe-kuntani/shared/ui/select";
-import { AdminErrorState, AdminSkeleton } from "../admin-feedback";
+import {
+  AdminErrorState,
+  AdminSkeleton,
+  ButtonPending,
+} from "../admin-feedback";
 import styles from "./team-workspace.module.css";
 
 type StaffUser = {
@@ -43,6 +47,7 @@ const ROLE_OPTIONS = ROLES.map((role) => ({
 export function TeamWorkspace() {
   const [users, setUsers] = useState<StaffUser[] | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [invitePending, setInvitePending] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [inviteLink, setInviteLink] = useState<string | null>(null);
@@ -72,45 +77,55 @@ export function TeamWorkspace() {
 
   async function provision(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (invitePending) return;
+    setInvitePending(true);
     setStatus("");
     setError("");
     setInviteLink(null);
     const form = new FormData(event.currentTarget);
     const formElement = event.currentTarget;
-    const response = await fetch("/api/admin/auth/users", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfCookie(),
-      },
-      body: JSON.stringify({
-        email: form.get("email"),
-        role: form.get("role"),
-      }),
-    });
-    if (!response.ok) {
-      setError(
-        "Could not send that invitation. Check that the email address is valid and not already in use.",
+    try {
+      const response = await fetch("/api/admin/auth/users", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfCookie(),
+        },
+        body: JSON.stringify({
+          email: form.get("email"),
+          role: form.get("role"),
+        }),
+      });
+      if (!response.ok) {
+        setError(
+          "Could not send that invitation. Check that the email address is valid and not already in use.",
+        );
+        return;
+      }
+      const body = (await response.json()) as {
+        email?: string;
+        accept_url?: string;
+        emailed?: boolean;
+      };
+      setStatus(
+        body.emailed
+          ? `Invitation sent to ${body.email}. It expires in 15 minutes — tell them to open it now, or send a fresh one.`
+          : `Invitation created for ${body.email}. Email delivery is not configured, so send them the link below yourself.`,
       );
-      return;
+      // Surfaced whenever delivery did not happen — otherwise the account exists
+      // with no way for anyone to reach it.
+      setInviteLink(body.emailed ? null : (body.accept_url ?? null));
+      formElement.reset();
+      setInviteOpen(false);
+      await load();
+    } catch {
+      setError(
+        "Could not send that invitation. Check your connection and try again.",
+      );
+    } finally {
+      setInvitePending(false);
     }
-    const body = (await response.json()) as {
-      email?: string;
-      accept_url?: string;
-      emailed?: boolean;
-    };
-    setStatus(
-      body.emailed
-        ? `Invitation sent to ${body.email}. It expires in 15 minutes — tell them to open it now, or send a fresh one.`
-        : `Invitation created for ${body.email}. Email delivery is not configured, so send them the link below yourself.`,
-    );
-    // Surfaced whenever delivery did not happen — otherwise the account exists
-    // with no way for anyone to reach it.
-    setInviteLink(body.emailed ? null : (body.accept_url ?? null));
-    formElement.reset();
-    setInviteOpen(false);
-    await load();
   }
 
   async function disableUser(id: string) {
@@ -218,7 +233,13 @@ export function TeamWorkspace() {
                 />
               </label>
             </div>
-            <button type="submit">Send invitation</button>
+            <button type="submit" disabled={invitePending}>
+              {invitePending ? (
+                <ButtonPending label="Sending invitation" />
+              ) : (
+                "Send invitation"
+              )}
+            </button>
           </form>
         </AdminDialog>
       ) : null}

@@ -283,6 +283,47 @@ describe("TeamWorkspace", () => {
     expect(screen.queryByLabelText("Invitation link")).not.toBeInTheDocument();
   });
 
+  it("locks the submit button and announces while an invitation is sending", async () => {
+    let resolveInvite!: (response: Response) => void;
+    const inviteRequest = new Promise<Response>((resolve) => {
+      resolveInvite = resolve;
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(directory([staffUser]))
+      .mockReturnValueOnce(inviteRequest)
+      .mockResolvedValueOnce(directory([staffUser]));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<TeamWorkspace />);
+    await screen.findByText("ama@example.com");
+
+    const dialog = await openInviteDialog();
+    fireEvent.change(within(dialog).getByLabelText("Email"), {
+      target: { value: "kwame@example.com" },
+    });
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Send invitation" }),
+    );
+
+    const pending = await within(dialog).findByRole("status", {
+      name: "Sending invitation",
+    });
+    expect(pending.closest("button")).toBeDisabled();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    resolveInvite(
+      Response.json({
+        email: "kwame@example.com",
+        accept_url: "https://admin.joekuntani.com/accept-invite?token=token",
+        emailed: true,
+      }),
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Invitation sent to kwame@example.com",
+    );
+  });
+
   it("keeps the invite dialog open and explains a rejected invitation", async () => {
     const fetchMock = stubSequence(
       directory([staffUser]),
