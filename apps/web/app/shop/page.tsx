@@ -10,6 +10,7 @@ import {
 } from "../../components/shop/data";
 import { EmptyState } from "../../components/ui/empty-state";
 import { pageMetadata } from "../../lib/seo";
+import { coverURLs } from "../../lib/media";
 import { getPublicSettings } from "../../lib/settings";
 import styles from "./shop.module.css";
 
@@ -28,6 +29,14 @@ export default async function ShopPage() {
     getCatalogue(),
     getPublicSettings(),
   ]);
+  // Products carry image ids; the shop rendered none of them, so every card was
+  // a block of text no matter what an editor uploaded.
+  const covers = await coverURLs(
+    catalogue.products.map((product) => ({
+      key: product.id,
+      assetID: product.image_asset_ids?.[0],
+    })),
+  );
 
   return (
     <PublicShell
@@ -65,6 +74,17 @@ export default async function ShopPage() {
                       className={styles.cardLink}
                       href={`/shop/${product.slug}`}
                     >
+                      {covers[product.id] ? (
+                        <span className={styles.cardMedia}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={covers[product.id]}
+                            alt=""
+                            width={800}
+                            height={800}
+                          />
+                        </span>
+                      ) : null}
                       <span className={styles.cardIndex}>
                         {String(index + 1).padStart(2, "0")}
                       </span>

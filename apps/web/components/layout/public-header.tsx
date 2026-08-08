@@ -14,7 +14,12 @@ import { SupportButton } from "../support/support-button";
 import { ButtonLink } from "../ui/button-link";
 import { BrandMark } from "./brand-mark";
 import { MobileMenu } from "./mobile-menu";
-import { fallbackNavigation, type NavItem } from "./nav-defaults";
+import {
+  fallbackNavigation,
+  withNavMetadata,
+  type NavItem,
+} from "./nav-defaults";
+import { NavIcon, NavWatermark } from "./nav-icon";
 import styles from "./public-header.module.css";
 
 /**
@@ -26,14 +31,21 @@ const NAV_GROUPS: readonly { label: string; hrefs: readonly string[] }[] = [
   { label: "Media", hrefs: ["/videos", "/press"] },
 ];
 
+/** Stable DOM id fragment from an href, for aria-labelledby/-describedby. */
+function slugForID(href: string) {
+  return href.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "root";
+}
+
 function groupNavigation(navigation: readonly NavItem[]): NavItem[] {
   const grouped: NavItem[] = [];
   const claimed = new Set<string>();
 
   for (const group of NAV_GROUPS) {
-    const children = navigation.filter((item) =>
-      group.hrefs.includes(item.href),
-    );
+    // Links from settings carry only href and label, so the dropdown fills in
+    // the description and icon it needs to show more than a bare title.
+    const children = navigation
+      .filter((item) => group.hrefs.includes(item.href))
+      .map(withNavMetadata);
     // A group with one surviving child is just that link — don't hide a single
     // page behind a menu.
     if (children.length < 2) continue;
@@ -134,20 +146,43 @@ function NavGroup({
         </span>
       </button>
       <ul className={styles.navMenu} data-open={open} aria-label={item.label}>
-        {children.map((child) => (
-          <li key={child.href}>
-            <Link
-              href={child.href}
-              className={styles.navMenuLink}
-              aria-current={
-                linkIsActive(currentPath, child.href) ? "page" : undefined
-              }
-              onClick={() => setOpen(false)}
-            >
-              {child.label}
-            </Link>
-          </li>
-        ))}
+        <NavWatermark name={children[0]?.icon} />
+        {children.map((child) => {
+          // The description is a description, not part of the name: without
+          // this the link announces as "Videos Reels, live clips and interview
+          // cuts" and every menu item reads as a paragraph.
+          const titleID = `nav-${slugForID(child.href)}-title`;
+          const descriptionID = `nav-${slugForID(child.href)}-description`;
+          return (
+            <li key={child.href}>
+              <Link
+                href={child.href}
+                className={styles.navMenuLink}
+                aria-labelledby={titleID}
+                aria-describedby={child.description ? descriptionID : undefined}
+                aria-current={
+                  linkIsActive(currentPath, child.href) ? "page" : undefined
+                }
+                onClick={() => setOpen(false)}
+              >
+                <NavIcon name={child.icon} />
+                <span className={styles.navMenuCopy}>
+                  <span className={styles.navMenuTitle} id={titleID}>
+                    {child.label}
+                  </span>
+                  {child.description ? (
+                    <span
+                      className={styles.navMenuDescription}
+                      id={descriptionID}
+                    >
+                      {child.description}
+                    </span>
+                  ) : null}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </li>
   );

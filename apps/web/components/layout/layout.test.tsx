@@ -128,6 +128,42 @@ describe("PublicShell", () => {
   });
 });
 
+  // The Media dropdown showed two bare titles. Each item now carries its title,
+  // a line saying what is behind it, and an icon — and the panel a watermark.
+  // The icon and watermark are decoration, so they must stay out of the
+  // accessible name rather than be read out as extra content.
+  it("gives every Media dropdown item a title, description and icon", () => {
+    render(
+      <PublicShell
+        currentPath="/"
+        footerCta={{
+          description: "Provide the details the team needs.",
+          href: "/book",
+          label: "Make an enquiry",
+          title: "Planning a booking?",
+        }}
+      >
+        <main id="main-content" />
+      </PublicShell>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Media/ }));
+
+    const menu = screen.getByRole("list", { name: "Media" });
+    const videos = within(menu).getByRole("link", { name: "Videos" });
+    expect(videos).toHaveAttribute("href", "/videos");
+    expect(videos).toHaveTextContent("Reels, live clips and interview cuts.");
+
+    const press = within(menu).getByRole("link", { name: "Press" });
+    expect(press).toHaveAttribute("href", "/press");
+    expect(press).toHaveTextContent("Interviews, features and coverage.");
+
+    // Decoration must not leak into what a screen reader announces.
+    expect(videos).toHaveAccessibleName("Videos");
+    expect(
+      menu.querySelectorAll('[aria-hidden="true"]').length,
+    ).toBeGreaterThan(0);
+  });
+
 describe("AdminShell", () => {
   it("exposes the content warning and accessible workspace landmarks", () => {
     render(

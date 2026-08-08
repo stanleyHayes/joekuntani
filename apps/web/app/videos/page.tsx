@@ -120,10 +120,9 @@ export default async function VideosPage({
               {items.map((item, index) => {
                 // Published records carry their own imagery; the demo map is
                 // only a fallback for the fixture path.
-                const cover = item.slug
-                  ? (covers[item.slug] ??
-                    (usingDemo ? demoCovers[item.slug] : undefined))
-                  : undefined;
+                const cover =
+                  covers[item.id] ??
+                  (usingDemo && item.slug ? demoCovers[item.slug] : undefined);
                 const href = item.external_url || item.embed_url;
                 return (
                   <li className={styles.videoCard} key={item.id}>

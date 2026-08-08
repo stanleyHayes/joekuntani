@@ -74,13 +74,18 @@ export async function coverURLs(
   );
 }
 
-/** Cover map for content records, which carry a gallery. */
+/**
+ * Cover map for content records, which carry a gallery.
+ *
+ * Keyed by id, not slug: press items are stored without one, so a slug-keyed
+ * map silently matched nothing and left every press card imageless.
+ */
 export function contentCovers(
-  items: { slug?: string; gallery_asset_ids?: string[] }[],
+  items: { id?: string; gallery_asset_ids?: string[] }[],
 ) {
   return coverURLs(
     items.map((item) => ({
-      key: item.slug,
+      key: item.id,
       assetID: item.gallery_asset_ids?.[0],
     })),
   );
@@ -88,9 +93,9 @@ export function contentCovers(
 
 /** Cover map for events, whose image is a single banner rather than a gallery. */
 export function eventCovers(
-  events: { slug?: string; banner_asset_id?: string }[],
+  events: { id?: string; banner_asset_id?: string }[],
 ) {
   return coverURLs(
-    events.map((event) => ({ key: event.slug, assetID: event.banner_asset_id })),
+    events.map((event) => ({ key: event.id, assetID: event.banner_asset_id })),
   );
 }

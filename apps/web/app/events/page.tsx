@@ -113,7 +113,7 @@ export default async function EventsPage({
                   event={event}
                   key={event.id}
                   coverSrc={
-                    covers[event.slug] ??
+                    covers[event.id] ??
                     (usingDemo ? demoEventCovers[event.slug] : undefined)
                   }
                 />

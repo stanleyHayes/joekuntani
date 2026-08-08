@@ -188,10 +188,8 @@ export default async function HomePage() {
             <ol className={styles.workGrid}>
               {work.slice(0, 4).map((item, index) => {
                 const cover =
-                  item.slug
-                    ? (covers[item.slug] ??
-                      (usingDemo ? demoCovers[item.slug] : undefined))
-                    : undefined;
+                  covers[item.id] ??
+                  (usingDemo && item.slug ? demoCovers[item.slug] : undefined);
                 return (
                   <li key={item.id}>
                     <Link href={item.slug ? `/work/${item.slug}` : "/work"}>

@@ -1,6 +1,24 @@
+/**
+ * Icon keys rather than components: navigation can arrive from published
+ * settings as JSON, so anything in a NavItem has to survive a round trip
+ * through the API. The header maps these names to real icons.
+ */
+export type NavIcon =
+  | "home"
+  | "about"
+  | "work"
+  | "services"
+  | "videos"
+  | "press"
+  | "events"
+  | "shop";
+
 export type NavItem = {
   href: string;
   label: string;
+  /** One line saying what is behind the link, shown in dropdown menus. */
+  description?: string;
+  icon?: NavIcon;
   children?: readonly NavItem[];
 };
 
@@ -12,11 +30,85 @@ export type NavItem = {
  * seven.
  */
 export const fallbackNavigation: readonly NavItem[] = [
-  { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
-  { href: "/work", label: "Work" },
-  { href: "/services", label: "Services" },
-  { href: "/videos", label: "Videos" },
-  { href: "/press", label: "Press" },
-  { href: "/events", label: "Events" },
+  { href: "/", label: "Home", icon: "home" },
+  {
+    href: "/about",
+    label: "About",
+    icon: "about",
+    description: "Who Joe is and how the show works.",
+  },
+  {
+    href: "/work",
+    label: "Work",
+    icon: "work",
+    description: "Formats, case studies and past rooms.",
+  },
+  {
+    href: "/services",
+    label: "Services",
+    icon: "services",
+    description: "What can be booked, and what each includes.",
+  },
+  {
+    href: "/videos",
+    label: "Videos",
+    icon: "videos",
+    description: "Reels, live clips and interview cuts.",
+  },
+  {
+    href: "/press",
+    label: "Press",
+    icon: "press",
+    description: "Interviews, features and coverage.",
+  },
+  {
+    href: "/events",
+    label: "Events",
+    icon: "events",
+    description: "Upcoming dates and tickets.",
+  },
 ] as const;
+
+/**
+ * Copy for links that arrive from settings without any of their own.
+ *
+ * A settings-driven nav carries only href and label, so a dropdown built from
+ * it would show bare titles. Keyed by href so an editor renaming a link keeps
+ * its description and icon.
+ */
+export const navMetadataByHref: Record<
+  string,
+  { description: string; icon: NavIcon }
+> = {
+  "/": { description: "Back to the start.", icon: "home" },
+  "/about": {
+    description: "Who Joe is and how the show works.",
+    icon: "about",
+  },
+  "/work": {
+    description: "Formats, case studies and past rooms.",
+    icon: "work",
+  },
+  "/services": {
+    description: "What can be booked, and what each includes.",
+    icon: "services",
+  },
+  "/videos": {
+    description: "Reels, live clips and interview cuts.",
+    icon: "videos",
+  },
+  "/press": { description: "Interviews, features and coverage.", icon: "press" },
+  "/events": { description: "Upcoming dates and tickets.", icon: "events" },
+  "/shop": { description: "Official merchandise, shipped from Ghana.", icon: "shop" },
+};
+
+/** Fills in description and icon for a link that carries neither. */
+export function withNavMetadata(item: NavItem): NavItem {
+  const metadata = navMetadataByHref[item.href];
+  if (!metadata) return item;
+  return {
+    ...item,
+    description: item.description ?? metadata.description,
+    icon: item.icon ?? metadata.icon,
+  };
+}

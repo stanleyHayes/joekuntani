@@ -314,9 +314,15 @@
   z-index: 40;
   display: grid;
   gap: 0.15rem;
-  min-width: 9rem;
+  /* Wide enough for a title and a line of description without wrapping the
+     description to three words a line. */
+  min-width: 19rem;
+  max-width: min(24rem, calc(100vw - 2rem));
   margin: 0;
-  padding: 0.35rem;
+  padding: 0.4rem;
+  /* Contains the watermark, which is absolutely positioned and would otherwise
+     spill past the rounded corners. */
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 0.9rem;
   background: var(--surface-raised);
@@ -337,20 +343,68 @@
 }
 
 .navMenuLink {
-  display: block;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.6rem;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.65rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 0.65rem;
   color: var(--ink);
-  font-size: 0.88rem;
-  font-weight: 600;
   text-decoration: none;
-  white-space: nowrap;
+}
+
+.navMenuIcon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+.navMenuCopy {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.navMenuTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.navMenuDescription {
+  color: color-mix(in srgb, var(--ink) 60%, transparent);
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* Decorative only, and inert to assistive tech. Sits behind the links and is
+   clipped by the panel. */
+.navMenuWatermark {
+  position: absolute;
+  right: -1.75rem;
+  bottom: -2.25rem;
+  z-index: 0;
+  color: color-mix(in srgb, var(--accent) 12%, transparent);
+  pointer-events: none;
 }
 
 .navMenuLink:hover,
 .navMenuLink[aria-current="page"] {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--ink);
+}
+
+.navMenuLink:hover .navMenuIcon,
+.navMenuLink[aria-current="page"] .navMenuIcon {
+  background: var(--accent);
+  color: var(--surface-raised);
 }
 
 .navMenuLink:focus-visible {

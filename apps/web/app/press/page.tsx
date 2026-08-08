@@ -78,10 +78,9 @@ export default async function PressPage() {
               {items.map((item, index) => {
                 // Published records carry their own imagery; the demo map is
                 // only a fallback for the fixture path.
-                const cover = item.slug
-                  ? (covers[item.slug] ??
-                    (usingDemo ? demoCovers[item.slug] : undefined))
-                  : undefined;
+                const cover =
+                  covers[item.id] ??
+                  (usingDemo && item.slug ? demoCovers[item.slug] : undefined);
                 return (
                   <li className={styles.pressRow} key={item.id}>
                     <span className={styles.pressIndex}>

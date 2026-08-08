@@ -136,7 +136,7 @@ export default async function WorkPage({
                 <WorkCard
                   cover={
                     item.slug
-                      ? (covers[item.slug] ??
+                      ? (covers[item.id] ??
                         (usingDemo ? demoCovers[item.slug] : undefined))
                       : undefined
                   }

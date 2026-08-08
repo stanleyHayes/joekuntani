@@ -376,7 +376,7 @@ func (store *MongoStore) ProvisionInvitedStaff(ctx context.Context, name, email 
 			return nil, findErr
 		}
 
-		userID := bson.ObjectID{}
+		var userID bson.ObjectID
 		if findErr == nil {
 			if existing.Status != "invited" {
 				return nil, ErrConflict

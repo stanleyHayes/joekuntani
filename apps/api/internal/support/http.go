@@ -62,14 +62,7 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request) {
 		problem(w, ErrInvalid)
 		return
 	}
-	donation, checkoutURL, err := h.service.Create(r.Context(), CreateInput{
-		Amount:    request.Amount,
-		Currency:  request.Currency,
-		Name:      request.Name,
-		Email:     request.Email,
-		Message:   request.Message,
-		Anonymous: request.Anonymous,
-	})
+	donation, checkoutURL, err := h.service.Create(r.Context(), CreateInput(request))
 	if err != nil {
 		problem(w, err)
 		return

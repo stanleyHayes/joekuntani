@@ -89,6 +89,38 @@
   outline-offset: 3px;
 }
 
+/* Sits above the index and body inside the card's grid. A square crop keeps a
+   row of products aligned whatever aspect ratio was uploaded. */
+.cardMedia {
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  margin: calc(clamp(1.25rem, 3vw, 1.75rem) * -1);
+  margin-bottom: 0;
+  background: color-mix(in srgb, var(--ink) 6%, var(--surface));
+}
+
+.cardMedia img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 320ms ease;
+}
+
+.cardLink:hover .cardMedia img {
+  transform: scale(1.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardMedia img {
+    transition: none;
+  }
+
+  .cardLink:hover .cardMedia img {
+    transform: none;
+  }
+}
+
 .cardIndex {
   font-size: 0.7rem;
   font-weight: 750;
