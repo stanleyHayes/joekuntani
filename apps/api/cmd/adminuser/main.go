@@ -21,11 +21,22 @@ func main() {
 		fail(err)
 	}
 	store := auth.NewMongoStore(client.Database(), box)
+	role := auth.Role(os.Getenv("STAFF_ROLE"))
+	mfaSecret := ""
+	if role == auth.RoleAdministrator {
+		// Administrators enroll their own authenticator after password login.
+		// Generate the enrollment secret here instead of accepting a shared,
+		// long-lived STAFF_MFA_SECRET from an environment file.
+		mfaSecret, err = auth.GenerateMFASecret()
+		if err != nil {
+			fail(err)
+		}
+	}
 	var publicID string
 	if os.Getenv("STAFF_RESET_EXISTING") == "yes" {
-		publicID, err = store.ResetProvisionedUser(ctx, os.Getenv("STAFF_NAME"), os.Getenv("STAFF_EMAIL"), os.Getenv("STAFF_PASSWORD"), auth.Role(os.Getenv("STAFF_ROLE")), os.Getenv("STAFF_MFA_SECRET"))
+		publicID, err = store.ResetProvisionedUser(ctx, os.Getenv("STAFF_NAME"), os.Getenv("STAFF_EMAIL"), os.Getenv("STAFF_PASSWORD"), role, mfaSecret)
 	} else {
-		publicID, err = store.ProvisionUser(ctx, os.Getenv("STAFF_NAME"), os.Getenv("STAFF_EMAIL"), os.Getenv("STAFF_PASSWORD"), auth.Role(os.Getenv("STAFF_ROLE")), os.Getenv("STAFF_MFA_SECRET"))
+		publicID, err = store.ProvisionUser(ctx, os.Getenv("STAFF_NAME"), os.Getenv("STAFF_EMAIL"), os.Getenv("STAFF_PASSWORD"), role, mfaSecret)
 	}
 	if err != nil {
 		fail(err)
