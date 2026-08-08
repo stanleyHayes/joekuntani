@@ -67,7 +67,7 @@ func (s *ResendSender) Send(ctx context.Context, n InternalNotification) error {
 	} else if n.Kind == "enquiry.stage_changed" {
 		subject = "CRM lead stage changed"
 	}
-	link := fmt.Sprintf("%s/admin/crm?enquiry=%s", s.adminURL, url.QueryEscape(n.EnquiryID))
+	link := fmt.Sprintf("%s/crm?enquiry=%s", s.adminURL, url.QueryEscape(n.EnquiryID))
 	payload, err := json.Marshal(map[string]any{"from": s.from, "to": []string{staff.Email}, "subject": subject, "html": fmt.Sprintf("<p>%s</p><p><a href=\"%s\">Open the protected CRM record</a></p>", subject, link)})
 	if err != nil {
 		return err

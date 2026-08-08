@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
@@ -78,6 +79,9 @@ func main() {
 		logger.Error("authentication initialization failed", "error", err)
 		os.Exit(1)
 	}
+	// Where the console lives, and which origin proxies its API calls. Differs
+	// between the console-under-/admin and standalone-subdomain topologies.
+	adminConsoleURL, adminOriginURL := adminURLs()
 	authStore := auth.NewMongoStore(mongoClient.Database(), secretBox)
 	authService := auth.NewService(authStore, nil, 12*time.Hour)
 	secureCookies := appEnvironment != "local" && appEnvironment != "development" && appEnvironment != "test"
@@ -92,7 +96,7 @@ func main() {
 			invitationMailer = mailer
 		}
 	}
-	authHandler, err := auth.NewHTTPHandler(authService, auth.HTTPConfig{SecureCookies: secureCookies, Production: appEnvironment == "production", AllowedOrigin: os.Getenv("PUBLIC_WEB_URL"), TrustedProxyCIDRs: splitNonempty(os.Getenv("AUTH_TRUSTED_PROXY_CIDRS")), PublicWebURL: os.Getenv("PUBLIC_WEB_URL"), InvitationMailer: invitationMailer})
+	authHandler, err := auth.NewHTTPHandler(authService, auth.HTTPConfig{SecureCookies: secureCookies, Production: appEnvironment == "production", AllowedOrigin: adminOriginURL, TrustedProxyCIDRs: splitNonempty(os.Getenv("AUTH_TRUSTED_PROXY_CIDRS")), PublicWebURL: adminConsoleURL, InvitationMailer: invitationMailer})
 	if err != nil {
 		logger.Error("authentication HTTP configuration failed", "error", err)
 		os.Exit(1)
@@ -198,7 +202,7 @@ func main() {
 	// loudly per message rather than pretending the mail went out.
 	var enquirySender enquiries.Sender = enquiries.UnavailableSender{}
 	if resendKey := os.Getenv("RESEND_API_KEY"); resendKey != "" {
-		enquirySender, err = enquiries.NewResendSender(mongoClient.Database(), &http.Client{Timeout: 10 * time.Second}, envOrDefault("RESEND_API_URL", "https://api.resend.com/emails"), resendKey, os.Getenv("RESEND_FROM_EMAIL"), envOrDefault("ENQUIRY_INTERNAL_INBOX", os.Getenv("RESEND_FROM_EMAIL")), os.Getenv("PUBLIC_WEB_URL"))
+		enquirySender, err = enquiries.NewResendSender(mongoClient.Database(), &http.Client{Timeout: 10 * time.Second}, envOrDefault("RESEND_API_URL", "https://api.resend.com/emails"), resendKey, os.Getenv("RESEND_FROM_EMAIL"), envOrDefault("ENQUIRY_INTERNAL_INBOX", os.Getenv("RESEND_FROM_EMAIL")), adminConsoleURL)
 		if err != nil {
 			logger.Error("enquiry notification configuration failed", "error", err)
 			os.Exit(1)
@@ -299,7 +303,7 @@ func main() {
 		}
 		return crmworkflow.Actor{InternalID: principal.InternalUserID, Permissions: permissions}, nil
 	}
-	workflowSigner, err := crmworkflow.NewAssetSigner(mongoClient.Database(), []byte(os.Getenv("CRM_ATTACHMENT_HMAC_KEY")), os.Getenv("PUBLIC_WEB_URL"), nil)
+	workflowSigner, err := crmworkflow.NewAssetSigner(mongoClient.Database(), []byte(os.Getenv("CRM_ATTACHMENT_HMAC_KEY")), adminOriginURL, nil)
 	if err != nil {
 		logger.Error("CRM attachment configuration failed", "error", "CRM_ATTACHMENT_HMAC_KEY must contain at least 32 bytes and PUBLIC_WEB_URL must be HTTPS")
 		os.Exit(1)
@@ -309,7 +313,7 @@ func main() {
 	workflowDownload := crmworkflow.NewDownloadHandler(workflowSigner, workflowActor)
 	var workflowSender crmworkflow.Sender = crmworkflow.UnavailableSender{}
 	if resendKey := os.Getenv("RESEND_API_KEY"); resendKey != "" {
-		workflowSender, err = crmworkflow.NewResendSender(mongoClient.Database(), &http.Client{Timeout: 10 * time.Second}, envOrDefault("RESEND_API_URL", "https://api.resend.com/emails"), resendKey, os.Getenv("RESEND_FROM_EMAIL"), os.Getenv("PUBLIC_WEB_URL"))
+		workflowSender, err = crmworkflow.NewResendSender(mongoClient.Database(), &http.Client{Timeout: 10 * time.Second}, envOrDefault("RESEND_API_URL", "https://api.resend.com/emails"), resendKey, os.Getenv("RESEND_FROM_EMAIL"), adminConsoleURL)
 		if err != nil {
 			logger.Error("CRM notification configuration failed", "error", err)
 			os.Exit(1)
@@ -702,6 +706,29 @@ func envOrDefault(name, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+// adminURLs answers two questions the console links depend on: where the
+// dashboard lives, and which origin proxies its /api/admin calls.
+//
+// They differ by topology. Served from the public site the console sits under
+// a /admin prefix on the same origin; deployed standalone at
+// admin.joekuntani.com it sits at the root of its own. Every invitation link,
+// CRM notification and signed attachment download is built from these, so
+// getting them from one place is what stops the two deployments drifting.
+//
+// PUBLIC_ADMIN_URL unset keeps the current single-app behaviour, so this is
+// safe to ship before the standalone app exists.
+func adminURLs() (console string, origin string) {
+	if standalone := strings.TrimRight(strings.TrimSpace(os.Getenv("PUBLIC_ADMIN_URL")), "/"); standalone != "" {
+		parsed, err := url.Parse(standalone)
+		if err != nil || parsed.Host == "" {
+			return standalone, standalone
+		}
+		return standalone, parsed.Scheme + "://" + parsed.Host
+	}
+	web := strings.TrimRight(strings.TrimSpace(os.Getenv("PUBLIC_WEB_URL")), "/")
+	return web + "/admin", web
 }
 
 // listenAddr prefers Render's injected PORT, then API_ADDR, then local :8080.

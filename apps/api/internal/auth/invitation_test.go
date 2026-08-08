@@ -204,12 +204,26 @@ func TestTokenIsNeverStoredInTheClear(t *testing.T) {
 }
 
 func TestAcceptURLRefusesUntrustedOrigins(t *testing.T) {
-	link, err := AcceptURL("https://joekuntani.com", "tok en/value")
+	// The base carries whatever prefix the console is served under, so the same
+	// builder serves both topologies: under /admin on the public site, and at
+	// the root of its own subdomain.
+	for base, want := range map[string]string{
+		"https://joekuntani.com/admin":  "https://joekuntani.com/admin/accept-invite?token=",
+		"https://admin.joekuntani.com":  "https://admin.joekuntani.com/accept-invite?token=",
+		"https://admin.joekuntani.com/": "https://admin.joekuntani.com/accept-invite?token=",
+	} {
+		built, buildErr := AcceptURL(base, "token")
+		if buildErr != nil {
+			t.Fatalf("%s: %v", base, buildErr)
+		}
+		if !strings.HasPrefix(built, want) {
+			t.Fatalf("AcceptURL(%q) = %q, want prefix %q", base, built, want)
+		}
+	}
+
+	link, err := AcceptURL("https://joekuntani.com/admin", "tok en/value")
 	if err != nil {
 		t.Fatalf("https origin: %v", err)
-	}
-	if !strings.HasPrefix(link, "https://joekuntani.com/admin/accept-invite?token=") {
-		t.Fatalf("unexpected link %q", link)
 	}
 	if strings.Contains(link, " ") || strings.Contains(link, "tok en") {
 		t.Fatalf("token should be query-escaped, got %q", link)

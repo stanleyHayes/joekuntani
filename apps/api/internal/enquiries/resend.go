@@ -121,7 +121,7 @@ func (s *ResendSender) compose(kind string, enquiry notificationEnquiry) (to, su
 		// created on a separate tick and is keyed by its own id, so no link
 		// built here could open the lead. The reference is in the body above,
 		// and the list is searchable by it.
-		link := s.adminURL + "/admin/crm"
+		link := s.adminURL + "/crm"
 		body = fmt.Sprintf(
 			"<p><strong>%s</strong> — %s enquiry via %s.</p><ul><li>Contact: %s%s</li><li>Budget: %s %s</li><li>Timeline: %s</li></ul><p>%s</p><p><a href=\"%s\">Open the CRM</a> and search for %s.</p>",
 			html.EscapeString(enquiry.Reference), html.EscapeString(enquiryTypeLabel(enquiry.EnquiryType)), html.EscapeString(orDash(enquiry.Source)),

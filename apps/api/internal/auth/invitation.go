@@ -141,9 +141,11 @@ func (service *Service) AcceptInvitation(ctx context.Context, token, password st
 		AuditEvent{ActorID: invitation.UserID, Action: "user.invite_accepted", EntityID: invitation.UserID, Outcome: "accepted", CreatedAt: now})
 }
 
-// AcceptURL builds the link mailed to the invitee. It refuses anything but a
-// usable origin so a misconfigured PUBLIC_WEB_URL cannot produce an invitation
-// pointing somewhere unintended.
+// AcceptURL builds the link mailed to the invitee from the console's base URL,
+// which already carries any path prefix — "/admin" when the console is served
+// from the public site, nothing when it runs on its own subdomain. It refuses
+// anything but a usable origin so a misconfigured base cannot produce an
+// invitation pointing somewhere unintended.
 func AcceptURL(base, token string) (string, error) {
 	origin, err := url.Parse(strings.TrimRight(strings.TrimSpace(base), "/"))
 	if err != nil || origin.Host == "" {
@@ -156,7 +158,7 @@ func AcceptURL(base, token string) (string, error) {
 			return "", ErrInvalidCredentials
 		}
 	}
-	return fmt.Sprintf("%s/admin/accept-invite?token=%s", origin.String(), url.QueryEscape(token)), nil
+	return fmt.Sprintf("%s/accept-invite?token=%s", origin.String(), url.QueryEscape(token)), nil
 }
 
 // nameFromEmail turns the local part of an address into a readable placeholder:

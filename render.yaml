@@ -34,6 +34,9 @@ services:
       # Must be the HTTPS Vercel web origin (exact match for auth CSRF/origin).
       - key: PUBLIC_WEB_URL
         sync: false
+      # Standalone staff-console origin, for invitation links and origin checks.
+      - key: PUBLIC_ADMIN_URL
+        value: https://admin.joekuntani.com
       - key: MFA_ENCRYPTION_KEY
         sync: false
       - key: TICKET_TOKEN_HMAC_KEY

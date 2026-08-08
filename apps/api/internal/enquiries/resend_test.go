@@ -75,8 +75,9 @@ func TestComposeInternalAlertGoesToTheInbox(t *testing.T) {
 	}
 	// The list, not a deep link: this alert only knows the public enquiry id,
 	// while the CRM record is created on a separate tick under its own id. The
-	// reference is what makes the lead findable.
-	if !strings.Contains(body, `href="https://joekuntani.com/admin/crm"`) {
+	// reference is what makes the lead findable. adminURL is the console's base
+	// and already carries any path prefix, so only the section is appended.
+	if !strings.Contains(body, `href="https://joekuntani.com/crm"`) {
 		t.Fatalf("console link missing: %q", body)
 	}
 	if strings.Contains(body, "?enquiry=") {
