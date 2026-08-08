@@ -20,26 +20,23 @@ export function BrandSplash({
     >
       <div className={styles.media} aria-hidden="true">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/demo/splash-stage.png"
-          alt=""
-          width={1920}
-          height={1080}
-        />
+        <img src="/demo/splash-stage.png" alt="" width={1920} height={1080} />
         <div className={styles.veil} />
+        <span className={styles.aperture} />
       </div>
       <div className={styles.fore}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          className={styles.mark}
-          src="/brand/logo.jpeg"
-          alt=""
-          width={96}
-          height={96}
-        />
-        <p className={styles.brand}>Joe Kuntani</p>
-        <p className={styles.label}>{label}</p>
-        <span className={styles.pulse} aria-hidden="true" />
+        <span className={styles.issue}>JK / LIVE</span>
+        <div className={styles.wordmark} aria-hidden="true">
+          <span>JOE</span>
+          <span>KUNTANI</span>
+        </div>
+        <div className={styles.statusLine}>
+          <p className={styles.label}>{label}</p>
+          <span className={styles.counter}>00—100</span>
+        </div>
+        <span className={styles.pulse} aria-hidden="true">
+          <i />
+        </span>
       </div>
     </div>
   );
