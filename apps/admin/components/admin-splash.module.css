@@ -2,150 +2,405 @@
   position: relative;
   display: grid;
   min-height: 100dvh;
-  place-content: center;
-  gap: 1.4rem;
+  grid-template-rows: auto 1fr auto;
   overflow: hidden;
+  padding: clamp(1.15rem, 3vw, 2.5rem);
   background:
     radial-gradient(
-      circle at 48% 46%,
-      color-mix(in srgb, var(--brand-j) 12%, transparent),
-      transparent 17rem
+      circle at 13% 22%,
+      color-mix(in srgb, var(--brand-j) 16%, transparent),
+      transparent 27rem
     ),
     radial-gradient(
-      circle at 54% 53%,
-      color-mix(in srgb, var(--brand-k) 10%, transparent),
-      transparent 22rem
+      circle at 88% 78%,
+      color-mix(in srgb, var(--brand-k) 13%, transparent),
+      transparent 31rem
     ),
-    #0c1218;
+    #0a0f14;
   color: #f4efe6;
+  isolation: isolate;
 }
 
 .splash[data-overlay="true"] {
   position: fixed;
   inset: 0;
   z-index: 100;
-  animation: admin-splash-enter 160ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: splash-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.splash::before,
+.splash::after {
+  position: absolute;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
 }
 
 .splash::before {
-  position: absolute;
   inset: 0;
-  content: "";
-  pointer-events: none;
   background-image:
-    linear-gradient(rgba(244, 239, 230, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(244, 239, 230, 0.035) 1px, transparent 1px);
-  background-size: 4rem 4rem;
-  mask-image: radial-gradient(circle at center, black, transparent 68%);
+    linear-gradient(rgb(244 239 230 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(244 239 230 / 0.035) 1px, transparent 1px);
+  background-size: clamp(3rem, 7vw, 6rem) clamp(3rem, 7vw, 6rem);
+  mask-image: linear-gradient(105deg, #000, transparent 76%);
 }
 
-.brand {
+.splash::after {
+  top: -35%;
+  bottom: -35%;
+  left: -18%;
+  width: 34%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--brand-j) 10%, transparent),
+    transparent
+  );
+  filter: blur(1.5rem);
+  transform: rotate(9deg) translateX(-160%);
+  animation: stage-sweep 950ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
+.grain {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E");
+}
+
+.ghostMark {
+  position: absolute;
+  right: -0.05em;
+  bottom: -0.28em;
+  z-index: -1;
+  color: transparent;
+  font-family: var(--font-brand);
+  font-size: clamp(17rem, 48vw, 46rem);
+  font-weight: 400;
+  letter-spacing: -0.12em;
+  line-height: 0.75;
+  -webkit-text-stroke: 1px rgb(244 239 230 / 0.055);
+  transform: translateY(7%) scale(1.03);
+  animation: ghost-arrive 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.rail,
+.status {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  align-items: center;
+  color: rgb(244 239 230 / 0.58);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.rail {
+  grid-template-columns: 1fr auto;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid rgb(244 239 230 / 0.13);
+  animation: rail-in 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(11rem, 0.66fr) minmax(17rem, 1.34fr);
+  align-items: center;
+  gap: clamp(2rem, 7vw, 8rem);
+  width: min(100%, 76rem);
+  margin: auto;
+  padding-block: clamp(2.5rem, 8vh, 6rem);
+}
+
+.brandPlate {
   position: relative;
   display: grid;
-  min-width: 15rem;
-  min-height: 7rem;
+  min-height: clamp(13rem, 33vw, 22rem);
   place-items: center;
+  border: 1px solid rgb(244 239 230 / 0.15);
+  background:
+    linear-gradient(145deg, rgb(244 239 230 / 0.075), transparent 46%),
+    rgb(13 20 26 / 0.72);
+  box-shadow:
+    0 2rem 6rem rgb(0 0 0 / 0.28),
+    inset 0 1px rgb(255 255 255 / 0.07);
+  clip-path: inset(0 100% 0 0);
+  animation: plate-reveal 620ms cubic-bezier(0.22, 1, 0.36, 1) 100ms forwards;
+}
+
+.brandPlate::after {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--brand-k);
+  box-shadow: 0 0 1.2rem color-mix(in srgb, var(--brand-k) 70%, transparent);
+  content: "";
+  animation: signal-pulse 760ms ease-in-out infinite alternate;
+}
+
+.plateIndex {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  color: rgb(244 239 230 / 0.45);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+}
+
+.corner {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-top: 2px solid var(--brand-j);
+  border-right: 2px solid var(--brand-j);
 }
 
 .mark {
   position: relative;
   z-index: 1;
-  transform: scale(1.08);
+  transform: scale(1.35);
+}
+
+.mark :global(.brand-mark__image) {
+  width: clamp(3.25rem, 7vw, 5.25rem);
+  height: clamp(3.25rem, 7vw, 5.25rem);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.28);
 }
 
 .mark :global(.brand-mark__text) {
   color: #f4efe6;
+  font-family: var(--font-brand);
+  font-size: clamp(1.15rem, 2.5vw, 1.85rem);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.copy {
+  min-width: 0;
+}
+
+.copy p,
+.copy span {
+  margin: 0;
+  color: rgb(244 239 230 / 0.58);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: clamp(0.62rem, 1vw, 0.72rem);
+  font-weight: 650;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+
+.copy p {
+  margin-bottom: clamp(1rem, 2vw, 1.5rem);
+  color: var(--brand-j);
+  opacity: 0;
+  animation: copy-in 520ms cubic-bezier(0.22, 1, 0.36, 1) 220ms forwards;
+}
+
+.copy strong {
+  display: block;
+  color: #f4efe6;
   font-family: var(--font-display);
-  font-size: 1.08rem;
-  font-weight: 750;
-  letter-spacing: -0.025em;
+  font-size: clamp(3.3rem, 8vw, 7.8rem);
+  font-weight: 760;
+  letter-spacing: -0.075em;
+  line-height: 0.78;
+  text-wrap: balance;
+  opacity: 0;
+  transform: translateY(1.2rem);
+  animation: copy-in 620ms cubic-bezier(0.22, 1, 0.36, 1) 160ms forwards;
 }
 
-.orbit {
-  position: absolute;
-  width: 7rem;
-  height: 7rem;
-  border: 1px solid rgba(244, 239, 230, 0.1);
-  border-radius: 50%;
+.copy strong em {
+  color: var(--brand-j);
+  font-family: var(--font-brand);
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: -0.035em;
 }
 
-.orbit::before,
-.orbit::after {
-  position: absolute;
-  border-radius: 50%;
-  content: "";
+.copy span {
+  display: block;
+  margin-top: clamp(1.4rem, 3vw, 2.2rem);
+  opacity: 0;
+  animation: copy-in 520ms cubic-bezier(0.22, 1, 0.36, 1) 330ms forwards;
 }
 
-.orbit::before {
-  top: -0.22rem;
-  left: calc(50% - 0.22rem);
-  width: 0.44rem;
-  height: 0.44rem;
-  background: var(--brand-j);
-  box-shadow: 0 0 1rem color-mix(in srgb, var(--brand-j) 50%, transparent);
-  animation: admin-splash-orbit 1.15s linear infinite;
-  transform-origin: 0.22rem 3.72rem;
+.status {
+  grid-template-columns: auto minmax(5rem, 1fr) auto;
+  gap: clamp(0.8rem, 3vw, 2rem);
+  padding-top: 0.9rem;
+  border-top: 1px solid rgb(244 239 230 / 0.13);
 }
 
-.orbit::after {
-  inset: 0.55rem;
-  border: 1px solid rgba(0, 200, 240, 0.12);
-}
-
-.dots {
-  position: relative;
-  z-index: 1;
+.statusLabel {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.32rem;
+  gap: 0.55rem;
+  color: rgb(244 239 230 / 0.78);
 }
 
-.dots i {
-  width: 0.34rem;
-  height: 0.34rem;
+.statusLabel i {
+  width: 0.38rem;
+  height: 0.38rem;
   border-radius: 50%;
-  background: rgba(244, 239, 230, 0.72);
-  animation: admin-splash-dot 780ms cubic-bezier(0.23, 1, 0.32, 1) infinite;
+  background: var(--brand-j);
+  box-shadow: 0 0 0.75rem color-mix(in srgb, var(--brand-j) 65%, transparent);
 }
 
-.dots i:nth-child(2) {
-  animation-delay: 100ms;
+.progress {
+  position: relative;
+  height: 1px;
+  overflow: hidden;
+  background: rgb(244 239 230 / 0.12);
 }
 
-.dots i:nth-child(3) {
-  animation-delay: 200ms;
+.progress i {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--brand-j), var(--brand-k));
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: progress-run 900ms cubic-bezier(0.65, 0, 0.35, 1) 80ms forwards;
 }
 
-@keyframes admin-splash-enter {
+.counter {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes splash-enter {
   from {
     opacity: 0;
   }
 }
 
-@keyframes admin-splash-orbit {
-  to {
-    transform: rotate(1turn);
+@keyframes rail-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.65rem);
   }
 }
 
-@keyframes admin-splash-dot {
-  0%,
-  60%,
-  100% {
-    opacity: 0.3;
-    transform: translateY(0);
+@keyframes plate-reveal {
+  to {
+    clip-path: inset(0);
   }
-  30% {
+}
+
+@keyframes copy-in {
+  to {
     opacity: 1;
-    transform: translateY(-0.24rem);
+    transform: none;
+  }
+}
+
+@keyframes stage-sweep {
+  to {
+    transform: rotate(9deg) translateX(430%);
+  }
+}
+
+@keyframes ghost-arrive {
+  from {
+    opacity: 0;
+    transform: translate(5%, 12%) scale(1.07);
+  }
+}
+
+@keyframes signal-pulse {
+  to {
+    opacity: 0.45;
+    transform: scale(0.75);
+  }
+}
+
+@keyframes progress-run {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (max-width: 42rem) {
+  .splash {
+    padding: 1rem;
+  }
+
+  .stage {
+    grid-template-columns: 1fr;
+    align-content: center;
+    gap: 1.75rem;
+    padding-block: 2rem;
+  }
+
+  .brandPlate {
+    width: min(12rem, 48vw);
+    min-height: min(10rem, 40vw);
+    justify-self: start;
+  }
+
+  .mark {
+    transform: scale(0.95);
+  }
+
+  .copy strong {
+    font-size: clamp(3.15rem, 15vw, 5.5rem);
+    line-height: 0.82;
+  }
+
+  .copy span {
+    line-height: 1.55;
+  }
+
+  .status {
+    grid-template-columns: auto 1fr;
+  }
+
+  .counter {
+    display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .splash[data-overlay="true"],
-  .orbit::before,
-  .dots i {
+  .splash::after,
+  .ghostMark,
+  .rail,
+  .brandPlate,
+  .brandPlate::after,
+  .copy p,
+  .copy strong,
+  .copy span,
+  .progress i {
     animation: none;
+  }
+
+  .brandPlate {
+    clip-path: none;
+  }
+
+  .copy p,
+  .copy strong,
+  .copy span {
+    opacity: 1;
+    transform: none;
+  }
+
+  .progress i {
+    transform: scaleX(1);
   }
 }
