@@ -1,5 +1,6 @@
 "use client";
 
+import { Country } from "country-state-city";
 import {
   Dispatch,
   FormEvent,
@@ -17,6 +18,12 @@ import { Select } from "../ui/select";
 import styles from "./booking-form.module.css";
 
 const DRAFT_KEY = "jk-enquiry-draft-v1";
+const COUNTRY_OPTIONS = Country.getAllCountries()
+  .map((country) => ({
+    value: country.isoCode,
+    label: `${country.name} — ${country.isoCode}`,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label));
 type Draft = {
   idempotencyKey: string;
   serviceId: string;
@@ -198,363 +205,386 @@ export function BookingForm({
     );
   return (
     <section className={styles.shell}>
-      <p className={styles.eyebrow}>Step {step} of 5</p>
-      <h1>Tell us what you’re building.</h1>
-      <ol className={styles.steps} aria-label="Enquiry progress">
-        {["Intent", "Contact", "Details", "Commercial", "Review"].map(
-          (label, index) => (
-            <li
-              aria-current={step === index + 1 ? "step" : undefined}
-              key={label}
-            >
-              {label}
-            </li>
-          ),
-        )}
-      </ol>
-      <form onSubmit={submit} noValidate>
-        {step === 1 && (
-          <fieldset>
-            <legend>Your intent</legend>
-            <label>
-              Enquiry type
-              <Select
-                aria-label="Enquiry type"
-                value={draft.enquiryType}
-                onChange={(enquiryType) =>
-                  setDraft((v) => ({
-                    ...v,
-                    enquiryType: enquiryType as "event" | "brand",
-                    details: {},
-                  }))
-                }
-                options={[
-                  { value: "event", label: "Event booking" },
-                  { value: "brand", label: "Brand partnership" },
-                ]}
-              />
-            </label>
-            {services.map((item) => (
-              <label className={styles.choice} key={item.id}>
-                <input
-                  checked={draft.serviceId === item.id}
-                  name="service"
-                  onChange={() =>
-                    setDraft((current) => ({
-                      ...current,
-                      serviceId: item.id,
-                      answers: {},
+      <aside className={styles.rail}>
+        <p className={styles.eyebrow}>Booking dossier</p>
+        <h1>Tell us what you’re building.</h1>
+        <ol className={styles.steps} aria-label="Enquiry progress">
+          {["Intent", "Contact", "Details", "Commercial", "Review"].map(
+            (label, index) => (
+              <li
+                aria-current={step === index + 1 ? "step" : undefined}
+                data-complete={index + 1 < step ? "true" : "false"}
+                key={label}
+              >
+                {label}
+              </li>
+            ),
+          )}
+        </ol>
+        <p className={styles.railNote}>
+          Your draft is saved on this device as you go.
+        </p>
+      </aside>
+      <div className={styles.formPanel}>
+        <header className={styles.formHeader}>
+          <span>0{step}</span>
+          <div>
+            <p>Step {step} of 5</p>
+            <strong>
+              {
+                [
+                  "Choose the brief",
+                  "Who should we contact?",
+                  "Shape the engagement",
+                  "Scope and timing",
+                  "Final check",
+                ][step - 1]
+              }
+            </strong>
+          </div>
+        </header>
+        <form onSubmit={submit} noValidate>
+          {step === 1 && (
+            <fieldset>
+              <legend>Your intent</legend>
+              <label>
+                Enquiry type
+                <Select
+                  aria-label="Enquiry type"
+                  value={draft.enquiryType}
+                  onChange={(enquiryType) =>
+                    setDraft((v) => ({
+                      ...v,
+                      enquiryType: enquiryType as "event" | "brand",
+                      details: {},
                     }))
                   }
-                  type="radio"
+                  options={[
+                    { value: "event", label: "Event booking" },
+                    { value: "brand", label: "Brand partnership" },
+                  ]}
                 />
-                {item.name}
-                <small>{item.summary}</small>
               </label>
-            ))}
-            <label>
-              How did you hear about Joe?
-              <Select
-                aria-label="How did you hear about Joe?"
+              {services.map((item) => (
+                <label className={styles.choice} key={item.id}>
+                  <input
+                    checked={draft.serviceId === item.id}
+                    name="service"
+                    onChange={() =>
+                      setDraft((current) => ({
+                        ...current,
+                        serviceId: item.id,
+                        answers: {},
+                      }))
+                    }
+                    type="radio"
+                  />
+                  {item.name}
+                  <small>{item.summary}</small>
+                </label>
+              ))}
+              <label>
+                How did you hear about Joe?
+                <Select
+                  aria-label="How did you hear about Joe?"
+                  required
+                  placeholder="Choose one"
+                  value={draft.source}
+                  onChange={(source) => setDraft((v) => ({ ...v, source }))}
+                  options={[
+                    { value: "search", label: "Search" },
+                    { value: "social", label: "Social media" },
+                    { value: "referral", label: "Referral" },
+                    { value: "press", label: "Press" },
+                    { value: "other", label: "Other" },
+                  ]}
+                />
+              </label>
+            </fieldset>
+          )}
+          {step === 2 && (
+            <fieldset>
+              <legend>Your contact details</legend>
+              <Field
+                label="Name"
                 required
-                placeholder="Choose one"
-                value={draft.source}
-                onChange={(source) => setDraft((v) => ({ ...v, source }))}
-                options={[
-                  { value: "search", label: "Search" },
-                  { value: "social", label: "Social media" },
-                  { value: "referral", label: "Referral" },
-                  { value: "press", label: "Press" },
-                  { value: "other", label: "Other" },
-                ]}
+                value={draft.name}
+                onChange={(name) => setDraft((v) => ({ ...v, name }))}
               />
-            </label>
-          </fieldset>
-        )}
-        {step === 2 && (
-          <fieldset>
-            <legend>Your contact details</legend>
-            <Field
-              label="Name"
-              required
-              value={draft.name}
-              onChange={(name) => setDraft((v) => ({ ...v, name }))}
-            />
-            <Field
-              label="Email"
-              required
-              type="email"
-              value={draft.email}
-              onChange={(email) => setDraft((v) => ({ ...v, email }))}
-            />
-            <Field
-              label="Phone"
-              value={draft.phone}
-              onChange={(phone) => setDraft((v) => ({ ...v, phone }))}
-            />
-            <Field
-              label="Organization"
-              value={draft.organization}
-              onChange={(organization) =>
-                setDraft((v) => ({ ...v, organization }))
-              }
-            />
-            <Field
-              label="Role"
-              required
-              value={draft.role}
-              onChange={(role) => setDraft((v) => ({ ...v, role }))}
-            />
-            <Field
-              label="Country code"
-              required
-              value={draft.country}
-              onChange={(country) =>
-                setDraft((v) => ({ ...v, country: country.toUpperCase() }))
-              }
-            />
-          </fieldset>
-        )}
-        {step === 3 && (
-          <fieldset>
-            <legend>
-              {draft.enquiryType === "event"
-                ? "Event details"
-                : "Brand details"}
-            </legend>
-            {draft.enquiryType === "event" ? (
-              <>
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="event_type"
-                  label="Event type"
+              <Field
+                label="Email"
+                required
+                type="email"
+                value={draft.email}
+                onChange={(email) => setDraft((v) => ({ ...v, email }))}
+              />
+              <Field
+                label="Phone"
+                value={draft.phone}
+                onChange={(phone) => setDraft((v) => ({ ...v, phone }))}
+              />
+              <Field
+                label="Organization"
+                value={draft.organization}
+                onChange={(organization) =>
+                  setDraft((v) => ({ ...v, organization }))
+                }
+              />
+              <Field
+                label="Role"
+                required
+                value={draft.role}
+                onChange={(role) => setDraft((v) => ({ ...v, role }))}
+              />
+              <CountryField
+                label="Country"
+                required
+                value={draft.country}
+                onChange={(country) => setDraft((v) => ({ ...v, country }))}
+              />
+            </fieldset>
+          )}
+          {step === 3 && (
+            <fieldset>
+              <legend>
+                {draft.enquiryType === "event"
+                  ? "Event details"
+                  : "Brand details"}
+              </legend>
+              {draft.enquiryType === "event" ? (
+                <>
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="event_type"
+                    label="Event type"
+                  />
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="event_at"
+                    label="Event date and time"
+                    type="datetime-local"
+                  />
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="venue"
+                    label="Venue"
+                  />
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="city"
+                    label="City"
+                  />
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="country"
+                    label="Event country"
+                  />
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="audience_size"
+                    label="Expected audience size"
+                    type="number"
+                  />
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="performance_duration"
+                    label="Performance duration"
+                  />
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="production_needs"
+                    label="Production needs"
+                  />
+                </>
+              ) : (
+                <>
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="campaign_objective"
+                    label="Campaign objective"
+                  />
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="target_audience"
+                    label="Target audience"
+                  />
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="channels"
+                    label="Channels (comma separated)"
+                  />
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="requested_deliverables"
+                    label="Requested deliverables"
+                  />
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="usage_rights"
+                    label="Usage rights"
+                  />
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="exclusivity"
+                    label="Exclusivity"
+                  />
+                  <DetailField
+                    draft={draft}
+                    setDraft={setDraft}
+                    name="launch_dates"
+                    label="Launch dates"
+                  />
+                </>
+              )}
+              {service?.form_schema.questions.map((question) => (
+                <DynamicQuestion
+                  key={question.key}
+                  question={question}
+                  value={draft.answers[question.key]}
+                  onChange={(value) =>
+                    setDraft((v) => ({
+                      ...v,
+                      answers: { ...v.answers, [question.key]: value },
+                    }))
+                  }
                 />
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="event_at"
-                  label="Event date and time"
-                  type="datetime-local"
+              ))}
+            </fieldset>
+          )}
+          {step === 4 && (
+            <fieldset>
+              <legend>Commercial details</legend>
+              <Field
+                label="Budget range"
+                required
+                value={draft.budget}
+                onChange={(budget) => setDraft((v) => ({ ...v, budget }))}
+              />
+              <label>
+                Currency
+                <Select
+                  aria-label="Currency"
+                  value={draft.currency}
+                  onChange={(currency) => setDraft((v) => ({ ...v, currency }))}
+                  options={["GHS", "USD", "EUR", "GBP"].map((value) => ({
+                    value,
+                    label: value,
+                  }))}
                 />
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="venue"
-                  label="Venue"
+              </label>
+              <Field
+                label="Decision deadline"
+                required
+                type="date"
+                value={draft.decisionDeadline}
+                onChange={(decisionDeadline) =>
+                  setDraft((v) => ({ ...v, decisionDeadline }))
+                }
+              />
+              <label>
+                Additional notes
+                <textarea
+                  value={draft.additionalNotes}
+                  onChange={(e) =>
+                    setDraft((v) => ({
+                      ...v,
+                      additionalNotes: e.target.value,
+                      projectBrief: e.target.value,
+                    }))
+                  }
                 />
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="city"
-                  label="City"
+              </label>
+            </fieldset>
+          )}
+          {step === 5 && (
+            <fieldset>
+              <legend>Review and consent</legend>
+              <dl className={styles.summary}>
+                <dt>Service</dt>
+                <dd>{service?.name}</dd>
+                <dt>Contact</dt>
+                <dd>
+                  {draft.name} · {draft.email}
+                </dd>
+                <dt>Project</dt>
+                <dd>{draft.projectBrief}</dd>
+              </dl>
+              <label className={styles.consent}>
+                <input
+                  checked={draft.consent}
+                  onChange={(e) =>
+                    setDraft((v) => ({ ...v, consent: e.target.checked }))
+                  }
+                  type="checkbox"
                 />
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="country"
-                  label="Event country code"
+                I consent to the processing of this enquiry under the privacy
+                notice.
+              </label>
+              <label className={styles.consent}>
+                <input
+                  checked={draft.marketingConsent}
+                  onChange={(e) =>
+                    setDraft((v) => ({
+                      ...v,
+                      marketingConsent: e.target.checked,
+                    }))
+                  }
+                  type="checkbox"
                 />
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="audience_size"
-                  label="Expected audience size"
-                  type="number"
+                I would like occasional marketing updates (optional).
+              </label>
+              {challenge?.enabled && (
+                <CaptchaChallenge
+                  provider={challenge.provider}
+                  siteKey={challenge.site_key}
+                  onToken={setCaptchaToken}
                 />
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="performance_duration"
-                  label="Performance duration"
-                />
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="production_needs"
-                  label="Production needs"
-                />
-              </>
+              )}
+              {challengeUnavailable && (
+                <p role="alert">
+                  Anti-spam verification is unavailable. Refresh or try again
+                  shortly.
+                </p>
+              )}
+            </fieldset>
+          )}
+          {error && (
+            <p role="alert" className={styles.error}>
+              {error}
+            </p>
+          )}
+          <div className={styles.actions}>
+            {step > 1 && (
+              <button onClick={() => setStep((v) => v - 1)} type="button">
+                Back
+              </button>
+            )}
+            {step < 5 ? (
+              <button onClick={next} type="button">
+                Continue
+              </button>
             ) : (
-              <>
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="campaign_objective"
-                  label="Campaign objective"
-                />
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="target_audience"
-                  label="Target audience"
-                />
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="channels"
-                  label="Channels (comma separated)"
-                />
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="requested_deliverables"
-                  label="Requested deliverables"
-                />
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="usage_rights"
-                  label="Usage rights"
-                />
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="exclusivity"
-                  label="Exclusivity"
-                />
-                <DetailField
-                  draft={draft}
-                  setDraft={setDraft}
-                  name="launch_dates"
-                  label="Launch dates"
-                />
-              </>
+              <button disabled={pending} type="submit">
+                {pending ? "Submitting…" : "Submit enquiry"}
+              </button>
             )}
-            {service?.form_schema.questions.map((question) => (
-              <DynamicQuestion
-                key={question.key}
-                question={question}
-                value={draft.answers[question.key]}
-                onChange={(value) =>
-                  setDraft((v) => ({
-                    ...v,
-                    answers: { ...v.answers, [question.key]: value },
-                  }))
-                }
-              />
-            ))}
-          </fieldset>
-        )}
-        {step === 4 && (
-          <fieldset>
-            <legend>Commercial details</legend>
-            <Field
-              label="Budget range"
-              required
-              value={draft.budget}
-              onChange={(budget) => setDraft((v) => ({ ...v, budget }))}
-            />
-            <label>
-              Currency
-              <Select
-                aria-label="Currency"
-                value={draft.currency}
-                onChange={(currency) => setDraft((v) => ({ ...v, currency }))}
-                options={["GHS", "USD", "EUR", "GBP"].map((value) => ({
-                  value,
-                  label: value,
-                }))}
-              />
-            </label>
-            <Field
-              label="Decision deadline"
-              required
-              type="date"
-              value={draft.decisionDeadline}
-              onChange={(decisionDeadline) =>
-                setDraft((v) => ({ ...v, decisionDeadline }))
-              }
-            />
-            <label>
-              Additional notes
-              <textarea
-                value={draft.additionalNotes}
-                onChange={(e) =>
-                  setDraft((v) => ({
-                    ...v,
-                    additionalNotes: e.target.value,
-                    projectBrief: e.target.value,
-                  }))
-                }
-              />
-            </label>
-          </fieldset>
-        )}
-        {step === 5 && (
-          <fieldset>
-            <legend>Review and consent</legend>
-            <dl className={styles.summary}>
-              <dt>Service</dt>
-              <dd>{service?.name}</dd>
-              <dt>Contact</dt>
-              <dd>
-                {draft.name} · {draft.email}
-              </dd>
-              <dt>Project</dt>
-              <dd>{draft.projectBrief}</dd>
-            </dl>
-            <label className={styles.consent}>
-              <input
-                checked={draft.consent}
-                onChange={(e) =>
-                  setDraft((v) => ({ ...v, consent: e.target.checked }))
-                }
-                type="checkbox"
-              />
-              I consent to the processing of this enquiry under the privacy
-              notice.
-            </label>
-            <label className={styles.consent}>
-              <input
-                checked={draft.marketingConsent}
-                onChange={(e) =>
-                  setDraft((v) => ({
-                    ...v,
-                    marketingConsent: e.target.checked,
-                  }))
-                }
-                type="checkbox"
-              />
-              I would like occasional marketing updates (optional).
-            </label>
-            {challenge?.enabled && (
-              <CaptchaChallenge
-                provider={challenge.provider}
-                siteKey={challenge.site_key}
-                onToken={setCaptchaToken}
-              />
-            )}
-            {challengeUnavailable && (
-              <p role="alert">
-                Anti-spam verification is unavailable. Refresh or try again
-                shortly.
-              </p>
-            )}
-          </fieldset>
-        )}
-        {error && (
-          <p role="alert" className={styles.error}>
-            {error}
-          </p>
-        )}
-        <div className={styles.actions}>
-          {step > 1 && (
-            <button onClick={() => setStep((v) => v - 1)} type="button">
-              Back
-            </button>
-          )}
-          {step < 5 ? (
-            <button onClick={next} type="button">
-              Continue
-            </button>
-          ) : (
-            <button disabled={pending} type="submit">
-              {pending ? "Submitting…" : "Submit enquiry"}
-            </button>
-          )}
-        </div>
-      </form>
+          </div>
+        </form>
+      </div>
     </section>
   );
 }
@@ -664,6 +694,21 @@ function DetailField({
   label: string;
   type?: string;
 }) {
+  if (name === "country") {
+    return (
+      <CountryField
+        label={label}
+        required
+        value={String(draft.details[name] ?? "")}
+        onChange={(value) =>
+          setDraft((current) => ({
+            ...current,
+            details: { ...current.details, [name]: value },
+          }))
+        }
+      />
+    );
+  }
   return (
     <Field
       label={label}
@@ -680,6 +725,32 @@ function DetailField({
         }))
       }
     />
+  );
+}
+
+function CountryField({
+  label,
+  value,
+  onChange,
+  required = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+}) {
+  return (
+    <label>
+      {label}
+      <Select
+        aria-label={label}
+        required={required}
+        placeholder="Choose a country"
+        value={value}
+        onChange={onChange}
+        options={COUNTRY_OPTIONS}
+      />
+    </label>
   );
 }
 function CaptchaChallenge({

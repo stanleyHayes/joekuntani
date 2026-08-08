@@ -1,5 +1,17 @@
 .eventStage {
   overflow: clip;
+  background: radial-gradient(
+    circle at 82% 6%,
+    color-mix(in srgb, var(--brand-j) 10%, transparent),
+    transparent 30rem
+  );
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
 }
 .hero,
 .section {
@@ -79,12 +91,13 @@
 }
 .banner {
   display: grid;
-  justify-items: start;
-  gap: 0.8rem;
-  padding: clamp(1.5rem, 4vw, 2.75rem);
+  grid-template-columns: minmax(9rem, 0.28fr) minmax(0, 1fr);
+  gap: 0;
+  padding: 0;
   color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-muted, var(--surface-canvas));
+  border-block: 1px solid var(--border-subtle);
+  background: transparent;
+  animation: event-banner-in 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* globals.css resets only margin-block-start on h2/p, so every child kept its
@@ -96,22 +109,128 @@
 
 /* Down from the global h2 clamp (up to 4rem), which was sized for page
    headings, not a card sitting inside one. */
+.bannerLead {
+  grid-row: 1 / span 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border-right: 1px solid var(--line);
+}
+.bannerLead > span {
+  color: var(--ink-soft);
+  font:
+    650 0.65rem/1 ui-monospace,
+    monospace;
+  letter-spacing: 0.1em;
+}
+.bannerCopy {
+  min-width: 0;
+  padding: clamp(2rem, 5vw, 4.5rem);
+  border-bottom: 1px solid var(--line);
+}
 .banner h2 {
-  max-width: 18ch;
-  font-size: clamp(1.85rem, 3.2vw, 2.9rem);
-  line-height: 1.03;
+  max-width: 16ch;
+  margin: 0 0 1.25rem;
+  font-size: clamp(2.8rem, 6vw, 5.7rem);
+  letter-spacing: -0.065em;
+  line-height: 0.9;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
-
-.banner p {
-  max-width: 54ch;
-  line-height: 1.55;
+.bannerCopy p {
+  max-width: 55ch;
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
 }
-
-.banner .primary {
-  margin-top: 0.6rem;
+.bannerFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+.bannerFacts div {
+  padding: 1.4rem clamp(1.25rem, 5vw, 4.5rem);
+}
+.bannerFacts div + div {
+  border-left: 1px solid var(--line);
+}
+.bannerFacts dt {
+  color: var(--ink-soft);
+  font-size: 0.65rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.bannerFacts dd {
+  margin: 0.45rem 0 0;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.bannerCta {
+  grid-column: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 4.5rem;
+  padding: 1rem clamp(1.25rem, 5vw, 4.5rem);
+  border-top: 1px solid var(--line);
+  background: var(--brand-j);
+  color: #151109;
+  font-weight: 800;
+  text-decoration: none;
+  transition:
+    filter 180ms ease,
+    transform 180ms ease;
+}
+.bannerCta:hover {
+  filter: brightness(1.05);
+}
+.bannerCta:active {
+  transform: scale(0.985);
+}
+@keyframes event-banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 48rem) {
+  .banner {
+    grid-template-columns: 1fr;
+  }
+  .bannerLead {
+    grid-row: auto;
+    min-height: 7rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .bannerFacts {
+    grid-template-columns: 1fr;
+  }
+  .bannerFacts div + div {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .bannerCta {
+    grid-column: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .banner {
+    animation: none;
+  }
+  .bannerCta {
+    transition: none;
+  }
 }
 .filters,
-.grid,
 .details,
 .tickets,
 .facts {
@@ -267,18 +386,35 @@
 
 .card {
   display: grid;
+  grid-template-columns: minmax(18rem, 0.42fr) minmax(0, 1fr);
   gap: 0;
+  min-height: 30rem;
   padding: 0;
   overflow: hidden;
+  border: 0;
+  border-top: 1px solid var(--line);
   border-radius: 0;
-  border-color: color-mix(in srgb, var(--ink) 16%, transparent);
-  background: var(--surface-raised, var(--surface-canvas));
+  background: transparent;
+}
+
+.card:nth-child(even) {
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.42fr);
+}
+
+.card:nth-child(even) .cardMedia {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.card:nth-child(even) .cardBody {
+  grid-column: 1;
+  grid-row: 1;
 }
 
 .cardMedia {
   margin: 0;
   overflow: hidden;
-  aspect-ratio: 4 / 3;
+  min-height: 30rem;
   background: var(--surface-muted, var(--surface-canvas));
 }
 
@@ -287,12 +423,62 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card:hover .cardMedia img {
+  transform: scale(1.035);
+}
+
+.cardFallback {
+  display: grid;
+  height: 100%;
+  min-height: 30rem;
+  align-content: space-between;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  background:
+    radial-gradient(
+      circle at 78% 22%,
+      color-mix(in srgb, var(--brand-k) 25%, transparent),
+      transparent 34%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--brand-j) 14%, var(--surface-raised)) 0%,
+      var(--surface-canvas) 65%
+    );
+}
+
+.cardFallbackCity,
+.cardFallbackLabel {
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.cardFallbackCity {
+  color: var(--brand-j);
+}
+
+.cardFallback strong {
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(7rem, 15vw, 13rem);
+  letter-spacing: -0.09em;
+  line-height: 0.75;
+}
+
+.cardFallbackLabel {
+  color: var(--ink-soft);
 }
 
 .cardBody {
   display: grid;
-  gap: 0.85rem;
-  padding: clamp(1.25rem, 3vw, 2rem);
+  min-width: 0;
+  align-content: center;
+  gap: clamp(1rem, 2vw, 1.6rem);
+  padding: clamp(2rem, 6vw, 5rem);
 }
 
 .cardTop {
@@ -339,26 +525,31 @@
 }
 
 .cardTitle {
+  max-width: 14ch;
   margin: 0;
   font-family: var(--font-display), var(--font-sans);
-  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-size: clamp(2.5rem, 5.6vw, 5.5rem);
   font-weight: 750;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  letter-spacing: -0.06em;
+  line-height: 0.92;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .cardSummary {
   margin: 0;
+  max-width: 52ch;
   color: var(--text-muted, var(--ink-soft));
-  font-size: 0.95rem;
-  line-height: 1.55;
+  font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+  line-height: 1.6;
 }
 
 .cardFacts {
   display: grid;
-  gap: 0.7rem;
-  margin: 0.15rem 0 0;
-  padding: 0.85rem 0 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1rem, 4vw, 3rem);
+  margin: 0;
+  padding: 1.25rem 0 0;
   border-top: 1px solid
     color-mix(in srgb, var(--border-subtle) 80%, transparent);
 }
@@ -396,7 +587,7 @@
   min-height: 2.65rem;
   align-items: center;
   gap: 0.55rem;
-  margin-top: 0.15rem;
+  margin-top: 0.25rem;
   border-radius: 0;
   padding: 0.55rem 1.1rem;
   background: var(--brand-j);
@@ -405,15 +596,67 @@
   font-weight: 800;
   letter-spacing: -0.015em;
   text-decoration: none;
+  transition:
+    filter 180ms ease,
+    transform 180ms ease;
 }
 
 .cardCta:hover {
   filter: brightness(1.04);
+  transform: translateY(-2px);
+}
+
+.cardCta span {
+  transition: transform 220ms ease;
+}
+
+.cardCta:hover span {
+  transform: translateX(0.25rem);
 }
 
 .cardCta:focus-visible {
   outline: 2px solid var(--focus, var(--brand-k));
   outline-offset: 3px;
+}
+
+@media (max-width: 52rem) {
+  .card:nth-child(n) {
+    grid-template-columns: 1fr;
+  }
+
+  .card:nth-child(n) .cardMedia,
+  .card:nth-child(n) .cardBody {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .cardMedia,
+  .cardFallback {
+    min-height: 0;
+    aspect-ratio: 16 / 10;
+  }
+
+  .cardBody {
+    padding: clamp(1.5rem, 7vw, 3rem);
+  }
+}
+
+@media (max-width: 34rem) {
+  .cardFacts {
+    grid-template-columns: 1fr;
+  }
+
+  .cardTitle {
+    font-size: clamp(2.35rem, 13vw, 4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardMedia img,
+  .cardCta,
+  .cardCta span {
+    transition: none;
+  }
 }
 
 .detailMedia {
@@ -605,10 +848,6 @@
 
 @media (min-width: 44rem) {
   .filterFields {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

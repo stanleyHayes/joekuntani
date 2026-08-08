@@ -50,13 +50,13 @@ export const fallbackNavigation: readonly NavItem[] = [
     description: "What can be booked, and what each includes.",
   },
   {
-    href: "/videos",
+    href: "/media/videos",
     label: "Videos",
     icon: "videos",
     description: "Reels, live clips and interview cuts.",
   },
   {
-    href: "/press",
+    href: "/media/press",
     label: "Press",
     icon: "press",
     description: "Interviews, features and coverage.",
@@ -97,9 +97,23 @@ export const navMetadataByHref: Record<
     description: "Reels, live clips and interview cuts.",
     icon: "videos",
   },
-  "/press": { description: "Interviews, features and coverage.", icon: "press" },
+  "/press": {
+    description: "Interviews, features and coverage.",
+    icon: "press",
+  },
+  "/media/videos": {
+    description: "Reels, live clips and interview cuts.",
+    icon: "videos",
+  },
+  "/media/press": {
+    description: "Interviews, features and coverage.",
+    icon: "press",
+  },
   "/events": { description: "Upcoming dates and tickets.", icon: "events" },
-  "/shop": { description: "Official merchandise, shipped from Ghana.", icon: "shop" },
+  "/shop": {
+    description: "Official merchandise, shipped from Ghana.",
+    icon: "shop",
+  },
 };
 
 /** Fills in description and icon for a link that carries neither. */

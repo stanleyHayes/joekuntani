@@ -9,14 +9,29 @@ export function ScheduledEventBanner({ event }: { event: PublicEvent }) {
       aria-labelledby="scheduled-event"
     >
       <div className={styles.banner}>
-        <p className="eyebrow">Featured event</p>
-        <h2 id="scheduled-event">{event.title}</h2>
-        <p>{event.summary}</p>
-        <p className={styles.meta}>
-          {formatDateRange(event)} · {event.venue.city}
-        </p>
-        <Link className={styles.primary} href={`/events/${event.slug}`}>
-          View event and tickets
+        <div className={styles.bannerLead}>
+          <p className="eyebrow">Next on stage</p>
+          <span aria-hidden="true">01 / LIVE</span>
+        </div>
+        <div className={styles.bannerCopy}>
+          <h2 id="scheduled-event">{event.title}</h2>
+          <p>{event.summary}</p>
+        </div>
+        <dl className={styles.bannerFacts}>
+          <div>
+            <dt>When</dt>
+            <dd>{formatDateRange(event)}</dd>
+          </div>
+          <div>
+            <dt>Where</dt>
+            <dd>
+              {event.venue.name} · {event.venue.city}
+            </dd>
+          </div>
+        </dl>
+        <Link className={styles.bannerCta} href={`/events/${event.slug}`}>
+          <span>Get tickets & details</span>
+          <span aria-hidden="true">↗</span>
         </Link>
       </div>
     </section>
@@ -26,19 +41,29 @@ export function ScheduledEventBanner({ event }: { event: PublicEvent }) {
 export function EventCard({
   event,
   coverSrc,
+  index = 0,
 }: {
   event: PublicEvent;
   coverSrc?: string;
+  index?: number;
 }) {
   const upcoming = periodFor(event) === "Upcoming event";
   return (
     <article className={styles.card} data-availability={event.availability}>
-      {coverSrc ? (
-        <div className={styles.cardMedia} aria-hidden="true">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={coverSrc} alt="" width={800} height={500} />
-        </div>
-      ) : null}
+      <div className={styles.cardMedia} aria-hidden="true">
+        {coverSrc ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={coverSrc} alt="" width={800} height={500} />
+          </>
+        ) : (
+          <div className={styles.cardFallback}>
+            <span className={styles.cardFallbackCity}>{event.venue.city}</span>
+            <strong>{String(index + 1).padStart(2, "0")}</strong>
+            <span className={styles.cardFallbackLabel}>Live programme</span>
+          </div>
+        )}
+      </div>
       <div className={styles.cardBody}>
         <div className={styles.cardTop}>
           <p className={styles.cardPeriod}>{periodFor(event)}</p>

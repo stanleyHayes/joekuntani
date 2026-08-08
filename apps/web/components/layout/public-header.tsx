@@ -1,5 +1,6 @@
 "use client";
 
+import { MicrophoneStage } from "@phosphor-icons/react";
 import Link from "next/link";
 import {
   useCallback,
@@ -11,7 +12,6 @@ import {
 
 import { ThemeToggle } from "../theme/theme-toggle";
 import { SupportButton } from "../support/support-button";
-import { ButtonLink } from "../ui/button-link";
 import { BrandMark } from "./brand-mark";
 import { MobileMenu } from "./mobile-menu";
 import {
@@ -27,9 +27,22 @@ import styles from "./public-header.module.css";
  * added. Settings still owns the links themselves; this only decides which of
  * them sit behind a shared trigger.
  */
-const NAV_GROUPS: readonly { label: string; hrefs: readonly string[] }[] = [
-  { label: "Media", hrefs: ["/videos", "/press"] },
+const NAV_GROUPS: readonly {
+  label: string;
+  href: string;
+  hrefs: readonly string[];
+}[] = [
+  {
+    label: "Media",
+    href: "/media",
+    hrefs: ["/media/videos", "/media/press", "/videos", "/press"],
+  },
 ];
+
+const MEDIA_CANONICAL: Record<string, string> = {
+  "/videos": "/media/videos",
+  "/press": "/media/press",
+};
 
 /** Stable DOM id fragment from an href, for aria-labelledby/-describedby. */
 function slugForID(href: string) {
@@ -45,12 +58,19 @@ function groupNavigation(navigation: readonly NavItem[]): NavItem[] {
     // the description and icon it needs to show more than a bare title.
     const children = navigation
       .filter((item) => group.hrefs.includes(item.href))
-      .map(withNavMetadata);
+      .map((item) =>
+        withNavMetadata({
+          ...item,
+          href: MEDIA_CANONICAL[item.href] ?? item.href,
+        }),
+      );
     // A group with one surviving child is just that link — don't hide a single
     // page behind a menu.
     if (children.length < 2) continue;
-    children.forEach((child) => claimed.add(child.href));
-    grouped.push({ href: children[0].href, label: group.label, children });
+    navigation
+      .filter((item) => group.hrefs.includes(item.href))
+      .forEach((child) => claimed.add(child.href));
+    grouped.push({ href: group.href, label: group.label, children });
   }
 
   const result: NavItem[] = [];
@@ -96,6 +116,9 @@ function NavGroup({
 }) {
   const [open, setOpen] = useState(false);
   const groupRef = useRef<HTMLLIElement>(null);
+  const micRef = useRef<HTMLSpanElement>(null);
+  const dragStart = useRef<number | null>(null);
+  const suppressClick = useRef(false);
   const children = item.children ?? [];
   const childActive = children.some((child) =>
     linkIsActive(currentPath, child.href),
@@ -116,6 +139,11 @@ function NavGroup({
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
+
+  function resetMic() {
+    micRef.current?.style.setProperty("--mic-pull", "0px");
+    dragStart.current = null;
+  }
 
   return (
     <li
@@ -138,11 +166,45 @@ function NavGroup({
         aria-expanded={open}
         aria-haspopup="true"
         aria-current={childActive ? "true" : undefined}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          if (suppressClick.current) {
+            suppressClick.current = false;
+            return;
+          }
+          setOpen((value) => !value);
+        }}
       >
-        {item.label}
-        <span aria-hidden="true" className={styles.navChevron}>
-          ▾
+        <span className={styles.navTriggerLabel}>{item.label}</span>
+        <span
+          ref={micRef}
+          aria-hidden="true"
+          className={styles.micPull}
+          onPointerDown={(event) => {
+            dragStart.current = event.clientY;
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerMove={(event) => {
+            if (dragStart.current === null) return;
+            const pull = Math.max(
+              0,
+              Math.min(28, event.clientY - dragStart.current),
+            );
+            event.currentTarget.style.setProperty("--mic-pull", `${pull}px`);
+            if (pull > 5) suppressClick.current = true;
+          }}
+          onPointerUp={(event) => {
+            if (dragStart.current === null) return;
+            const pull = Math.max(0, event.clientY - dragStart.current);
+            if (pull >= 14) setOpen(true);
+            resetMic();
+          }}
+          onPointerCancel={resetMic}
+        >
+          <span className={styles.micMount} />
+          <span className={styles.micWeight}>
+            <span className={styles.micCable} />
+            <MicrophoneStage weight="fill" className={styles.micIcon} />
+          </span>
         </span>
       </button>
       <ul className={styles.navMenu} data-open={open} aria-label={item.label}>
@@ -278,7 +340,7 @@ function NavCapsule({
                 if (node) itemRefs.current.set(item.href, node);
                 else itemRefs.current.delete(item.href);
               }}
-              className={`${styles.navLink} ${tone(item.href)}`}
+              className={`${styles.navLink} ${item.label === "Book" ? styles.bookLink : ""} ${tone(item.href)}`}
               aria-current={
                 linkIsActive(currentPath, item.href) ? "page" : undefined
               }
@@ -337,9 +399,30 @@ export function PublicHeader({
   brandName,
   cta,
 }: PublicHeaderProps) {
-  const groupedNavigation = groupNavigation(navigation);
   const safeBrandName = brandName || "Joe Kuntani";
   const safeCTA = cta || { href: "/book", label: "Make an enquiry" };
+  const navigationWithBooking = navigation.some(
+    (item) => item.href === safeCTA.href,
+  )
+    ? navigation.map((item) =>
+        item.href === safeCTA.href ? { ...item, label: "Book" } : item,
+      )
+    : [
+        ...navigation.slice(0, Math.ceil(navigation.length / 2)),
+        { href: safeCTA.href, label: "Book" },
+        ...navigation.slice(Math.ceil(navigation.length / 2)),
+      ];
+  const grouped = groupNavigation(navigationWithBooking);
+  const bookingItem = grouped.find((item) => item.label === "Book");
+  const groupedWithoutBooking = grouped.filter((item) => item.label !== "Book");
+  const bookingIndex = Math.floor(groupedWithoutBooking.length / 2);
+  const groupedNavigation = bookingItem
+    ? [
+        ...groupedWithoutBooking.slice(0, bookingIndex),
+        bookingItem,
+        ...groupedWithoutBooking.slice(bookingIndex),
+      ]
+    : grouped;
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const scrollFrame = useRef<number | null>(null);
@@ -389,9 +472,6 @@ export function PublicHeader({
 
           <div className={styles.actions}>
             <SupportButton className={styles.support} label="Support" />
-            <ButtonLink className={styles.cta} href={safeCTA.href}>
-              {safeCTA.label}
-            </ButtonLink>
             <ThemeToggle className={styles.theme} />
             <button
               type="button"
@@ -411,7 +491,7 @@ export function PublicHeader({
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         currentPath={currentPath}
-        navigation={navigation}
+        navigation={navigationWithBooking}
         brandName={safeBrandName}
         cta={safeCTA}
       />

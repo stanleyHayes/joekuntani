@@ -15,7 +15,7 @@ it("renders published event and scheduled banner with contextual links", () => {
     screen.getAllByRole("heading", { name: "Approved event" }),
   ).toHaveLength(2);
   expect(
-    screen.getByRole("link", { name: "View event and tickets" }),
+    screen.getAllByRole("link", { name: "Get tickets & details" })[0],
   ).toHaveAttribute("href", "/events/approved-event");
   expect(screen.getByText("On sale")).toBeVisible();
 });

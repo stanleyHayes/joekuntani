@@ -118,6 +118,10 @@ it("completes the five accessible steps and clears the draft on success", async 
   fireEvent.change(screen.getByLabelText("Role"), {
     target: { value: "Director" },
   });
+  expect(screen.queryByRole("textbox", { name: "Country" })).toBeNull();
+  expect(screen.getByRole("button", { name: "Country" })).toHaveTextContent(
+    "Ghana — GH",
+  );
   fireEvent.click(screen.getByRole("button", { name: "Continue" }));
   fireEvent.change(screen.getByLabelText("Event type"), {
     target: { value: "Comedy" },
@@ -126,11 +130,12 @@ it("completes the five accessible steps and clears the draft on success", async 
   for (const [label, value] of [
     ["Venue", "National Theatre"],
     ["City", "Accra"],
-    ["Event country code", "GH"],
     ["Expected audience size", "500"],
     ["Performance duration", "60 minutes"],
   ])
     fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  expect(screen.queryByRole("textbox", { name: "Event country" })).toBeNull();
+  chooseSelect("Event country", "Ghana — GH");
   fireEvent.change(screen.getByLabelText("Primary goal"), {
     target: { value: "Launch safely" },
   });

@@ -108,9 +108,10 @@ export default async function EventsPage({
             </p>
           ) : events.length ? (
             <div className={styles.grid}>
-              {events.map((event) => (
+              {events.map((event, index) => (
                 <EventCard
                   event={event}
+                  index={index}
                   key={event.id}
                   coverSrc={
                     covers[event.id] ??
