@@ -477,7 +477,12 @@ func newRateLimiter(limit int, window time.Duration, capacity int) *rateLimiter 
 func (handler *HTTPHandler) rateLimit(next http.HandlerFunc) http.HandlerFunc {
 	return func(response http.ResponseWriter, request *http.Request) {
 		host := handler.clientIP(request)
-		if !handler.limiter.allow(strings.TrimSpace(host), time.Now()) {
+		// Password attempts, enrollment reads and TOTP verification are separate
+		// security stages. Sharing one IP bucket let successful login attempts
+		// consume the allowance needed to fetch the enrollment QR immediately
+		// afterwards.
+		key := strings.TrimSpace(host) + "|" + request.URL.Path
+		if !handler.limiter.allow(key, time.Now()) {
 			response.Header().Set("Retry-After", "60")
 			problem(response, http.StatusTooManyRequests, "Too many attempts")
 			return

@@ -38,6 +38,10 @@ export function MFAForm() {
             setSetupError(
               "Your sign-in session expired. Return to sign in, then open this page again.",
             );
+          } else if (!cancelled && response.status === 429) {
+            setSetupError(
+              "Too many setup requests. Wait one minute, then reload this page.",
+            );
           }
           return;
         }
@@ -81,7 +85,11 @@ export function MFAForm() {
         body: JSON.stringify({ code }),
       });
       if (!response.ok) {
-        setError("That verification code was not accepted.");
+        setError(
+          response.status === 429
+            ? "Too many verification attempts. Wait one minute and try again."
+            : "That verification code was not accepted.",
+        );
         setCode("");
         return;
       }

@@ -64,6 +64,14 @@ func TestHTTPAuthenticationCSRFAndRateLimit(t *testing.T) {
 			t.Fatalf("rate-limit status = %d", result.Code)
 		}
 	}
+	setup := httptest.NewRequest(http.MethodGet, "/mfa/setup", nil)
+	setup.RemoteAddr = "198.51.100.2:22"
+	setup.Header.Set("Origin", "http://admin.test")
+	setupResult := httptest.NewRecorder()
+	limited.ServeHTTP(setupResult, setup)
+	if setupResult.Code != http.StatusUnauthorized {
+		t.Fatalf("MFA setup inherited login rate limit: status = %d", setupResult.Code)
+	}
 }
 
 func TestLoginAndMFARejectCrossSiteOrMissingOrigin(t *testing.T) {
