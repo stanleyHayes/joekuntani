@@ -4,6 +4,7 @@ import { Knewave, Outfit } from "next/font/google";
 import { ThemeProvider } from "@joe-kuntani/shared/theme/theme-provider";
 import "@joe-kuntani/shared/styles/globals.css";
 import { AdminChrome } from "./admin-chrome";
+import { ClearStaleBrowserCache } from "../components/platform/clear-stale-browser-cache";
 import "../components/layout/admin-stage.css";
 
 /**
@@ -66,6 +67,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
       <body>
+        <ClearStaleBrowserCache />
         <ThemeProvider>
           <AdminChrome>{children}</AdminChrome>
         </ThemeProvider>

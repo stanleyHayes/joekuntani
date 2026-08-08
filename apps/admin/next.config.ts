@@ -3,6 +3,19 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "private, no-store, max-age=0, must-revalidate",
+          },
+        ],
+      },
+    ];
+  },
   // Shared with the public site as TypeScript source, so neither app keeps its
   // own drifting fork of the controls both use.
   transpilePackages: ["@joe-kuntani/shared"],
