@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  // Keep the public project independently deployable from the admin workspace.
   poweredByHeader: false,
   reactStrictMode: true,
   async rewrites() {
