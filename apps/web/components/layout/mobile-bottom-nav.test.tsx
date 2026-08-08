@@ -1,5 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { act, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { MobileBottomNav } from "./mobile-bottom-nav";
 
@@ -11,7 +11,9 @@ function slots() {
 }
 
 describe("MobileBottomNav", () => {
-  it("ranks published pages by traffic and always ends on the enquiry action", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("ranks published pages by traffic and keeps Book in the middle", () => {
     render(
       <MobileBottomNav
         currentPath="/events"
@@ -26,9 +28,7 @@ describe("MobileBottomNav", () => {
       />,
     );
 
-    // Home is prepended even though settings never published it, and the bar
-    // stops at four shortcuts so the fifth slot stays the enquiry action.
-    expect(slots()).toEqual(["Home", "Events", "Videos", "Shop", "Book"]);
+    expect(slots()).toEqual(["Home", "Events", "Book", "Videos", "Shop"]);
     expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -47,16 +47,62 @@ describe("MobileBottomNav", () => {
         cta={{ href: "/book", label: "Make an enquiry" }}
       />,
     );
-    expect(slots()).toEqual(["Home", "Shop", "About", "Book"]);
+    expect(slots()).toEqual(["Home", "Shop", "Book", "About"]);
   });
 
   it("falls back to the shared default navigation when settings are missing", () => {
     render(<MobileBottomNav currentPath="/shop" />);
-    expect(slots()).toEqual(["Home", "Events", "Shop", "Work", "Book"]);
+    expect(slots()).toEqual(["Home", "Events", "Book", "Videos", "Shop"]);
     expect(screen.getByRole("link", { name: "Shop" })).toHaveAttribute(
       "aria-current",
       "page",
     );
+  });
+
+  it("marks the canonical videos page active when settings still use /videos", () => {
+    render(
+      <MobileBottomNav
+        currentPath="/media/videos"
+        navigation={[
+          { href: "/events", label: "Events" },
+          { href: "/videos", label: "Videos" },
+          { href: "/shop", label: "Shop" },
+        ]}
+      />,
+    );
+    expect(screen.getByRole("link", { name: "Videos" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("settles the floating bar against the footer when it enters view", () => {
+    let notify: IntersectionObserverCallback = () => undefined;
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(callback: IntersectionObserverCallback) {
+          notify = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    render(
+      <>
+        <footer className="site-footer" />
+        <MobileBottomNav currentPath="/" />
+      </>,
+    );
+    const bar = screen.getByTestId("mobile-bottom-nav");
+    expect(bar).toHaveAttribute("data-docked", "false");
+    act(() =>
+      notify(
+        [{ isIntersecting: true } as IntersectionObserverEntry],
+        {} as IntersectionObserver,
+      ),
+    );
+    expect(bar).toHaveAttribute("data-docked", "true");
   });
 
   it("marks only the root route as home", () => {
