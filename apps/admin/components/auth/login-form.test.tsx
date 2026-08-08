@@ -26,9 +26,7 @@ describe("LoginForm", () => {
       target: { value: "correct horse battery staple" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Continue securely" }));
-    await waitFor(() =>
-      expect(replace).toHaveBeenCalledWith("/admin/login/mfa"),
-    );
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/login/mfa"));
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/admin/auth/login",
       expect.objectContaining({ method: "POST", credentials: "include" }),

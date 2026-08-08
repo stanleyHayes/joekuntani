@@ -408,11 +408,17 @@ export function AssetUploadList({
       <ul className={styles.gallery}>
         {values.map((id, index) => {
           const source =
-            previews[id] || previewFor?.(id) || storedAsset(id)?.publicUrl || "";
+            previews[id] ||
+            previewFor?.(id) ||
+            storedAsset(id)?.publicUrl ||
+            "";
           const lead = index === 0 && Boolean(leadBadge);
           return (
             <li className={styles.tile} key={id} data-lead={lead}>
-              <span className={styles.thumb} data-empty={source ? "false" : "true"}>
+              <span
+                className={styles.thumb}
+                data-empty={source ? "false" : "true"}
+              >
                 {source ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={source} alt="" />

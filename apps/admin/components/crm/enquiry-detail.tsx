@@ -45,7 +45,7 @@ export function EnquiryDetail({ enquiryID }: { enquiryID: string }) {
           </p>
         </div>
         <div className="stage-head__actions">
-          <Link className={styles.back} href="/admin/crm">
+          <Link className={styles.back} href="/crm">
             Back to enquiries
           </Link>
         </div>

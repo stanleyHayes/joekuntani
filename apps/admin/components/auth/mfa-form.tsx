@@ -85,7 +85,7 @@ export function MFAForm() {
         setCode("");
         return;
       }
-      router.replace("/admin");
+      router.replace("/");
       router.refresh();
     } catch {
       setError("Verification is temporarily unavailable. Please try again.");
@@ -212,7 +212,7 @@ export function MFAForm() {
           </button>
         </form>
         <p className={styles.help}>
-          <a className={styles.link} href="/admin/login">
+          <a className={styles.link} href="/login">
             Return to sign in
           </a>
         </p>

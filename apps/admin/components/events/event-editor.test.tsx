@@ -221,7 +221,7 @@ describe("EventEditor", () => {
     expect(JSON.parse(String(request.body))).not.toHaveProperty("status");
     // The address stops claiming to be a blank form once the id exists, so a
     // reload lands on the saved record.
-    expect(window.location.pathname).toBe("/admin/events/new-event");
+    expect(window.location.pathname).toBe("/events/new-event");
     // Ticket types only become reachable once the server has minted an id.
     expect(
       screen.getByRole("heading", { name: "Ticket types" }),

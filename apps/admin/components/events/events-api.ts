@@ -103,7 +103,7 @@ export const emptyTicket: TicketDraft = {
 
 /** Where the editor for an event lives. `new` is an event that has no id yet. */
 export function eventEditorHref(id: string) {
-  return `/admin/events/${id ? encodeURIComponent(id) : "new"}`;
+  return `/events/${id ? encodeURIComponent(id) : "new"}`;
 }
 
 export function mutationHeaders() {

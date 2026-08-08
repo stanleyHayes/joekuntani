@@ -242,7 +242,7 @@ export function EventEditor({ eventID }: { eventID: string }) {
           {selected ? (
             <span className={styles.status}>{selected.status}</span>
           ) : null}
-          <Link className={styles.back} href="/admin/events">
+          <Link className={styles.back} href="/events">
             Back to events
           </Link>
         </div>
@@ -640,7 +640,7 @@ export function EventEditor({ eventID }: { eventID: string }) {
               Cancel event
             </button>
           ) : null}
-          <Link className={styles.cancel} href="/admin/events">
+          <Link className={styles.cancel} href="/events">
             Done
           </Link>
         </div>

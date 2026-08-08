@@ -49,7 +49,7 @@ export function CampaignEditor() {
       });
       // Back to the list, which reloads and shows the new campaign. Staying
       // here would leave an operator wondering whether the save took.
-      router.push("/admin/campaigns");
+      router.push("/campaigns");
       router.refresh();
     } catch {
       setError("Campaign was not saved.");
@@ -72,7 +72,7 @@ export function CampaignEditor() {
           </p>
         </div>
         <div className="stage-head__actions">
-          <Link className={styles.back} href="/admin/campaigns">
+          <Link className={styles.back} href="/campaigns">
             Back to campaigns
           </Link>
         </div>
@@ -196,7 +196,7 @@ export function CampaignEditor() {
           <button className="primary" type="submit" disabled={pending}>
             {pending ? "Saving…" : "Create campaign"}
           </button>
-          <Link className={styles.cancel} href="/admin/campaigns">
+          <Link className={styles.cancel} href="/campaigns">
             Cancel
           </Link>
         </div>

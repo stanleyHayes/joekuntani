@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 
-import type { PublicService, ServiceQuestion } from "@joe-kuntani/shared/types/services";
+import type {
+  PublicService,
+  ServiceQuestion,
+} from "@joe-kuntani/shared/types/services";
 import { AiAssist, type AiAssistField } from "@joe-kuntani/shared/ui/ai-assist";
 import { AdminErrorState, AdminSkeleton } from "../admin-feedback";
 import { type Draft, emptyDraft, mutationHeaders } from "./services-api";
@@ -122,7 +125,7 @@ export function ServiceEditor({ serviceID }: { serviceID: string }) {
       }
       // Back to the list, which reloads and shows the saved service. Staying
       // here would leave an operator wondering whether the save took.
-      router.push("/admin/services");
+      router.push("/services");
       router.refresh();
     } catch {
       setError("The service could not be saved.");
@@ -154,7 +157,7 @@ export function ServiceEditor({ serviceID }: { serviceID: string }) {
           </p>
         </div>
         <div className="stage-head__actions">
-          <Link className={styles.back} href="/admin/services">
+          <Link className={styles.back} href="/services">
             Back to services
           </Link>
         </div>
@@ -277,7 +280,7 @@ export function ServiceEditor({ serviceID }: { serviceID: string }) {
           >
             {creating ? "Create service" : "Save service"}
           </button>
-          <Link className={styles.cancel} href="/admin/services">
+          <Link className={styles.cancel} href="/services">
             Cancel
           </Link>
         </div>

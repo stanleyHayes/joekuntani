@@ -276,9 +276,7 @@ describe("MediaLibrary", () => {
     expect(
       screen.queryByRole("dialog", { name: "Asset details" }),
     ).not.toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", { name: "View press-kit.pdf" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "View press-kit.pdf" }));
     expect(screen.getByText("PDF")).toBeInTheDocument();
     expect(
       screen.getByText("press-kit.pdf", { selector: "p" }),

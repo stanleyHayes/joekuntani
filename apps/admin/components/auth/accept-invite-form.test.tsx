@@ -45,7 +45,7 @@ describe("AcceptInviteForm", () => {
       screen.getByRole("button", { name: "Set password and continue" }),
     );
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/login"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/login"));
     const [url, init] = fetchMock.mock.calls[1]!;
     expect(url).toBe("/api/admin/auth/invitations/invite-token/accept");
     expect(JSON.parse(String(init?.body))).toEqual({

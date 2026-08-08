@@ -54,7 +54,7 @@ it("loads campaign financials without a dialog", async () => {
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(
     screen.getByRole("link", { name: "Back to campaigns" }),
-  ).toHaveAttribute("href", "/admin/campaigns");
+  ).toHaveAttribute("href", "/campaigns");
 });
 
 it("updates a deliverable approval and publish workflow", async () => {

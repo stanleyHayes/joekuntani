@@ -66,7 +66,7 @@ export function AnalyticsWorkspace() {
 
   return (
     <section className={styles.workspace} aria-labelledby="analytics-heading">
-      <SectionSwitcher section="governance" current="/admin/analytics" />
+      <SectionSwitcher section="governance" current="/analytics" />
       <header className={styles.header}>
         <p className={styles.eyebrow}>Dashboards</p>
         <h2 id="analytics-heading">Operations overview</h2>

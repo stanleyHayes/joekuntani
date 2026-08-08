@@ -87,7 +87,7 @@ export function AdminUserMenu({ onReplayTour }: AdminUserMenuProps) {
       credentials: "include",
       headers: { "X-CSRF-Token": csrfCookie() },
     }).catch(() => undefined);
-    router.replace("/admin/login");
+    router.replace("/login");
     router.refresh();
   }
 
@@ -140,25 +140,25 @@ export function AdminUserMenu({ onReplayTour }: AdminUserMenuProps) {
           </div>
           <div className={styles.items}>
             <MenuLink
-              href="/admin/account"
+              href="/account"
               title="My profile"
               sub="Name and account details"
               onClick={() => setOpen(false)}
             />
             <MenuLink
-              href="/admin/account/security"
+              href="/account/security"
               title="Security & MFA"
               sub="Password and authenticator"
               onClick={() => setOpen(false)}
             />
             <MenuLink
-              href="/admin/account/preferences"
+              href="/account/preferences"
               title="Preferences"
               sub="Alerts and workspace density"
               onClick={() => setOpen(false)}
             />
             <MenuLink
-              href="/admin/team"
+              href="/team"
               title="Users & roles"
               sub="Invite and manage staff"
               onClick={() => setOpen(false)}

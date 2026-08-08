@@ -117,7 +117,8 @@ export function BookingEditor() {
       </section>
     );
 
-  if (!timezone) return <AdminSkeleton label="Loading booking" variant="form" />;
+  if (!timezone)
+    return <AdminSkeleton label="Loading booking" variant="form" />;
 
   return (
     <section

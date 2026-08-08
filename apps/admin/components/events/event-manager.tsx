@@ -10,7 +10,7 @@ import { eventEditorHref, type EventRecord } from "./events-api";
 
 /**
  * The event board: what exists, what state each one is in, and a way into the
- * editor. Everything that edits an event lives on /admin/events/[id].
+ * editor. Everything that edits an event lives on /events/[id].
  */
 export function EventManager() {
   const [events, setEvents] = useState<EventRecord[]>([]);

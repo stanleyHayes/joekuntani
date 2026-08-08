@@ -3,21 +3,20 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import type { ContentItem, ContentKind } from "@joe-kuntani/shared/types/content";
+import type {
+  ContentItem,
+  ContentKind,
+} from "@joe-kuntani/shared/types/content";
 import { EmptyState } from "@joe-kuntani/shared/ui/empty-state";
 import { Select } from "@joe-kuntani/shared/ui/select";
 import { AdminErrorState, AdminSkeleton } from "../admin-feedback";
-import {
-  contentEditorHref,
-  contentKinds,
-  type StaffRole,
-} from "./content-api";
+import { contentEditorHref, contentKinds, type StaffRole } from "./content-api";
 import styles from "./content-manager.module.css";
 
 /**
  * The content library: find an item, then open it.
  *
- * Editing lives on `/admin/content/[kind]/[id]`, so this component holds no
+ * Editing lives on `/content/[kind]/[id]`, so this component holds no
  * draft state — every row is a link, which is what lets an operator open two
  * drafts in two tabs and keep the browser's history honest.
  */
@@ -104,8 +103,8 @@ export function ContentManager({
               className={styles.quickLinks}
               aria-label="Content workspace sections"
             >
-              <Link href="/admin/services">Services</Link>
-              <Link href="/admin/media">Full media library</Link>
+              <Link href="/services">Services</Link>
+              <Link href="/media">Full media library</Link>
             </nav>
             <Link
               className={styles.newDraft}

@@ -57,7 +57,7 @@ it("sends adding a booking to its own page rather than a dialog", async () => {
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Add booking" })).toHaveAttribute(
     "href",
-    "/admin/bookings/new",
+    "/bookings/new",
   );
 });
 it("uses CSRF protected lifecycle actions", async () => {

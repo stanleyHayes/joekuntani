@@ -33,10 +33,9 @@ function fill() {
 
 it("creates an audited campaign and returns to the list", async () => {
   document.cookie = "jk_admin_csrf=token";
-  const fetcher =
-    vi.fn<(input: string | URL | Request, init?: RequestInit) => Response>(() =>
-      Response.json({}, { status: 201 }),
-    );
+  const fetcher = vi.fn<
+    (input: string | URL | Request, init?: RequestInit) => Response
+  >(() => Response.json({}, { status: 201 }));
   vi.stubGlobal("fetch", fetcher);
   render(<CampaignEditor />);
   fill();
@@ -56,9 +55,7 @@ it("creates an audited campaign and returns to the list", async () => {
   expect(body.results).toEqual([{ label: "Reach", value: "1000" }]);
   expect(body.fee).toEqual({ amount: "200", currency: "GHS" });
   expect(body.expenses).toEqual({ amount: "10", currency: "GHS" });
-  await waitFor(() =>
-    expect(router.push).toHaveBeenCalledWith("/admin/campaigns"),
-  );
+  await waitFor(() => expect(router.push).toHaveBeenCalledWith("/campaigns"));
 });
 
 it("keeps the draft on the page when the campaign is rejected", async () => {

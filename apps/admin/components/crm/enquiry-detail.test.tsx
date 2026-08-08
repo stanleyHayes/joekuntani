@@ -50,7 +50,7 @@ it("heads the workflow with the enquiry reference", async () => {
   ).toBeVisible();
   expect(
     screen.getByRole("link", { name: "Back to enquiries" }),
-  ).toHaveAttribute("href", "/admin/crm");
+  ).toHaveAttribute("href", "/crm");
   expect(
     screen.getByRole("heading", { name: "Add follow-up task" }),
   ).toBeVisible();

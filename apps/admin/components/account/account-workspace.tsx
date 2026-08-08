@@ -73,7 +73,7 @@ export function ProfileWorkspace() {
 
   return (
     <section className={styles.workspace} aria-labelledby="profile-heading">
-      <SectionSwitcher section="account" current="/admin/account" />
+      <SectionSwitcher section="account" current="/account" />
       <header className="stage-head">
         <div className="stage-head__copy">
           <p className="stage-head__eyebrow">Your account</p>
@@ -184,7 +184,7 @@ export function SecurityWorkspace() {
 
   return (
     <section className={styles.workspace} aria-labelledby="security-heading">
-      <SectionSwitcher section="account" current="/admin/account/security" />
+      <SectionSwitcher section="account" current="/account/security" />
       <header className="stage-head">
         <div className="stage-head__copy">
           <p className="stage-head__eyebrow">Your account</p>
@@ -353,7 +353,7 @@ export function PreferencesWorkspace() {
 
   return (
     <section className={styles.workspace} aria-labelledby="prefs-heading">
-      <SectionSwitcher section="account" current="/admin/account/preferences" />
+      <SectionSwitcher section="account" current="/account/preferences" />
       <header className="stage-head">
         <div className="stage-head__copy">
           <p className="stage-head__eyebrow">Your account</p>

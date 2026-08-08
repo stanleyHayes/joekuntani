@@ -25,7 +25,7 @@ describe("EventManager", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Add event" })).toHaveAttribute(
       "href",
-      "/admin/events/new",
+      "/events/new",
     );
   });
 
@@ -40,7 +40,7 @@ describe("EventManager", () => {
       await screen.findByRole("link", {
         name: "Edit and preview Approved event",
       }),
-    ).toHaveAttribute("href", "/admin/events/event%20id");
+    ).toHaveAttribute("href", "/events/event%20id");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: "Title" })).toBeNull();
   });

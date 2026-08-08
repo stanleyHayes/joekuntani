@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ExportsPage() {
   return (
     <div className="governance-page">
-      <SectionSwitcher section="governance" current="/admin/exports" />
+      <SectionSwitcher section="governance" current="/exports" />
       <ExportsWorkspace />
     </div>
   );

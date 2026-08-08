@@ -6,24 +6,22 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("SearchWorkspace", () => {
   it("submits an encoded bounded query and renders minimal accessible results", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          query: "launch & press",
-          limited: false,
-          items: [
-            {
-              id: "10000000-0000-4000-8000-000000000001",
-              kind: "content",
-              title: "Launch story",
-              context: "press_items · published",
-              href: "/admin/content?item=10000000-0000-4000-8000-000000000001",
-            },
-          ],
-        }),
-      });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        query: "launch & press",
+        limited: false,
+        items: [
+          {
+            id: "10000000-0000-4000-8000-000000000001",
+            kind: "content",
+            title: "Launch story",
+            context: "press_items · published",
+            href: "/content?item=10000000-0000-4000-8000-000000000001",
+          },
+        ],
+      }),
+    });
     vi.stubGlobal("fetch", fetchMock);
     render(<SearchWorkspace />);
     fireEvent.change(screen.getByRole("searchbox"), {
@@ -32,7 +30,7 @@ describe("SearchWorkspace", () => {
     fireEvent.submit(screen.getByRole("search"));
     expect(
       await screen.findByRole("link", { name: /Launch story/ }),
-    ).toHaveAttribute("href", expect.stringContaining("/admin/content"));
+    ).toHaveAttribute("href", expect.stringContaining("/content"));
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("launch%20%26%20press"),
       expect.objectContaining({

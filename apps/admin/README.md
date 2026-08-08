@@ -10,8 +10,9 @@ Copy `.env.example` to `.env`, start the API, then run:
 pnpm dev:admin
 ```
 
-The console runs on `http://localhost:3001`. Existing `/admin/*` links remain
-valid; the app rewrites them internally to its root-level App Router pages.
+The console runs on `http://localhost:3001`. Its canonical routes are root-level
+paths such as `/login`, `/events`, and `/settings`. Legacy `/admin/*` bookmarks
+redirect to their clean equivalents.
 
 ## Vercel
 

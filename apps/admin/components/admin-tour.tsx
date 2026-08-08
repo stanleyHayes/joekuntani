@@ -32,13 +32,13 @@ export const ADMIN_TOUR_STEPS: TourStep[] = [
     body: "Profile, password, preferences, team access, and a replay of this tour live here — plus sign out.",
   },
   {
-    selector: 'a[href="/admin/team"]',
+    selector: 'a[href="/team"]',
     side: "right",
     title: "Users & roles",
     body: "Administrators invite staff, change roles, and disable accounts. Permissions are fixed to the four server roles.",
   },
   {
-    selector: 'a[href="/admin/newsletter"]',
+    selector: 'a[href="/newsletter"]',
     side: "right",
     title: "Newsletter signups",
     body: "Review consent-backed subscribers from the public site and unsubscribe when asked.",

@@ -47,11 +47,11 @@ it("loads drafts and points every row at its own editor route", async () => {
   ).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Edit" })).toHaveAttribute(
     "href",
-    `/admin/content/page/${page.id}`,
+    `/content/page/${page.id}`,
   );
   expect(screen.getByRole("link", { name: "New draft" })).toHaveAttribute(
     "href",
-    "/admin/content/page/new",
+    "/content/page/new",
   );
 });
 
@@ -70,7 +70,7 @@ it("reloads the collection and retargets New draft when the type changes", async
   expect(fetcher.mock.calls.at(-1)?.[0]).toBe("/api/admin/content/portfolio");
   expect(screen.getByRole("link", { name: "New draft" })).toHaveAttribute(
     "href",
-    "/admin/content/portfolio/new",
+    "/content/portfolio/new",
   );
 });
 

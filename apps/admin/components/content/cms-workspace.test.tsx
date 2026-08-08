@@ -95,7 +95,7 @@ it("loads and selects service management inside the unified workspace", async ()
   // listing what can be opened.
   expect(screen.getByRole("link", { name: "Edit" })).toHaveAttribute(
     "href",
-    `/admin/services/${service.id}`,
+    `/services/${service.id}`,
   );
   expect(fetcher).toHaveBeenCalledWith(
     "/api/admin/services",

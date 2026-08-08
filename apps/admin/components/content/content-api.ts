@@ -62,7 +62,7 @@ export function kindLabel(kind: ContentKind) {
 
 /** Where the editor for an item lives. `new` is an item that has no id yet. */
 export function contentEditorHref(kind: ContentKind, id: string) {
-  return `/admin/content/${kind}/${id ? encodeURIComponent(id) : "new"}`;
+  return `/content/${kind}/${id ? encodeURIComponent(id) : "new"}`;
 }
 
 export function blank(kind: ContentKind): ContentDraft {

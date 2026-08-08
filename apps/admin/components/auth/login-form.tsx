@@ -31,7 +31,7 @@ export function LoginForm() {
       if (!response.ok) {
         if (response.status === 403) {
           setError(
-            "This browser origin was rejected. Open the site at http://localhost:3000 (not 127.0.0.1) and try again.",
+            "This browser origin was rejected. Open the configured admin domain and try again.",
           );
         } else if (response.status === 429) {
           setError("Too many attempts. Wait a minute, then try again.");
@@ -47,7 +47,7 @@ export function LoginForm() {
         return;
       }
       const result = (await response.json()) as { mfa_required: boolean };
-      router.replace(result.mfa_required ? "/admin/login/mfa" : "/admin");
+      router.replace(result.mfa_required ? "/login/mfa" : "/");
       router.refresh();
     } catch {
       setError("Sign-in is temporarily unavailable. Please try again.");
@@ -139,9 +139,7 @@ export function LoginForm() {
         </form>
         <p className={styles.help}>
           Repeated attempts are rate-limited. Security-relevant activity is
-          audited. Use{" "}
-          <code className={styles.code}>http://localhost:3000</code> for local
-          sign-in.
+          audited. Always sign in from the configured admin domain.
         </p>
       </section>
     </main>

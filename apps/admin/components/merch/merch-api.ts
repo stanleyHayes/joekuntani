@@ -89,5 +89,5 @@ export async function api<T>(
 
 /** Where the editor for a product lives. `new` is a product that has no id yet. */
 export function productEditorHref(id: string) {
-  return `/admin/merch/products/${id ? encodeURIComponent(id) : "new"}`;
+  return `/merch/products/${id ? encodeURIComponent(id) : "new"}`;
 }

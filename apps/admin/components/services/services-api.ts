@@ -50,5 +50,5 @@ export function mutationHeaders() {
 
 /** Where the editor for a service lives. `new` is a service that has no id yet. */
 export function serviceEditorHref(id: string) {
-  return `/admin/services/${id ? encodeURIComponent(id) : "new"}`;
+  return `/services/${id ? encodeURIComponent(id) : "new"}`;
 }

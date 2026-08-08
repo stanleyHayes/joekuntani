@@ -153,7 +153,7 @@ export function CRMTools({ query, stage, owner }: PipelineFilters) {
           </p>
         </div>
         <div className="stage-head__actions">
-          <Link className={styles.back} href="/admin/crm">
+          <Link className={styles.back} href="/crm">
             Back to enquiries
           </Link>
         </div>

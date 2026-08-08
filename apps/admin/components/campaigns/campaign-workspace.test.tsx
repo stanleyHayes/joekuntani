@@ -28,10 +28,10 @@ it("lists campaigns and links each one to its own page", async () => {
   render(<CampaignWorkspace />);
   expect(
     await screen.findByRole("link", { name: /Approved campaign/ }),
-  ).toHaveAttribute("href", `/admin/campaigns/${item.id}`);
+  ).toHaveAttribute("href", `/campaigns/${item.id}`);
   expect(screen.getByRole("link", { name: "Add campaign" })).toHaveAttribute(
     "href",
-    "/admin/campaigns/new",
+    "/campaigns/new",
   );
   // Both the editor and the campaign itself are routes now, so the list opens
   // no modal of its own.
@@ -49,7 +49,7 @@ it("offers the editor from the empty state", async () => {
   const links = screen.getAllByRole("link", { name: "Add campaign" });
   expect(links).toHaveLength(2);
   for (const link of links)
-    expect(link).toHaveAttribute("href", "/admin/campaigns/new");
+    expect(link).toHaveAttribute("href", "/campaigns/new");
 });
 
 it("shows a safe failure message when the list cannot load", async () => {

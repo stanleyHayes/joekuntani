@@ -5,15 +5,15 @@ import styles from "./section-switcher.module.css";
 
 const sections = {
   account: [
-    { href: "/admin/account", label: "Profile", index: "01" },
-    { href: "/admin/account/security", label: "Security", index: "02" },
-    { href: "/admin/account/preferences", label: "Preferences", index: "03" },
+    { href: "/account", label: "Profile", index: "01" },
+    { href: "/account/security", label: "Security", index: "02" },
+    { href: "/account/preferences", label: "Preferences", index: "03" },
   ],
   governance: [
-    { href: "/admin/analytics", label: "Analytics", index: "01" },
-    { href: "/admin/exports", label: "Exports", index: "02" },
-    { href: "/admin/audit", label: "Audit", index: "03" },
-    { href: "/admin/privacy", label: "Privacy", index: "04" },
+    { href: "/analytics", label: "Analytics", index: "01" },
+    { href: "/exports", label: "Exports", index: "02" },
+    { href: "/audit", label: "Audit", index: "03" },
+    { href: "/privacy", label: "Privacy", index: "04" },
   ],
 } as const;
 

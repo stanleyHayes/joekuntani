@@ -24,8 +24,8 @@ export function AdminChrome({ children }: { children: ReactNode }) {
   if (
     pathname.startsWith("/login") ||
     pathname.startsWith("/accept-invite") ||
-    pathname.startsWith("/admin/login") ||
-    pathname.startsWith("/admin/accept-invite")
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/accept-invite")
   ) {
     return <>{children}</>;
   }

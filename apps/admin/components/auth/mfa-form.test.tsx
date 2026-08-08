@@ -59,7 +59,7 @@ describe("MFAForm", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Verify and continue" }),
     );
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
   });
 
   it("does not expose provider details on rejection", async () => {

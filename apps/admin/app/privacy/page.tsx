@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <div className="governance-page">
-      <SectionSwitcher section="governance" current="/admin/privacy" />
+      <SectionSwitcher section="governance" current="/privacy" />
       <PrivacyWorkspace />
     </div>
   );

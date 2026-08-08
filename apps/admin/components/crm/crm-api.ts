@@ -106,10 +106,10 @@ export function crmToolsHref(filters: PipelineFilters) {
   if (filters.stage) params.set("stage", filters.stage);
   if (filters.owner) params.set("owner_id", filters.owner);
   const search = params.toString();
-  return `/admin/crm/tools${search ? `?${search}` : ""}`;
+  return `/crm/tools${search ? `?${search}` : ""}`;
 }
 
 /** Where the notes, tasks and proposals for one enquiry live. */
 export function enquiryHref(id: string) {
-  return `/admin/crm/enquiries/${encodeURIComponent(id)}`;
+  return `/crm/enquiries/${encodeURIComponent(id)}`;
 }

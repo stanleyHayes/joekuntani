@@ -75,7 +75,7 @@ it("edits a service, validates the schema and persists with CSRF", async () => {
   fireEvent.change(questions, { target: { value: "[]" } });
   fireEvent.click(screen.getByRole("button", { name: "Save service" }));
 
-  await waitFor(() => expect(push).toHaveBeenCalledWith("/admin/services"));
+  await waitFor(() => expect(push).toHaveBeenCalledWith("/services"));
   expect(fetcher.mock.calls[1]).toEqual([
     `/api/admin/services/${first.id}`,
     expect.objectContaining({
@@ -105,7 +105,7 @@ it("creates a service at the end of the display order", async () => {
   });
   fireEvent.click(screen.getByRole("button", { name: "Create service" }));
 
-  await waitFor(() => expect(push).toHaveBeenCalledWith("/admin/services"));
+  await waitFor(() => expect(push).toHaveBeenCalledWith("/services"));
   expect(fetcher.mock.calls[1]?.[0]).toBe("/api/admin/services");
   expect(fetcher.mock.calls[1]?.[1]?.method).toBe("POST");
   const body = JSON.parse(fetcher.mock.calls[1]?.[1]?.body as string);

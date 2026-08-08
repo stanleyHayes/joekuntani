@@ -83,7 +83,7 @@ export function AuditWorkspace() {
   const count = response?.items.length ?? 0;
   return (
     <section className={styles.workspace} aria-labelledby="audit-heading">
-      <SectionSwitcher section="governance" current="/admin/audit" />
+      <SectionSwitcher section="governance" current="/audit" />
       <header className={styles.header}>
         <p className={styles.eyebrow}>Administrator only</p>
         <h2 id="audit-heading">Activity register</h2>

@@ -39,8 +39,8 @@ export const FALLBACK_TIMEZONE = "Africa/Accra";
  * Where the booking editor lives. Bookings are only ever created there; dates
  * already in the diary are confirmed or cancelled from the calendar itself.
  */
-export const bookingEditorHref = "/admin/bookings/new";
-export const bookingCalendarHref = "/admin/bookings";
+export const bookingEditorHref = "/bookings/new";
+export const bookingCalendarHref = "/bookings";
 
 export async function api(path: string, init?: RequestInit) {
   const csrf = document.cookie.match(/(?:^|; )jk_admin_csrf=([^;]+)/)?.[1];

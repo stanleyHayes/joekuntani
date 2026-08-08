@@ -324,7 +324,7 @@ export function ContentEditor({
           </p>
         </div>
         <div className="stage-head__actions">
-          <Link className={styles.back} href="/admin/content">
+          <Link className={styles.back} href="/content">
             Back to content
           </Link>
         </div>
@@ -603,7 +603,7 @@ export function ContentEditor({
             <button className={styles.save} disabled={pending} type="submit">
               Save draft
             </button>
-            <Link className={styles.cancel} href="/admin/content">
+            <Link className={styles.cancel} href="/content">
               Cancel
             </Link>
             <span className={styles.actionsSplit} aria-hidden="true" />

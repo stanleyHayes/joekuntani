@@ -88,10 +88,10 @@ it("links to the tools page carrying the active filters, and to each enquiry", a
 
   expect(
     screen.getByRole("link", { name: "Open notes, tasks and proposals" }),
-  ).toHaveAttribute("href", `/admin/crm/enquiries/${enquiryID}`);
+  ).toHaveAttribute("href", `/crm/enquiries/${enquiryID}`);
   expect(screen.getByRole("link", { name: "Open CRM tools" })).toHaveAttribute(
     "href",
-    "/admin/crm/tools",
+    "/crm/tools",
   );
 
   // A saved view records the filters the list was using, so they have to
@@ -104,7 +104,7 @@ it("links to the tools page carrying the active filters, and to each enquiry", a
   });
   expect(screen.getByRole("link", { name: "Open CRM tools" })).toHaveAttribute(
     "href",
-    "/admin/crm/tools?q=launch&owner_id=staff-1",
+    "/crm/tools?q=launch&owner_id=staff-1",
   );
 });
 

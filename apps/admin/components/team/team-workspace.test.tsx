@@ -135,9 +135,9 @@ describe("TeamWorkspace", () => {
 
     const active = within(rows[1] as HTMLElement);
     expect(active.getByText("Ama Mensah")).toBeInTheDocument();
-    expect(active.getByRole("button", { name: "Role for Ama Mensah" })).toHaveTextContent(
-      "Content editor",
-    );
+    expect(
+      active.getByRole("button", { name: "Role for Ama Mensah" }),
+    ).toHaveTextContent("Content editor");
     expect(active.getByRole("button", { name: "Disable" })).toBeEnabled();
 
     // A disabled account must not be re-roled or disabled again: the role
@@ -216,7 +216,7 @@ describe("TeamWorkspace", () => {
       directory([staffUser]),
       Response.json({
         email: "kwame@example.com",
-        accept_url: "https://joekuntani.com/admin/accept/tok",
+        accept_url: "https://joekuntani.com/accept/tok",
         emailed: true,
       }),
       directory([
@@ -324,7 +324,7 @@ describe("TeamWorkspace", () => {
       directory([staffUser]),
       Response.json({
         email: "kwame@example.com",
-        accept_url: "https://joekuntani.com/admin/accept/tok-123",
+        accept_url: "https://joekuntani.com/accept/tok-123",
         emailed: false,
       }),
       directory([staffUser]),
@@ -345,17 +345,19 @@ describe("TeamWorkspace", () => {
     // Without this panel the account exists and nobody can reach it: the link
     // is the only way in when the mailer is not wired up.
     const link = await screen.findByLabelText("Invitation link");
-    expect(link).toHaveValue("https://joekuntani.com/admin/accept/tok-123");
+    expect(link).toHaveValue("https://joekuntani.com/accept/tok-123");
     expect(screen.getByRole("status")).toHaveTextContent(
       /Email delivery is not configured/,
     );
     expect(
-      screen.getByText(/works once and expires 15\s+minutes after it was issued/),
+      screen.getByText(
+        /works once and expires 15\s+minutes after it was issued/,
+      ),
     ).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     expect(writeText).toHaveBeenCalledWith(
-      "https://joekuntani.com/admin/accept/tok-123",
+      "https://joekuntani.com/accept/tok-123",
     );
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
@@ -384,7 +386,9 @@ describe("TeamWorkspace", () => {
     // box anyway gives the operator an empty field to copy and a Copy button
     // that silently puts nothing on the clipboard.
     expect(screen.queryByLabelText("Invitation link")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Copy" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Copy" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(
       /Email delivery is not configured/,
     );
@@ -412,7 +416,9 @@ describe("TeamWorkspace", () => {
     render(<TeamWorkspace />);
     await screen.findByText("ama@example.com");
 
-    fireEvent.click(screen.getByRole("button", { name: "Role for Ama Mensah" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Role for Ama Mensah" }),
+    );
     fireEvent.click(screen.getByRole("option", { name: "Booking manager" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
@@ -443,7 +449,9 @@ describe("TeamWorkspace", () => {
     render(<TeamWorkspace />);
     await screen.findByText("ama@example.com");
 
-    fireEvent.click(screen.getByRole("button", { name: "Role for Ama Mensah" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Role for Ama Mensah" }),
+    );
     fireEvent.click(screen.getByRole("option", { name: "Administrator" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(

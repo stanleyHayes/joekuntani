@@ -363,7 +363,11 @@ export function MediaLibrary({
             once it does.
           </span>
           {onRefresh ? (
-            <button type="button" disabled={busy} onClick={() => void refresh()}>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void refresh()}
+            >
               <ArrowClockwise size={15} aria-hidden="true" />
               Check again
             </button>
@@ -412,7 +416,11 @@ export function MediaLibrary({
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={chosen.url} alt="" />
                       ) : (
-                        <FilePdf size={22} weight="duotone" aria-hidden="true" />
+                        <FilePdf
+                          size={22}
+                          weight="duotone"
+                          aria-hidden="true"
+                        />
                       )}
                     </span>
                     <span className={styles.filePreviewMeta}>

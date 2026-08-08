@@ -15,10 +15,10 @@ const sections = [
     description:
       "Shape what the public site shows — content, media, services, and global settings.",
     links: [
-      { href: "/admin/content", label: "Content" },
-      { href: "/admin/media", label: "Media" },
-      { href: "/admin/services", label: "Services" },
-      { href: "/admin/settings", label: "Settings" },
+      { href: "/content", label: "Content" },
+      { href: "/media", label: "Media" },
+      { href: "/services", label: "Services" },
+      { href: "/settings", label: "Settings" },
     ],
   },
   {
@@ -26,21 +26,21 @@ const sections = [
     description:
       "Run first-party events from draft through door scan and order review.",
     links: [
-      { href: "/admin/events", label: "Events" },
-      { href: "/admin/tickets", label: "Tickets & orders" },
-      { href: "/admin/checkin", label: "Check-in" },
-      { href: "/admin/ticket-analytics", label: "Ticket analytics" },
+      { href: "/events", label: "Events" },
+      { href: "/tickets", label: "Tickets & orders" },
+      { href: "/checkin", label: "Check-in" },
+      { href: "/ticket-analytics", label: "Ticket analytics" },
     ],
   },
   {
     title: "Pipeline",
     description: "Move enquiries into CRM, bookings, and campaign follow-up.",
     links: [
-      { href: "/admin/crm", label: "CRM" },
-      { href: "/admin/bookings", label: "Bookings" },
-      { href: "/admin/campaigns", label: "Campaigns" },
-      { href: "/admin/newsletter", label: "Newsletter" },
-      { href: "/admin/search", label: "Search" },
+      { href: "/crm", label: "CRM" },
+      { href: "/bookings", label: "Bookings" },
+      { href: "/campaigns", label: "Campaigns" },
+      { href: "/newsletter", label: "Newsletter" },
+      { href: "/search", label: "Search" },
     ],
   },
   {
@@ -48,11 +48,11 @@ const sections = [
     description:
       "Staff directory, role permissions, and your own profile settings.",
     links: [
-      { href: "/admin/team", label: "Users & roles" },
-      { href: "/admin/permissions", label: "Permissions" },
-      { href: "/admin/account", label: "Profile" },
-      { href: "/admin/account/security", label: "Security" },
-      { href: "/admin/account/preferences", label: "Preferences" },
+      { href: "/team", label: "Users & roles" },
+      { href: "/permissions", label: "Permissions" },
+      { href: "/account", label: "Profile" },
+      { href: "/account/security", label: "Security" },
+      { href: "/account/preferences", label: "Preferences" },
     ],
   },
   {
@@ -60,10 +60,10 @@ const sections = [
     description:
       "Read the trail — analytics, exports, audit, and privacy holds.",
     links: [
-      { href: "/admin/analytics", label: "Analytics" },
-      { href: "/admin/exports", label: "Exports" },
-      { href: "/admin/audit", label: "Audit" },
-      { href: "/admin/privacy", label: "Privacy" },
+      { href: "/analytics", label: "Analytics" },
+      { href: "/exports", label: "Exports" },
+      { href: "/audit", label: "Audit" },
+      { href: "/privacy", label: "Privacy" },
     ],
   },
 ] as const;
@@ -84,10 +84,10 @@ export default function AdminOverviewPage() {
           </p>
         </div>
         <div className={styles.heroActions}>
-          <Link className={styles.primaryAction} href="/admin/content">
+          <Link className={styles.primaryAction} href="/content">
             Open content
           </Link>
-          <Link className={styles.secondaryAction} href="/admin/events">
+          <Link className={styles.secondaryAction} href="/events">
             Open events
           </Link>
         </div>

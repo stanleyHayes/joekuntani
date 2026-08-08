@@ -141,7 +141,7 @@ export function CampaignDetail({ campaignID }: { campaignID: string }) {
           </p>
         </div>
         <div className="stage-head__actions">
-          <Link className={styles.back} href="/admin/campaigns">
+          <Link className={styles.back} href="/campaigns">
             Back to campaigns
           </Link>
         </div>

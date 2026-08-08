@@ -28,8 +28,9 @@ function stubFetch(warnings: unknown[]) {
 }
 
 async function fillForm() {
-  const form = (await screen.findByRole("button", { name: "Create booking" }))
-    .closest("form")!;
+  const form = (
+    await screen.findByRole("button", { name: "Create booking" })
+  ).closest("form")!;
   for (const [name, value] of Object.entries({
     title: "New show",
     enquiry_id: "018f47f6-9f5d-4d3a-8d4e-45f0f7d4c202",
@@ -82,7 +83,7 @@ it("returns to the diary when nothing clashes", async () => {
   stubFetch([]);
   render(<BookingEditor />);
   fireEvent.submit(await fillForm());
-  await waitFor(() => expect(push).toHaveBeenCalledWith("/admin/bookings"));
+  await waitFor(() => expect(push).toHaveBeenCalledWith("/bookings"));
   expect(refresh).toHaveBeenCalled();
 });
 

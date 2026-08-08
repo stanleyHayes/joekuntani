@@ -52,7 +52,7 @@ export function ProductEditor({ productID }: { productID: string }) {
       await api("/api/admin/merch/products", { method: "PUT", body: draft });
       // Back to the list, which reloads and shows the saved row. Staying here
       // would leave an operator wondering whether the save took.
-      router.push("/admin/merch");
+      router.push("/merch");
       router.refresh();
     } catch {
       setError("The product was not accepted. Check the name and slug.");
@@ -86,7 +86,7 @@ export function ProductEditor({ productID }: { productID: string }) {
           </p>
         </div>
         <div className="stage-head__actions">
-          <Link className={styles.back} href="/admin/merch">
+          <Link className={styles.back} href="/merch">
             Back to shop
           </Link>
         </div>
@@ -193,7 +193,7 @@ export function ProductEditor({ productID }: { productID: string }) {
           <button className="primary" type="submit" disabled={pending}>
             {pending ? "Saving…" : "Save product"}
           </button>
-          <Link className={styles.cancel} href="/admin/merch">
+          <Link className={styles.cancel} href="/merch">
             Cancel
           </Link>
         </div>

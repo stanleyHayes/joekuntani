@@ -150,7 +150,7 @@ describe("AdminUserMenu", () => {
           headers: { "X-CSRF-Token": "csrf-token" },
         }),
       );
-      expect(router.replace).toHaveBeenCalledWith("/admin/login");
+      expect(router.replace).toHaveBeenCalledWith("/login");
       expect(router.refresh).toHaveBeenCalled();
     });
   });

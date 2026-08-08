@@ -76,7 +76,7 @@ export function AcceptInviteForm() {
         );
         return;
       }
-      router.replace("/admin/login");
+      router.replace("/login");
       router.refresh();
     } catch {
       setError("That could not be completed. Please try again.");
@@ -94,7 +94,10 @@ export function AcceptInviteForm() {
         trail=" password."
         copy="Nobody else has ever held it — not the administrator who invited you, and not this system before now."
         facts={[
-          { term: "Link", detail: "Single use, expires 15 minutes after issue" },
+          {
+            term: "Link",
+            detail: "Single use, expires 15 minutes after issue",
+          },
           { term: "Password", detail: "At least 12 characters" },
           { term: "Changes", detail: "Audited server-side" },
         ]}
@@ -116,8 +119,8 @@ export function AcceptInviteForm() {
           <>
             <p className={styles.intro}>
               Set a password for <strong>{invitation.email}</strong> as{" "}
-              {ROLE_LABELS[invitation.role] ?? invitation.role}. You will sign in
-              with it straight afterwards.
+              {ROLE_LABELS[invitation.role] ?? invitation.role}. You will sign
+              in with it straight afterwards.
             </p>
             <form className={styles.form} onSubmit={submit}>
               <label className={styles.label}>

@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 
 import type { ContentItem } from "@joe-kuntani/shared/types/content";
@@ -168,7 +174,9 @@ it("keeps approval, preview, and publication as explicit controls", async () => 
       requestCacheInvalidation={noCacheInvalidation}
     />,
   );
-  fireEvent.click(await screen.findByRole("button", { name: "Private preview" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Private preview" }),
+  );
   expect(await screen.findByText("Private approved preview")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Publish now" }));
   expect(
@@ -238,7 +246,9 @@ it("reveals the correct fields for video, press, and testimonial drafts", async 
       requestCacheInvalidation={noCacheInvalidation}
     />,
   );
-  expect(await screen.findByLabelText("Approved HTTPS embed URL")).toBeVisible();
+  expect(
+    await screen.findByLabelText("Approved HTTPS embed URL"),
+  ).toBeVisible();
   expect(screen.getByLabelText("Verified external HTTPS URL")).toBeVisible();
   unmount();
 
@@ -288,7 +298,9 @@ it("supports approval revocation, scheduled publishing, and unpublishing", async
       requestCacheInvalidation={noCacheInvalidation}
     />,
   );
-  fireEvent.click(await screen.findByRole("button", { name: "Revoke approval" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Revoke approval" }),
+  );
   expect(await screen.findByText("Approval revoked.")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Approve" }));
   expect(await screen.findByText("Content approved.")).toBeVisible();
@@ -379,7 +391,9 @@ it("fails closed for preview, mutation, and load errors", async () => {
       requestCacheInvalidation={noCacheInvalidation}
     />,
   );
-  fireEvent.click(await screen.findByRole("button", { name: "Private preview" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Private preview" }),
+  );
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "private preview could not be loaded",
   );
@@ -398,7 +412,10 @@ it("fails closed for preview, mutation, and load errors", async () => {
   );
   missing.unmount();
 
-  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("database secret")));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockRejectedValue(new Error("database secret")),
+  );
   render(
     <ContentEditor
       kind="page"

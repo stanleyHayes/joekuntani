@@ -44,11 +44,11 @@ it("loads services and sends editing to its own page", async () => {
   expect(screen.queryByLabelText("Service name")).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Add service" })).toHaveAttribute(
     "href",
-    "/admin/services/new",
+    "/services/new",
   );
   expect(screen.getAllByRole("link", { name: "Edit" })[0]).toHaveAttribute(
     "href",
-    `/admin/services/${first.id}`,
+    `/services/${first.id}`,
   );
 });
 

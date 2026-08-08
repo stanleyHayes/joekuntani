@@ -56,7 +56,7 @@ export const currencies = ["GHS", "USD", "EUR", "GBP"];
 
 /** Where a campaign's own page lives. `new` is a campaign that has no id yet. */
 export function campaignHref(id: string) {
-  return `/admin/campaigns/${id ? encodeURIComponent(id) : "new"}`;
+  return `/campaigns/${id ? encodeURIComponent(id) : "new"}`;
 }
 
 export function splitValues(value: string) {
