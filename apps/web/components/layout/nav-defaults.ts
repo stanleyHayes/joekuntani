@@ -67,7 +67,27 @@ export const fallbackNavigation: readonly NavItem[] = [
     icon: "events",
     description: "Upcoming dates and tickets.",
   },
+  {
+    href: "/shop",
+    label: "Shop",
+    icon: "shop",
+    description: "Official merchandise, shipped from Ghana.",
+  },
 ] as const;
+
+export const SHOP_NAVIGATION: NavItem = {
+  href: "/shop",
+  label: "Shop",
+  icon: "shop",
+  description: "Official merchandise, shipped from Ghana.",
+};
+
+/** The published storefront must stay discoverable even when old CMS settings omit it. */
+export function withShopNavigation(navigation: readonly NavItem[]): NavItem[] {
+  return navigation.some((item) => item.href === SHOP_NAVIGATION.href)
+    ? [...navigation]
+    : [...navigation, SHOP_NAVIGATION];
+}
 
 /**
  * Copy for links that arrive from settings without any of their own.

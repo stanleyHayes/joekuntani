@@ -47,13 +47,13 @@ describe("MobileBottomNav", () => {
         cta={{ href: "/book", label: "Make an enquiry" }}
       />,
     );
-    expect(slots()).toEqual(["Home", "About", "Book"]);
+    expect(slots()).toEqual(["Home", "Shop", "About", "Book"]);
   });
 
   it("falls back to the shared default navigation when settings are missing", () => {
-    render(<MobileBottomNav currentPath="/about" />);
-    expect(slots()).toEqual(["Home", "Events", "Work", "About", "Book"]);
-    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute(
+    render(<MobileBottomNav currentPath="/shop" />);
+    expect(slots()).toEqual(["Home", "Events", "Shop", "Work", "Book"]);
+    expect(screen.getByRole("link", { name: "Shop" })).toHaveAttribute(
       "aria-current",
       "page",
     );

@@ -16,6 +16,7 @@ import { BrandMark } from "./brand-mark";
 import { MobileMenu } from "./mobile-menu";
 import {
   fallbackNavigation,
+  withShopNavigation,
   withNavMetadata,
   type NavItem,
 } from "./nav-defaults";
@@ -401,16 +402,20 @@ export function PublicHeader({
 }: PublicHeaderProps) {
   const safeBrandName = brandName || "Joe Kuntani";
   const safeCTA = cta || { href: "/book", label: "Make an enquiry" };
-  const navigationWithBooking = navigation.some(
+  const navigationWithShop = withShopNavigation(navigation);
+  const navigationWithBooking = navigationWithShop.some(
     (item) => item.href === safeCTA.href,
   )
-    ? navigation.map((item) =>
+    ? navigationWithShop.map((item) =>
         item.href === safeCTA.href ? { ...item, label: "Book" } : item,
       )
     : [
-        ...navigation.slice(0, Math.ceil(navigation.length / 2)),
+        ...navigationWithShop.slice(
+          0,
+          Math.ceil(navigationWithShop.length / 2),
+        ),
         { href: safeCTA.href, label: "Book" },
-        ...navigation.slice(Math.ceil(navigation.length / 2)),
+        ...navigationWithShop.slice(Math.ceil(navigationWithShop.length / 2)),
       ];
   const grouped = groupNavigation(navigationWithBooking);
   const bookingItem = grouped.find((item) => item.label === "Book");

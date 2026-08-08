@@ -47,6 +47,10 @@ describe("PublicShell", () => {
       "href",
       "/book",
     );
+    expect(within(primary).getByRole("link", { name: "Shop" })).toHaveAttribute(
+      "href",
+      "/shop",
+    );
     expect(screen.getByRole("button", { name: "Support" })).toBeVisible();
     expect(
       screen.getByRole("button", { name: "Open menu" }),
@@ -75,7 +79,7 @@ describe("PublicShell", () => {
     );
   });
 
-  it("renders only explicitly supplied published shell settings", () => {
+  it("renders published shell settings while keeping the storefront discoverable", () => {
     render(
       <PublicShell
         settings={{
@@ -123,6 +127,9 @@ describe("PublicShell", () => {
       </PublicShell>,
     );
     expect(screen.getAllByRole("link", { name: "Approved" })).toHaveLength(1);
+    expect(
+      screen.getAllByRole("link", { name: "Shop" }).length,
+    ).toBeGreaterThan(0);
     expect(
       within(
         screen.getByRole("navigation", { name: "Primary navigation" }),

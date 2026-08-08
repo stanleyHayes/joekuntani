@@ -3,7 +3,11 @@
 import Link from "next/link";
 
 import styles from "./mobile-bottom-nav.module.css";
-import { fallbackNavigation, type NavItem } from "./nav-defaults";
+import {
+  fallbackNavigation,
+  withShopNavigation,
+  type NavItem,
+} from "./nav-defaults";
 import { NavIcon } from "./nav-icons";
 
 type MobileBottomNavProps = {
@@ -62,7 +66,7 @@ export function MobileBottomNav({
   navigation = fallbackNavigation,
   cta,
 }: MobileBottomNavProps) {
-  const shortcuts = shortcutsFor(navigation);
+  const shortcuts = shortcutsFor(withShopNavigation(navigation));
   const enquiry = cta ?? { href: "/book", label: "Make an enquiry" };
   // The enquiry slot is still a route, so it reports its current state like any
   // other tab. Without this it kept its brand wash on every page and never lit
