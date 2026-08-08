@@ -1,7 +1,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: var(--layer-dialog, 90);
   display: grid;
   padding: clamp(0.75rem, 3vw, 2rem);
   place-items: center;

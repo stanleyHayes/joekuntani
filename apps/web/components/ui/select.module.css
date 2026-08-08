@@ -64,7 +64,7 @@
 
 .list {
   position: fixed;
-  z-index: 80;
+  z-index: var(--layer-popover, 95);
   margin: 0;
   /* Sizes to its longest option (bounded by `maxWidth` from the placement
      hook) instead of inheriting the trigger's width, which used to crop

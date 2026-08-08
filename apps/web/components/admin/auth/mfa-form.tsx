@@ -2,9 +2,10 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BrandMark, BRAND_LOGO_SRC } from "../../layout/brand-mark";
+import { BrandMark } from "../../layout/brand-mark";
 import { OTPInput } from "../../ui/otp-input";
 import { ButtonPending } from "../admin-feedback";
+import { AuthHero } from "./auth-hero";
 import { MFAQR } from "./mfa-qr";
 import styles from "./auth-form.module.css";
 
@@ -95,47 +96,18 @@ export function MFAForm() {
 
   return (
     <main className={styles.split}>
-      <aside className={styles.hero} aria-hidden="true">
-        <div className={styles.heroInner}>
-          <div className={styles.heroTop}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              alt=""
-              className={styles.heroLogo}
-              height={160}
-              src={BRAND_LOGO_SRC}
-              width={160}
-            />
-            <div>
-              <p className={styles.heroBrand}>Joe Kuntani</p>
-              <p className={styles.heroTag}>Second factor</p>
-            </div>
-          </div>
-          <div className={styles.heroStatement}>
-            <p className={styles.heroDisplay}>
-              One more <em>step</em>.
-            </p>
-            <p className={styles.heroCopy}>
-              Scan the QR once, then enter the rotating six-digit code to finish
-              sign-in.
-            </p>
-          </div>
-          <dl className={styles.heroRail}>
-            <div className={styles.heroRailItem}>
-              <dt>Code</dt>
-              <dd>Rotates every 30s</dd>
-            </div>
-            <div className={styles.heroRailItem}>
-              <dt>Setup</dt>
-              <dd>Scanned once per device</dd>
-            </div>
-            <div className={styles.heroRailItem}>
-              <dt>Attempts</dt>
-              <dd>Rate-limited and logged</dd>
-            </div>
-          </dl>
-        </div>
-      </aside>
+      <AuthHero
+        tag="Second factor"
+        lead="One more "
+        accent="step"
+        trail="."
+        copy="Scan the QR once, then enter the rotating six-digit code to finish sign-in."
+        facts={[
+          { term: "Code", detail: "Rotates every 30s" },
+          { term: "Setup", detail: "Scanned once per device" },
+          { term: "Attempts", detail: "Rate-limited and logged" },
+        ]}
+      />
 
       <section className={styles.panel} aria-labelledby="mfa-title">
         <div className={styles.brandRow}>

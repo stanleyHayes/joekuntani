@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { DateField } from "../../ui/date-field";
 import { Select } from "../../ui/select";
+import { DocumentUploadField } from "../media/asset-picker";
 
 type Note = {
   id: string;
@@ -79,6 +80,14 @@ export function EnquiryWorkflow({
   const [workflow, setWorkflow] = useState(initial);
   const [deliveries, setDeliveries] = useState(initialDeliveries);
   const [message, setMessage] = useState("");
+  // Held in state rather than read off the form, because the document is
+  // uploaded before the form is submitted — the id it produces has nowhere
+  // else to live.
+  const [attachment, setAttachment] = useState({
+    assetID: "",
+    label: "",
+    filename: "",
+  });
   const base = `/api/admin/crm/enquiries/${enquiryId}`;
   const refresh = useCallback(async () => {
     const [next, deliveryResult] = await Promise.all([
@@ -136,18 +145,16 @@ export function EnquiryWorkflow({
   }
   async function addAttachment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const element = event.currentTarget;
-    const form = new FormData(element);
     try {
       await request(`${base}/attachments`, {
         method: "POST",
         body: JSON.stringify({
-          asset_id: form.get("asset_id"),
-          label: form.get("label"),
+          asset_id: attachment.assetID,
+          label: attachment.label,
         }),
       });
       await refresh();
-      element.reset();
+      setAttachment({ assetID: "", label: "", filename: "" });
       setMessage("Protected proposal attachment added.");
     } catch {
       setMessage("The attachment must be a ready protected document.");
@@ -232,15 +239,39 @@ export function EnquiryWorkflow({
       </form>
       <form onSubmit={addAttachment}>
         <h3>Add proposal attachment</h3>
-        <label>
-          Protected media asset ID
-          <input name="asset_id" required />
-        </label>
+        <DocumentUploadField
+          label="Proposal document"
+          hint="Uploads to protected storage. Only the lead's own staff can open it, through a signed link."
+          value={attachment.assetID}
+          filename={attachment.filename}
+          onChange={(assetID, filename) =>
+            setAttachment((current) => ({
+              assetID,
+              // The filename is a sensible first label; an operator who has
+              // already written one keeps it.
+              label: current.label || filename.replace(/\.pdf$/i, ""),
+              filename,
+            }))
+          }
+        />
         <label>
           Label
-          <input name="label" required maxLength={200} />
+          <input
+            name="label"
+            required
+            maxLength={200}
+            value={attachment.label}
+            onChange={(event) =>
+              setAttachment((current) => ({
+                ...current,
+                label: event.target.value,
+              }))
+            }
+          />
         </label>
-        <button type="submit">Add attachment</button>
+        <button type="submit" disabled={!attachment.assetID}>
+          Add attachment
+        </button>
       </form>
       <h3>Notes</h3>
       {workflow.notes.length ? (

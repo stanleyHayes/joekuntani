@@ -1,0 +1,568 @@
+.stage {
+  display: block;
+  overflow: clip;
+}
+
+/* ---- Hero ---------------------------------------------------------------
+   Two columns on desktop: the decision copy on the left, the buy box on the
+   right so the price and the call to action stay in the first screenful.
+   Single column on phones, buy box directly under the facts. */
+
+.hero {
+  display: grid;
+  align-items: start;
+  gap: clamp(2rem, 5vw, 3.5rem);
+  padding-block: clamp(3rem, 8vw, 6rem);
+  border-bottom: 1px solid var(--line);
+}
+
+.heroCopy {
+  display: grid;
+  gap: 1.15rem;
+  min-width: 0;
+}
+
+.title {
+  max-width: 16ch;
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(2.75rem, 8vw, 6rem);
+  font-weight: 750;
+  letter-spacing: -0.05em;
+  line-height: 0.92;
+}
+
+.lede {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: clamp(1.02rem, 1.8vw, 1.25rem);
+  line-height: 1.6;
+}
+
+.heroFacts {
+  display: grid;
+  gap: 1.15rem;
+  margin: 0.35rem 0 0;
+  padding-top: 1.35rem;
+  border-top: 1px solid var(--line);
+}
+
+.heroFacts > div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.heroFacts dt {
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.heroFacts dd {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.heroFactNote {
+  color: var(--ink-soft);
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+}
+
+.heroAside {
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.cover {
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.cover img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-panel);
+  object-fit: cover;
+}
+
+.cover figcaption {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+
+/* ---- Buy box ---- */
+
+.buyBox {
+  display: grid;
+  justify-items: start;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+}
+
+.buyStatus {
+  margin: 0;
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.buyStatus[data-tone="live"] {
+  background: color-mix(in srgb, var(--brand-j) 26%, transparent);
+  color: var(--ink);
+}
+
+.buyStatus[data-tone="warn"] {
+  background: var(--warning-surface);
+  color: var(--warning);
+}
+
+.buyPrice {
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(1.6rem, 3.5vw, 2.35rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.cta {
+  display: inline-flex;
+  width: 100%;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.7rem 1.5rem;
+  background: var(--accent-strong);
+  color: var(--accent-contrast);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  text-align: center;
+  text-decoration: none;
+  transition: transform 140ms ease;
+}
+
+.cta:hover {
+  transform: translateY(-1px);
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.ctaDisabled,
+.ctaDisabled:hover {
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  color: var(--ink-soft);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.buyNote {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+/* ---- Sections ------------------------------------------------------------ */
+
+.section {
+  padding-block: clamp(2.75rem, 7vw, 5.5rem);
+}
+
+.sectionHead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.4rem 1rem;
+  margin-bottom: clamp(1.5rem, 4vw, 2.75rem);
+}
+
+.sectionHead > span {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+}
+
+.sectionHead h2 {
+  margin: 0;
+  font-size: clamp(1.9rem, 4.5vw, 3.25rem);
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+}
+
+.sectionHead p {
+  grid-column: 2;
+  max-width: 40ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.prose {
+  max-width: 62ch;
+  margin: 0;
+  font-size: clamp(1rem, 1.5vw, 1.12rem);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+/* ---- Venue ---- */
+
+.venuePanel {
+  display: grid;
+  gap: 1.35rem;
+  min-width: 0;
+  padding: clamp(1.35rem, 3vw, 2.15rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+}
+
+.facts {
+  display: grid;
+  gap: 1.15rem;
+  margin: 0;
+}
+
+.facts > div {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.facts dt {
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.facts dd {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.mapLink {
+  justify-self: start;
+  color: var(--accent);
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 0.1rem;
+}
+
+.mapLink:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.accessNote {
+  display: grid;
+  gap: 0.4rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid var(--line);
+}
+
+.accessNote h3 {
+  margin: 0;
+  color: var(--focus);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.accessNote p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+/* ---- Tickets ------------------------------------------------------------- */
+
+.tiers {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tiers > li {
+  display: grid;
+  min-width: 0;
+}
+
+.tier {
+  display: grid;
+  align-content: start;
+  gap: 0.7rem;
+  min-width: 0;
+  height: 100%;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+}
+
+/* The live tier is the one we want chosen, so it is the only bordered-in-accent
+   card; muted and warn tiers must not compete with it. */
+.tier[data-tone="live"] {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.tier[data-tone="muted"],
+.tier[data-tone="warn"] {
+  background: color-mix(in srgb, var(--surface-raised) 70%, transparent);
+}
+
+.tierHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 0.75rem;
+}
+
+.tierName {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.tierStatus {
+  margin: 0;
+  border-radius: 999px;
+  padding: 0.22rem 0.6rem;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink-soft);
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tierStatus[data-tone="live"] {
+  background: color-mix(in srgb, var(--brand-j) 26%, transparent);
+  color: var(--ink);
+}
+
+.tierStatus[data-tone="warn"] {
+  background: var(--warning-surface);
+  color: var(--warning);
+}
+
+.tierPrice {
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.tierCopy {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.tierFacts {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.15rem 0 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--line);
+}
+
+.tierFacts > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.2rem 0.75rem;
+  min-width: 0;
+}
+
+.tierFacts dt {
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tierFacts dd {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 650;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.tierCta {
+  display: inline-flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  padding: 0.6rem 1.2rem;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 750;
+  text-align: center;
+  text-decoration: none;
+}
+
+.tierCta:hover {
+  background: var(--ink);
+  color: var(--canvas);
+}
+
+.tierCta:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.tierCtaDisabled,
+.tierCtaDisabled:hover {
+  border-color: var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+.notice {
+  max-width: 46rem;
+  margin: 0;
+  padding: clamp(1.15rem, 3vw, 1.75rem);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  color: var(--ink-soft);
+}
+
+/* ---- Policies ------------------------------------------------------------ */
+
+.policyGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.policy {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: clamp(1.15rem, 2.5vw, 1.65rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--surface-raised) 80%, transparent);
+}
+
+.policy h3 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.policy p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (min-width: 44rem) {
+  .heroFacts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 2rem;
+  }
+
+  .facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 1.75rem;
+  }
+
+  .cta {
+    width: auto;
+    min-width: 14rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .hero {
+    grid-template-columns: minmax(0, 1.15fr) minmax(21rem, 0.7fr);
+  }
+
+  .buyBox {
+    position: sticky;
+    top: calc(var(--header-height) + 1rem);
+  }
+
+  .cta {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta,
+  .cta:hover {
+    transition: none;
+    transform: none;
+  }
+}

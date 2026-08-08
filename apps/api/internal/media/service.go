@@ -101,6 +101,41 @@ func (service *Service) CompleteUpload(ctx context.Context, body []byte, headers
 	if err != nil {
 		return Asset{}, err
 	}
+	return service.finishUpload(ctx, completion, headers["event-id"])
+}
+
+// ConfirmUpload completes an asset from the reply the browser received from the
+// provider, for when the provider's callback never arrives. A local API has no
+// public hostname for the callback to reach, so without this every upload made
+// in development stayed at StatusUploading forever and no chosen image was ever
+// publishable; dropped callbacks strand assets the same way in production.
+//
+// The payload is relayed by the client but not trusted on its word: the provider
+// signs its reply, and VerifyUploadResponse rejects anything that does not carry
+// that signature. Completion is idempotent, so a confirm racing a late callback
+// settles on the same asset.
+func (service *Service) ConfirmUpload(ctx context.Context, actor Actor, assetID string, body []byte) (Asset, error) {
+	if !actor.CanEditContent {
+		return Asset{}, ErrForbidden
+	}
+	verifier, ok := service.provider.(UploadResponseVerifier)
+	if !ok {
+		return Asset{}, ErrProviderUnavailable
+	}
+	completion, err := verifier.VerifyUploadResponse(ctx, body)
+	if err != nil {
+		return Asset{}, err
+	}
+	// The signature proves the provider produced this reply, not that it belongs
+	// to the asset the caller named — bind them so a valid reply cannot be
+	// replayed against a different draft.
+	if completion.AssetID != assetID {
+		return Asset{}, ErrInvalid
+	}
+	return service.finishUpload(ctx, completion, "confirm:"+completion.StorageKey+":"+completion.ProviderVersion)
+}
+
+func (service *Service) finishUpload(ctx context.Context, completion Completion, eventID string) (Asset, error) {
 	asset, err := service.repository.Get(ctx, completion.AssetID)
 	if err != nil {
 		return Asset{}, err
@@ -112,7 +147,7 @@ func (service *Service) CompleteUpload(ctx context.Context, body []byte, headers
 		_ = service.repository.MarkFailed(ctx, asset.PublicID, service.now().UTC(), AuditEvent{Action: "media.upload.complete", AssetID: asset.PublicID, Outcome: "rejected", CreatedAt: service.now().UTC()})
 		return Asset{}, err
 	}
-	return service.repository.Complete(ctx, completion, headers["event-id"], service.now().UTC(), AuditEvent{Action: "media.upload.complete", AssetID: asset.PublicID, Outcome: "accepted", CreatedAt: service.now().UTC()})
+	return service.repository.Complete(ctx, completion, eventID, service.now().UTC(), AuditEvent{Action: "media.upload.complete", AssetID: asset.PublicID, Outcome: "accepted", CreatedAt: service.now().UTC()})
 }
 
 func (service *Service) UpdateMetadata(ctx context.Context, actor Actor, assetID, alt string, tags, transforms []string) (Asset, error) {
@@ -178,6 +213,26 @@ func (service *Service) Get(ctx context.Context, actor Actor, id string) (Asset,
 		return Asset{}, ErrForbidden
 	}
 	return service.repository.Get(ctx, id)
+}
+
+// PublicAsset resolves an asset id for an unauthenticated reader.
+//
+// The public site stores only asset ids on its content — a page's gallery is a
+// list of uuids — so without this every CMS image resolved to nothing and no
+// picture was ever rendered, on any page or social card.
+//
+// Only a `ready` asset is visible. A draft, failed or deleted asset has either
+// no file behind it or one that was withdrawn, and neither should be reachable
+// without a session.
+func (service *Service) PublicAsset(ctx context.Context, id string) (Asset, error) {
+	asset, err := service.repository.Get(ctx, id)
+	if err != nil {
+		return Asset{}, err
+	}
+	if asset.Status != StatusReady {
+		return Asset{}, ErrNotFound
+	}
+	return asset, nil
 }
 func (service *Service) List(ctx context.Context, actor Actor) ([]Asset, error) {
 	if !actor.CanEditContent {

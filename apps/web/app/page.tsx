@@ -23,6 +23,7 @@ import {
   demoTestimonials,
   demoWork,
 } from "../lib/demo/content";
+import { contentCovers, publicImageURL } from "../lib/media";
 import { contentMetadata } from "../lib/seo";
 import { getPublicServices } from "../components/services/data";
 import styles from "./home.module.css";
@@ -60,6 +61,13 @@ export default async function HomePage() {
       ? demoTestimonials
       : [];
   const services = servicesRaw.length ? servicesRaw : demo ? demoServices : [];
+  // The hero photograph comes from the first gallery image on the Home page
+  // record, the same field the About portrait uses, so both are managed from
+  // Content and media without an operator ever handling an asset id.
+  const heroImage = await publicImageURL(home?.gallery_asset_ids?.[0] ?? "");
+  // Published work carries its own imagery; the demo map is only a fallback
+  // for the fixture path.
+  const covers = await contentCovers(work);
   const featuredEvent =
     activeFeaturedEvent(events.data) ||
     (demo ? activeFeaturedEvent(demoEvents) : undefined);
@@ -99,27 +107,44 @@ export default async function HomePage() {
             </div>
           </div>
           <figure className={styles.heroMedia}>
-            {usingDemo ? (
-              <>
-                {/* SVG demo asset; CMS will replace with approved Cloudinary media. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/* The frame owns the rounded clip. The stamp is inside it so the
+                corner crops the monogram, rather than letting it trail off
+                across the page background where it has no contrast to sit on. */}
+            <span className={styles.heroFrame}>
+              {heroImage ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={heroImage}
+                  alt={home?.title ? `${home.title} hero image` : ""}
+                  width={1600}
+                  height={1200}
+                />
+              ) : usingDemo ? (
+                /* SVG demo asset; CMS will replace with approved Cloudinary media. */
+                /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={demoImages.hero}
                   alt="Demo stage atmosphere placeholder. Replace via CMS."
                   width={1600}
                   height={1200}
                 />
-                <figcaption>Demo media — replace via CMS</figcaption>
-              </>
-            ) : (
-              <ContentPlaceholder
-                label="Hero media"
-                detail="Approved photography or video will appear here."
-              />
-            )}
-            <span className={styles.heroStamp} aria-hidden="true">
-              JK
+              ) : (
+                <ContentPlaceholder
+                  label="Hero media"
+                  detail="Approved photography or video will appear here."
+                />
+              )}
+              {/* Only over photography: on the empty-state placeholder the
+                  monogram has nothing to read against. */}
+              {heroImage || usingDemo ? (
+                <span className={styles.heroStamp} aria-hidden="true">
+                  JK
+                </span>
+              ) : null}
             </span>
+            {!heroImage && usingDemo ? (
+              <figcaption>Demo media — replace via CMS</figcaption>
+            ) : null}
           </figure>
         </header>
         <div className={styles.signal} aria-label="Joe Kuntani disciplines">
@@ -163,7 +188,10 @@ export default async function HomePage() {
             <ol className={styles.workGrid}>
               {work.slice(0, 4).map((item, index) => {
                 const cover =
-                  item.slug && usingDemo ? demoCovers[item.slug] : undefined;
+                  item.slug
+                    ? (covers[item.slug] ??
+                      (usingDemo ? demoCovers[item.slug] : undefined))
+                    : undefined;
                 return (
                   <li key={item.id}>
                     <Link href={item.slug ? `/work/${item.slug}` : "/work"}>

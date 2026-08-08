@@ -49,54 +49,8 @@
   gap: 0.35rem;
 }
 
-.form,
-.field {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.form {
-  gap: 1rem;
-}
-
-.field span,
-.checkbox {
-  font-weight: 700;
-}
-
-.field input,
-.field textarea,
-.field select {
-  width: 100%;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  background: var(--surface);
-  padding: 0.7rem;
-}
-
-.field textarea {
-  min-height: 7rem;
-  resize: vertical;
-}
-
-.field small {
-  color: var(--ink-soft);
-}
-
-.checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-.actions button,
-.itemActions button {
+.itemActions button,
+.rowLink {
   min-height: 2.5rem;
   border: 1px solid var(--ink);
   border-radius: var(--radius-control);
@@ -107,15 +61,33 @@
   font-weight: 750;
 }
 
-.actions button[type="submit"] {
-  background: var(--accent-strong);
-  color: var(--accent-contrast);
-}
-
-.actions button:disabled,
 .itemActions button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+/* The editor is a page now, so Add and Edit are links wearing the shape the
+   buttons used to have. */
+.addService,
+.rowLink {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.addService {
+  min-height: 2.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: var(--accent-strong);
+  padding: 0.5rem 0.9rem;
+  color: var(--accent-contrast);
+  font-weight: 750;
+}
+
+.addService:hover,
+.rowLink:hover {
+  filter: brightness(1.06);
 }
 
 .status,
@@ -132,13 +104,4 @@
   .manager {
     grid-template-columns: 1fr;
   }
-}
-
-/* Wraps a labelled control together with its AI assist bar, which must sit
-   outside the <label> so its buttons do not become part of the control name. */
-.fieldGroup {
-  display: grid;
-  gap: 0;
-  align-content: start;
-  min-width: 0;
 }

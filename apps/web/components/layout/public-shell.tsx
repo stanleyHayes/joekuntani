@@ -50,6 +50,11 @@ export function PublicShell({
           brandName={resolved?.brand?.name}
           statusText={resolved?.brand?.tagline}
         />
+        <MobileBottomNav
+          currentPath={currentPath}
+          navigation={resolved?.navigation}
+          cta={resolved?.ctas?.find((item) => item.key === "header")}
+        />
       </div>
     </ThemeProvider>
   );

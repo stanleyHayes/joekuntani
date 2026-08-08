@@ -32,6 +32,13 @@
   --admin-sidebar: 15rem;
   --layer-skip: 40;
   --layer-header: 20;
+  /* Dialogs portal to <body>, and so do the Select/DateField popovers, which
+     makes them siblings rather than descendants — a popover opened from inside
+     a dialog is layered against the dialog itself, not within it. It therefore
+     has to outrank the dialog (90) while staying under the splash (100), or a
+     field like the invite Role select opens behind the panel that owns it. */
+  --layer-dialog: 90;
+  --layer-popover: 95;
   --theme-reveal-x: 50%;
   --theme-reveal-y: 50%;
 
@@ -1083,6 +1090,14 @@ h2 {
 
 .public-shell {
   min-height: 100dvh;
+}
+
+/* The mobile bottom bar is fixed, so the last of the footer would sit under it.
+   Matches the bar's own breakpoint in mobile-bottom-nav.module.css. */
+@media (max-width: 72rem) {
+  .public-shell {
+    padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .desktop-navigation a[aria-current="page"]::after,

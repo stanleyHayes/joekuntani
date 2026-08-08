@@ -29,6 +29,9 @@
 
 .link,
 .action {
+  /* Each tab lights its indicator in its own hue, so the cap always matches the
+     icon under it rather than reading as a stray cyan mark on the gold slot. */
+  --tab-accent: var(--brand-k);
   position: relative;
   flex: 1;
   min-width: 0;
@@ -80,16 +83,18 @@
   max-width: 100%;
 }
 
-.link[data-active="true"] {
+.link[data-active="true"],
+.action[data-active="true"] {
   color: var(--ink);
 }
 
 .link[data-active="true"] .icon {
-  color: var(--brand-k);
+  color: var(--tab-accent);
 }
 
 /* Lit cap on the current tab, drawn on the bar's own top rule. */
-.link[data-active="true"]::before {
+.link[data-active="true"]::before,
+.action[data-active="true"]::before {
   content: "";
   position: absolute;
   top: -1px;
@@ -98,11 +103,12 @@
   height: 2px;
   transform: translateX(-50%);
   border-radius: 0 0 2px 2px;
-  background: var(--brand-k);
+  background: var(--tab-accent);
 }
 
 .action {
-  color: var(--ink);
+  --tab-accent: var(--brand-j);
+  color: var(--ink-soft);
 }
 
 .action .icon {
@@ -114,7 +120,9 @@
 }
 
 /* The enquiry slot is the site's conversion target — a brand wash separates it
-   from the four navigational tabs without stealing a whole row. */
+   from the four navigational tabs without stealing a whole row. It rests low
+   enough that deepening it still reads as a state change: at the old fixed 22%
+   the slot looked selected on every page, so /book was indistinguishable. */
 .action::after {
   content: "";
   position: absolute;
@@ -123,8 +131,17 @@
   border-radius: 0.7rem;
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--brand-j) 22%, transparent),
-    color-mix(in srgb, var(--brand-k) 22%, transparent)
+    color-mix(in srgb, var(--brand-j) 13%, transparent),
+    color-mix(in srgb, var(--brand-k) 13%, transparent)
+  );
+  transition: background 160ms ease;
+}
+
+.action[data-active="true"]::after {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--brand-j) 34%, transparent),
+    color-mix(in srgb, var(--brand-k) 30%, transparent)
   );
 }
 
@@ -137,5 +154,9 @@
 @media (prefers-reduced-motion: reduce) {
   .action:hover .icon {
     transform: none;
+  }
+
+  .action::after {
+    transition: none;
   }
 }

@@ -76,3 +76,36 @@ it("labels a completed event as past", () => {
   ).toBeVisible();
   expect(screen.getByText("Past event")).toBeVisible();
 });
+
+// A tier's stored availability lags its inventory: the flag still reads
+// `on_sale` after the last seat goes. The card used to render "0 remaining"
+// beside a live checkout link, walking buyers into an order that cannot be
+// filled. Inventory decides, not the flag.
+it("treats an on-sale tier with nothing left as sold out", () => {
+  const approved = event();
+  const exhausted = {
+    ...approved.tickets[0],
+    availability: "on_sale" as const,
+    capacity: 100,
+    sold: 95,
+    reserved: 5,
+  };
+  render(<TicketCard ticket={exhausted} />);
+
+  expect(screen.getByText(/0 remaining/)).toBeVisible();
+  expect(
+    screen.queryByRole("link", { name: "Choose this ticket" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getAllByText("Sold out").length).toBeGreaterThan(0);
+});
+
+// Stock left but no checkout link configured is a different state, and must
+// not be reported to a visitor as sold out.
+it("distinguishes a missing checkout link from an exhausted tier", () => {
+  const approved = event();
+  render(
+    <TicketCard ticket={{ ...approved.tickets[0], checkout_href: undefined }} />,
+  );
+  expect(screen.getByText("Checkout coming soon")).toBeVisible();
+  expect(screen.queryByText("Sold out")).not.toBeInTheDocument();
+});

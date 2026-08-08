@@ -134,8 +134,22 @@ func (store *MongoStore) Retry(ctx context.Context, publicID string, attempts in
 	return nil
 }
 
+// enquiryDocument fills in the empty collection and map that Go leaves nil.
+//
+// A nil slice or map encodes to BSON null, and the schema validator requires an
+// array and an object. Channels is a brand-enquiry field, so every event
+// enquiry arrived with it nil and was rejected outright — the submission never
+// reached storage, the outbox, or the console, and the caller saw only a 503.
 func enquiryDocument(item Enquiry) bson.M {
-	return bson.M{"public_id": item.PublicID, "reference": item.Reference, "service_id": item.ServiceID, "enquiry_type": item.EnquiryType, "source": item.Source, "contact": item.Contact, "details": item.Details, "answers": item.Answers, "project_brief": item.ProjectBrief, "budget": item.Budget, "timeline": item.Timeline, "currency": item.Currency, "decision_deadline": item.DecisionDeadline, "additional_notes": item.AdditionalNotes, "marketing_consent": item.MarketingConsent, "consent_text": item.ConsentText, "consent_version": item.ConsentVersion, "consent_at": item.ConsentAt, "ip_hash": item.IPHash, "status": "new", "created_at": item.CreatedAt, "updated_at": item.CreatedAt}
+	details := item.Details
+	if details.Channels == nil {
+		details.Channels = []string{}
+	}
+	answers := item.Answers
+	if answers == nil {
+		answers = map[string]any{}
+	}
+	return bson.M{"public_id": item.PublicID, "reference": item.Reference, "service_id": item.ServiceID, "enquiry_type": item.EnquiryType, "source": item.Source, "contact": item.Contact, "details": details, "answers": answers, "project_brief": item.ProjectBrief, "budget": item.Budget, "timeline": item.Timeline, "currency": item.Currency, "decision_deadline": item.DecisionDeadline, "additional_notes": item.AdditionalNotes, "marketing_consent": item.MarketingConsent, "consent_text": item.ConsentText, "consent_version": item.ConsentVersion, "consent_at": item.ConsentAt, "ip_hash": item.IPHash, "status": "new", "created_at": item.CreatedAt, "updated_at": item.CreatedAt}
 }
 func tokenHash(value string) string {
 	sum := sha256.Sum256([]byte(value))

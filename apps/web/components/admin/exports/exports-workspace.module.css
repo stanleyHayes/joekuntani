@@ -36,34 +36,29 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.65rem;
 }
-.controls select,
-.controls button {
+/* Scoped to the download button by class, never to a bare `button`. The
+   resource control is the branded `Select`, whose trigger is also a `button`
+   inside `.controls` — an element selector here (0-1-1) outranked `.trigger`
+   (0-1-0) and repainted it with `--color-text`, which aliases `--ink`. That is
+   cream on the dark theme and near-black on the light one, so the field came
+   out inverted against every other control on the page. The old `select` rules
+   went with it: this control has not been a native `<select>` for a while. */
+.controls .download {
   min-height: 3rem;
-  border-radius: 0.7rem;
-  font: inherit;
-}
-.controls select {
-  min-width: 0;
-  padding: 0 0.9rem;
-  border: 1px solid var(--color-border, #bbb);
-  background: var(--color-background, #fff);
-  color: inherit;
-}
-.controls button {
   padding: 0 1.25rem;
   border: 0;
-  background: var(--color-text, #171717);
-  color: var(--color-background, #fff);
+  border-radius: 0.7rem;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font: inherit;
   font-weight: 750;
   cursor: pointer;
 }
-.controls button:disabled,
-.controls select:disabled {
+.controls .download:disabled {
   cursor: not-allowed;
   opacity: 0.65;
 }
-.controls select:focus-visible,
-.controls button:focus-visible {
+.controls .download:focus-visible {
   outline: 3px solid var(--color-focus, #0f766e);
   outline-offset: 3px;
 }

@@ -132,6 +132,7 @@ export function ExportsWorkspace() {
               aria-label="Export resource"
             />
             <button
+              className={styles.download}
               type="submit"
               disabled={state === "exporting" || resources.length === 0}
             >

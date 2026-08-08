@@ -29,9 +29,14 @@
   gap: 1rem;
 }
 
-/* Cards / panels */
-.admin-stage [class*="panel"],
-.admin-stage [class*="card"] {
+/* Cards / panels.
+   `:not(button)` because the substring match is blind to what the class means:
+   it also catches `cardDelete` and `discard`, and the !important padding below
+   collapses an icon button's content box to zero width, so the icon disappears
+   inside an otherwise normal-looking control. Buttons take their chrome from
+   the `.admin-stage button` rule below instead. */
+.admin-stage [class*="panel"]:not(button),
+.admin-stage [class*="card"]:not(button) {
   border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent) !important;
   border-radius: 1.05rem !important;
   background: var(--surface) !important;

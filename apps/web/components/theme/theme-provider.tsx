@@ -4,9 +4,8 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
@@ -27,41 +26,51 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 const STORAGE_KEY = "jk-theme";
 
+/**
+ * `<html data-theme>` is the single source of truth, not React state: the
+ * layout's boot script writes it from storage before React hydrates. Treating
+ * it as an external store lets `useSyncExternalStore` serve the server's value
+ * during hydration and the real one immediately after, which is what keeps the
+ * toggle from rendering "Light" over server-rendered "Dark".
+ */
+const listeners = new Set<() => void>();
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot(): Theme {
+  const current = document.documentElement.dataset.theme;
+  return current === "light" || current === "dark" ? current : SERVER_THEME;
+}
+
+function getServerSnapshot(): Theme {
+  return SERVER_THEME;
+}
+
 function applyTheme(theme: Theme) {
   document.documentElement.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme;
+  listeners.forEach((listener) => listener());
 }
 
-function supportsViewTransition(
-  doc: Document,
-): doc is Document & {
+function supportsViewTransition(doc: Document): doc is Document & {
   startViewTransition: (cb: () => void) => { finished: Promise<void> };
 } {
   return "startViewTransition" in doc;
 }
 
-function readInitialTheme(): Theme {
-  /* v8 ignore next 3 -- SSR/prerender safety; jsdom always has document */
-  if (typeof document === "undefined") {
-    return "dark";
-  }
-  const current = document.documentElement.dataset.theme;
-  return current === "light" || current === "dark" ? current : "dark";
-}
-
 function ThemeProviderInner({ children }: { children: ReactNode }) {
-  // Deliberately NOT `useState(readInitialTheme)`. The layout's boot script
-  // rewrites `<html data-theme>` from storage before React hydrates, so reading
-  // it during the first render made the client disagree with the server HTML —
-  // the toggle rendered "Light"/"☀" over a server-rendered "Dark"/"◐" and React
-  // threw "server rendered text didn't match the client" for every light-theme
-  // visitor. Start from the server's value, then adopt the real one on mount.
-  const [theme, setThemeState] = useState<Theme>(SERVER_THEME);
-
-  useEffect(() => {
-    const actual = readInitialTheme();
-    setThemeState((current) => (current === actual ? current : actual));
-  }, []);
+  // Reading `<html data-theme>` during render used to break hydration: the boot
+  // script has already rewritten it, so a light-theme visitor rendered
+  // "Light"/"☀" over the server's "Dark"/"◐" and React threw "server rendered
+  // text didn't match the client". `useSyncExternalStore` serves the server's
+  // value while hydrating and swaps to the live one straight after, so the two
+  // renders agree without an effect that sets state.
+  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const setTheme = useCallback(
     (next: Theme, origin?: { x: number; y: number }) => {
@@ -70,8 +79,9 @@ function ThemeProviderInner({ children }: { children: ReactNode }) {
         typeof window.matchMedia === "function" &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const run = () => {
+        // applyTheme writes the attribute and notifies subscribers, so the
+        // render updates from the store rather than a parallel copy of state.
         applyTheme(next);
-        setThemeState(next);
         try {
           localStorage.setItem(STORAGE_KEY, next);
         } catch {

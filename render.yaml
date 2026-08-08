@@ -94,3 +94,12 @@ services:
         value: 1m
       - key: TICKET_HOLD_DURATION
         value: 10m
+      # Payments. Without PAYSTACK_SECRET_KEY the API silently falls back to
+      # payments.UnavailableProvider, which takes donations, merch and ticket
+      # checkout down together while /health/ready still reports healthy.
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_API_BASE_URL
+        sync: false
+      - key: SUPPORT_CURRENCY
+        value: GHS

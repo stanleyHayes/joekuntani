@@ -97,29 +97,65 @@ func (provider *Cloudinary) VerifyCompletion(_ context.Context, body []byte, hea
 	if subtle.ConstantTimeCompare(expected, provided) != 1 {
 		return Completion{}, ErrInvalidSignature
 	}
-	var notification struct {
-		PublicID     string `json:"public_id"`
-		SecureURL    string `json:"secure_url"`
-		ResourceType string `json:"resource_type"`
-		Format       string `json:"format"`
-		Bytes        int64  `json:"bytes"`
-		Width        int    `json:"width"`
-		Height       int    `json:"height"`
-		Version      int64  `json:"version"`
-	}
+	var notification uploadReply
 	decoder := json.NewDecoder(strings.NewReader(string(body)))
 	if err := decoder.Decode(&notification); err != nil {
 		return Completion{}, ErrInvalid
 	}
-	mimeType := notification.ResourceType + "/" + strings.ToLower(notification.Format)
-	if notification.Format == "jpg" {
+	return notification.completion(), nil
+}
+
+// uploadReply is the payload Cloudinary sends for a finished upload. The webhook
+// notification and the reply the browser receives from a direct upload carry the
+// same fields, so both completion paths decode into this one shape.
+type uploadReply struct {
+	PublicID     string `json:"public_id"`
+	SecureURL    string `json:"secure_url"`
+	ResourceType string `json:"resource_type"`
+	Format       string `json:"format"`
+	Signature    string `json:"signature"`
+	Bytes        int64  `json:"bytes"`
+	Width        int    `json:"width"`
+	Height       int    `json:"height"`
+	Version      int64  `json:"version"`
+}
+
+func (reply uploadReply) completion() Completion {
+	mimeType := reply.ResourceType + "/" + strings.ToLower(reply.Format)
+	switch reply.Format {
+	case "jpg":
 		mimeType = "image/jpeg"
-	}
-	if notification.Format == "pdf" {
+	case "pdf":
 		mimeType = "application/pdf"
 	}
-	completion := Completion{AssetID: path.Base(notification.PublicID), StorageKey: notification.PublicID, PublicURL: notification.SecureURL, MIMEType: mimeType, Bytes: notification.Bytes, Width: notification.Width, Height: notification.Height, ProviderVersion: strconv.FormatInt(notification.Version, 10)}
-	return completion, nil
+	return Completion{AssetID: path.Base(reply.PublicID), StorageKey: reply.PublicID, PublicURL: reply.SecureURL, MIMEType: mimeType, Bytes: reply.Bytes, Width: reply.Width, Height: reply.Height, ProviderVersion: strconv.FormatInt(reply.Version, 10)}
+}
+
+// VerifyUploadResponse authenticates the reply Cloudinary hands back to the
+// browser after a direct upload, which it signs as
+// sha1("public_id=<id>&version=<v>" + api_secret).
+//
+// This exists because the inbound webhook is not always deliverable. A local API
+// has no public hostname for Cloudinary to call, so every upload stranded at
+// StatusUploading and no image a developer chose ever became usable. Hosted
+// callbacks also go missing occasionally, leaving the same dead asset in
+// production. The browser cannot forge this signature without the API secret, so
+// relaying the reply through the client is exactly as trustworthy as the webhook
+// while working everywhere.
+func (provider *Cloudinary) VerifyUploadResponse(_ context.Context, body []byte) (Completion, error) {
+	var reply uploadReply
+	if err := json.Unmarshal(body, &reply); err != nil {
+		return Completion{}, ErrInvalid
+	}
+	if reply.PublicID == "" || reply.Version == 0 || reply.Signature == "" {
+		return Completion{}, ErrInvalid
+	}
+	expected := sha1.Sum([]byte("public_id=" + reply.PublicID + "&version=" + strconv.FormatInt(reply.Version, 10) + provider.config.APISecret))
+	provided, err := hex.DecodeString(reply.Signature)
+	if err != nil || subtle.ConstantTimeCompare(expected[:], provided) != 1 {
+		return Completion{}, ErrInvalidSignature
+	}
+	return reply.completion(), nil
 }
 func (provider *Cloudinary) Delete(ctx context.Context, asset Asset) error {
 	if err := provider.delete(ctx, asset.StorageKey); err != nil {

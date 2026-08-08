@@ -1,10 +1,4 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 
 import type { PublicService } from "../../services/types";
@@ -37,50 +31,25 @@ const second = {
 
 afterEach(() => vi.unstubAllGlobals());
 
-it("loads, edits, validates schema and persists with CSRF", async () => {
-  Object.defineProperty(document, "cookie", {
-    configurable: true,
-    value: "jk_admin_csrf=test-csrf",
-  });
-  const saved = { ...first, name: "Approved updated" };
+it("loads services and sends editing to its own page", async () => {
   const fetcher = vi
     .fn()
     .mockResolvedValueOnce(
       new Response(JSON.stringify({ items: [first, second] }), { status: 200 }),
-    )
-    .mockResolvedValueOnce(
-      new Response(JSON.stringify(saved), { status: 200 }),
     );
   vi.stubGlobal("fetch", fetcher);
   render(<ServiceManager />);
   expect(await screen.findByText("Approved first")).toBeVisible();
-  expect(
-    screen.queryByRole("dialog", { name: "Add a service" }),
-  ).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Add service" }));
-  expect(
-    screen.getByRole("button", { name: "Create service" }),
-  ).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Close dialog" }));
+  // The editor is a route, so no form opens over the list.
   expect(screen.queryByLabelText("Service name")).not.toBeInTheDocument();
-  fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]!);
-  fireEvent.change(screen.getByLabelText("Service name"), {
-    target: { value: "Approved updated" },
-  });
-  const questions = screen.getByLabelText(/Service-specific questions/);
-  fireEvent.change(questions, { target: { value: "{" } });
-  expect(questions).toHaveAttribute("aria-invalid", "true");
-  expect(screen.getByRole("button", { name: "Save service" })).toBeDisabled();
-  fireEvent.change(questions, { target: { value: "[]" } });
-  fireEvent.click(screen.getByRole("button", { name: "Save service" }));
-  expect(await screen.findByText("Service saved and audited.")).toBeVisible();
-  expect(fetcher.mock.calls[1]).toEqual([
-    `/api/admin/services/${first.id}`,
-    expect.objectContaining({
-      method: "PUT",
-      headers: expect.objectContaining({ "X-CSRF-Token": "test-csrf" }),
-    }),
-  ]);
+  expect(screen.getByRole("link", { name: "Add service" })).toHaveAttribute(
+    "href",
+    "/admin/services/new",
+  );
+  expect(screen.getAllByRole("link", { name: "Edit" })[0]).toHaveAttribute(
+    "href",
+    `/admin/services/${first.id}`,
+  );
 });
 
 it("reorders and toggles lifecycle through explicit controls", async () => {
@@ -134,6 +103,8 @@ it("confirms and safely retires a service while preserving history", async () =>
     await screen.findByText("Service retired and retained in history."),
   ).toBeVisible();
   expect(screen.getByText("Retired")).toBeVisible();
+  // A retired service keeps its history but can no longer be opened.
+  expect(screen.getByRole("button", { name: "Edit" })).toBeDisabled();
   expect(fetcher.mock.calls[1]).toEqual([
     `/api/admin/services/${first.id}`,
     expect.objectContaining({
@@ -185,50 +156,4 @@ it("shows a safe load failure without exposing internals", async () => {
     await screen.findByText("Services could not be loaded. Try again."),
   ).toBeVisible();
   expect(screen.queryByText("secret")).toBeNull();
-});
-
-it("rewrites service copy through the assistant without renaming the field", async () => {
-  Object.defineProperty(document, "cookie", {
-    configurable: true,
-    value: "jk_admin_csrf=test-csrf",
-  });
-  const encoder = new TextEncoder();
-  const fetcher = vi
-    .fn()
-    .mockResolvedValueOnce(
-      new Response(JSON.stringify({ items: [first] }), { status: 200 }),
-    )
-    .mockResolvedValueOnce({
-      ok: true,
-      body: new ReadableStream<Uint8Array>({
-        start(controller) {
-          controller.enqueue(encoder.encode("A polished service summary."));
-          controller.close();
-        },
-      }),
-    });
-  vi.stubGlobal("fetch", fetcher);
-  render(<ServiceManager />);
-
-  expect(await screen.findByText("Approved first")).toBeVisible();
-  fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[0]!);
-
-  const summary = await screen.findByRole("textbox", { name: "Summary" });
-  fireEvent.click(
-    within(summary.closest("div") as HTMLElement).getByRole("button", {
-      name: /Rewrite/,
-    }),
-  );
-  fireEvent.click(await screen.findByRole("button", { name: /Use this/ }));
-
-  await waitFor(() =>
-    expect(screen.getByRole("textbox", { name: "Summary" })).toHaveValue(
-      "A polished service summary.",
-    ),
-  );
-  // The bar lives outside the <label>, so the control keeps its own name.
-  expect(
-    screen.getByRole("textbox", { name: "Description" }),
-  ).toBeInTheDocument();
-  expect(fetcher.mock.calls.at(-1)?.[0]).toBe("/api/admin/ai/assist");
 });

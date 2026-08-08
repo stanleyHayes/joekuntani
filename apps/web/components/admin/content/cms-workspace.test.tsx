@@ -1,19 +1,18 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 
-import { CMSWorkspace, refreshPublishedContent } from "./cms-workspace";
+import { refreshPublishedContent } from "./content-api";
+import { CMSWorkspace } from "./cms-workspace";
 
 afterEach(() => vi.unstubAllGlobals());
 
-it("verifies the role and loads approved media before exposing the workspace", async () => {
+it("verifies the role before exposing the workspace", async () => {
   const fetcher = vi.fn(async (input: string | URL | Request) => {
     const url = String(input);
     if (url.endsWith("/auth/me"))
       return new Response(JSON.stringify({ role: "content_editor" }), {
         status: 200,
       });
-    if (url.endsWith("/media"))
-      return new Response(JSON.stringify({ assets: [] }), { status: 200 });
     return new Response(JSON.stringify({ items: [] }), { status: 200 });
   });
   vi.stubGlobal("fetch", fetcher);
@@ -92,10 +91,12 @@ it("loads and selects service management inside the unified workspace", async ()
   const servicesTab = await screen.findByRole("button", { name: "Services" });
   fireEvent.click(servicesTab);
   expect(await screen.findByText("Approved service")).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "Edit" }));
-  expect(
-    screen.getByRole("dialog", { name: "Edit Approved service" }),
-  ).toBeVisible();
+  // Both workspaces edit on their own route now, so the tab's job ends at
+  // listing what can be opened.
+  expect(screen.getByRole("link", { name: "Edit" })).toHaveAttribute(
+    "href",
+    `/admin/services/${service.id}`,
+  );
   expect(fetcher).toHaveBeenCalledWith(
     "/api/admin/services",
     expect.objectContaining({ cache: "no-store" }),

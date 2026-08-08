@@ -13,6 +13,7 @@ import {
   demoContentEnabled,
   demoImages,
 } from "../../lib/demo/content";
+import { publicImageURL } from "../../lib/media";
 import { contentMetadata } from "../../lib/seo";
 import styles from "./about.module.css";
 
@@ -34,6 +35,11 @@ export default async function AboutPage() {
   const demo = demoContentEnabled();
   const usingDemo = demo && !pageRaw;
   const page = pageRaw || (demo ? demoAbout : null);
+  // The portrait comes from the first gallery asset on the About page record,
+  // which the admin content editor already manages. Before this the figure was
+  // hardcoded to a demo file or the brand logo, so there was no way to publish
+  // a real photograph from the dashboard at all.
+  const portrait = await publicImageURL(page?.gallery_asset_ids?.[0] ?? "");
   return (
     <PublicShell
       settings={shellSettings}
@@ -66,9 +72,17 @@ export default async function AboutPage() {
 
               <figure
                 className={styles.portrait}
-                data-placeholder={usingDemo ? "false" : "true"}
+                data-placeholder={portrait || usingDemo ? "false" : "true"}
               >
-                {usingDemo ? (
+                {portrait ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={portrait}
+                    alt={`${page.title} portrait`}
+                    width={1200}
+                    height={800}
+                  />
+                ) : usingDemo ? (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img

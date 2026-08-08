@@ -324,6 +324,148 @@ func (store *MongoStore) ProvisionStaff(ctx context.Context, name, email, passwo
 	return store.ProvisionUser(ctx, name, email, password, role, mfaSecret)
 }
 
+// ProvisionInvitedStaff writes the staff record and its invitation together, so
+// an account can never exist without the only means of activating it.
+func (store *MongoStore) ProvisionInvitedStaff(ctx context.Context, name, email string, role Role, mfaSecret, tokenHash string, expiresAt time.Time, audit AuditEvent) (string, error) {
+	name, email = strings.TrimSpace(name), strings.ToLower(strings.TrimSpace(email))
+	if name == "" || email == "" || !strings.Contains(email, "@") {
+		return "", errors.New("valid staff name and email are required")
+	}
+	if !role.provisionable() {
+		return "", errors.New("role must be administrator, booking_manager, content_editor, or analyst")
+	}
+	if role == RoleAdministrator && strings.TrimSpace(mfaSecret) == "" {
+		return "", errors.New("administrator provisioning requires an MFA secret")
+	}
+	if len(strings.TrimSpace(tokenHash)) == 0 {
+		return "", errors.New("invitation token hash is required")
+	}
+	encryptedSecret := ""
+	if mfaSecret != "" {
+		secret, err := store.secrets.Encrypt(strings.TrimSpace(mfaSecret))
+		if err != nil {
+			return "", err
+		}
+		encryptedSecret = secret
+	}
+	publicID, now := uuid(), time.Now().UTC()
+	session, err := store.database.Client().StartSession()
+	if err != nil {
+		return "", err
+	}
+	defer session.EndSession(ctx)
+	_, err = session.WithTransaction(ctx, func(transaction context.Context) (any, error) {
+		// Re-inviting an address that never accepted must reissue, not collide.
+		//
+		// Inviting always wrote a `users` row, and email is uniquely indexed, so
+		// once an invitation lapsed the address was locked out of the platform
+		// for good: the only route that mints an invitation is the same one that
+		// inserts the row, and there is no reissue path. A 72-hour window made
+		// that rare; a 15-minute one makes it the ordinary case.
+		//
+		// An account that has already been accepted is a different matter. It is
+		// still a conflict, because reissuing there would hand whoever can post
+		// an invite a way to reset a live administrator's credentials.
+		var existing struct {
+			ID     bson.ObjectID `bson:"_id"`
+			Public string        `bson:"public_id"`
+			Status string        `bson:"status"`
+		}
+		findErr := store.database.Collection("users").FindOne(transaction, bson.M{"email": email}).Decode(&existing)
+		if findErr != nil && !errors.Is(findErr, mongo.ErrNoDocuments) {
+			return nil, findErr
+		}
+
+		userID := bson.ObjectID{}
+		if findErr == nil {
+			if existing.Status != "invited" {
+				return nil, ErrConflict
+			}
+			publicID = existing.Public
+			userID = existing.ID
+			if _, err := store.database.Collection("users").UpdateOne(transaction,
+				bson.M{"_id": existing.ID, "status": "invited"},
+				bson.M{"$set": bson.M{"name": name, "role": role, "mfa_enabled": mfaSecret != "", "mfa_secret_encrypted": encryptedSecret, "updated_at": now}}); err != nil {
+				return nil, err
+			}
+			// The superseded link must stop working the moment a new one is
+			// issued, otherwise an invite is effectively multi-use.
+			if _, err := store.database.Collection("staff_invitations").DeleteMany(transaction,
+				bson.M{"user_id": existing.ID, "accepted_at": nil}); err != nil {
+				return nil, err
+			}
+		} else {
+			// An empty password hash never verifies — VerifyPassword rejects it on
+			// shape — so the account is unusable until acceptance writes a real one.
+			result, err := store.database.Collection("users").InsertOne(transaction, bson.M{"public_id": publicID, "name": name, "email": email, "password_hash": "", "role": role, "mfa_enabled": mfaSecret != "", "mfa_secret_encrypted": encryptedSecret, "last_mfa_counter": int64(0), "status": "invited", "last_login_at": nil, "created_at": now, "updated_at": now})
+			if err != nil {
+				return nil, err
+			}
+			id, ok := result.InsertedID.(bson.ObjectID)
+			if !ok {
+				return nil, errors.New("unexpected inserted user id")
+			}
+			userID = id
+		}
+
+		if _, err = store.database.Collection("staff_invitations").InsertOne(transaction, bson.M{"user_id": userID, "public_id": publicID, "name": name, "email": email, "role": role, "token_hash": tokenHash, "expires_at": expiresAt, "accepted_at": nil, "created_at": now}); err != nil {
+			return nil, err
+		}
+		return nil, store.appendAudit(transaction, audit)
+	})
+	if err != nil {
+		return "", fmt.Errorf("invite staff user: %w", err)
+	}
+	return publicID, nil
+}
+
+func (store *MongoStore) FindInvitation(ctx context.Context, tokenHash string) (Invitation, error) {
+	var record struct {
+		UserID    bson.ObjectID `bson:"user_id"`
+		Name      string        `bson:"name"`
+		Email     string        `bson:"email"`
+		Role      Role          `bson:"role"`
+		ExpiresAt time.Time     `bson:"expires_at"`
+	}
+	filter := bson.M{"token_hash": tokenHash, "accepted_at": nil}
+	if err := store.database.Collection("staff_invitations").FindOne(ctx, filter).Decode(&record); err != nil {
+		return Invitation{}, ErrInvitationInvalid
+	}
+	return Invitation{UserID: record.UserID.Hex(), Name: record.Name, Email: record.Email, Role: record.Role, ExpiresAt: record.ExpiresAt}, nil
+}
+
+// AcceptInvitation spends the invitation and activates the account atomically.
+// The filter carries `accepted_at: nil` and the expiry, so two concurrent
+// submissions of the same link cannot both write a password.
+func (store *MongoStore) AcceptInvitation(ctx context.Context, tokenHash, passwordHash string, now time.Time, audit AuditEvent) error {
+	session, err := store.database.Client().StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(ctx)
+	_, err = session.WithTransaction(ctx, func(transaction context.Context) (any, error) {
+		var record struct {
+			UserID bson.ObjectID `bson:"user_id"`
+		}
+		filter := bson.M{"token_hash": tokenHash, "accepted_at": nil, "expires_at": bson.M{"$gt": now}}
+		update := bson.M{"$set": bson.M{"accepted_at": now}}
+		if err := store.database.Collection("staff_invitations").FindOneAndUpdate(transaction, filter, update).Decode(&record); err != nil {
+			return nil, ErrInvitationInvalid
+		}
+		result, err := store.database.Collection("users").UpdateOne(transaction,
+			bson.M{"_id": record.UserID, "status": "invited"},
+			bson.M{"$set": bson.M{"password_hash": passwordHash, "status": "active", "updated_at": now}})
+		if err != nil {
+			return nil, err
+		}
+		if result.MatchedCount != 1 {
+			return nil, ErrInvitationInvalid
+		}
+		return nil, store.appendAudit(transaction, audit)
+	})
+	return err
+}
+
 func (store *MongoStore) UpdateProfile(ctx context.Context, id, name string, now time.Time, audit AuditEvent) error {
 	oid, err := bson.ObjectIDFromHex(id)
 	if err != nil {

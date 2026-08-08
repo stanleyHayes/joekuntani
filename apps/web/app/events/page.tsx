@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { eventCovers } from "../../lib/media";
 import { getPublicSettings } from "../../lib/settings";
 import { EventCard } from "../../components/events/event-ui";
 import { EventFilters } from "../../components/events/event-filters";
@@ -51,6 +52,9 @@ export default async function EventsPage({
   const usingDemo = demo && result.data.length === 0;
   const source = usingDemo ? demoEvents : result.data;
   const events = filterEvents(source, filters);
+  // Published events carry their own banner; the demo map is only a fallback
+  // for the fixture path.
+  const covers = await eventCovers(events);
   const cities = [...new Set(source.map((event) => event.venue.city))].sort();
   return (
     <PublicShell
@@ -108,7 +112,10 @@ export default async function EventsPage({
                 <EventCard
                   event={event}
                   key={event.id}
-                  coverSrc={usingDemo ? demoEventCovers[event.slug] : undefined}
+                  coverSrc={
+                    covers[event.slug] ??
+                    (usingDemo ? demoEventCovers[event.slug] : undefined)
+                  }
                 />
               ))}
             </div>

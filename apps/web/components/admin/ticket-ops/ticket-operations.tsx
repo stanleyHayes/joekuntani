@@ -290,17 +290,21 @@ export function TicketOperations() {
                     Refunded {o.refunded}
                   </td>
                   <td>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void mutate(`/api/admin/ticket-ops/orders/${id}/resend`)
-                      }
-                    >
-                      Resend tickets
-                    </button>
-                    <button type="button" onClick={() => setRefundOrder(o)}>
-                      Refund order
-                    </button>
+                    <div className={styles.rowActions}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void mutate(
+                            `/api/admin/ticket-ops/orders/${id}/resend`,
+                          )
+                        }
+                      >
+                        Resend tickets
+                      </button>
+                      <button type="button" onClick={() => setRefundOrder(o)}>
+                        Refund order
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

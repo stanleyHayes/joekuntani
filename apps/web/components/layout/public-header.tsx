@@ -14,19 +14,8 @@ import { SupportButton } from "../support/support-button";
 import { ButtonLink } from "../ui/button-link";
 import { BrandMark } from "./brand-mark";
 import { MobileMenu } from "./mobile-menu";
+import { fallbackNavigation, type NavItem } from "./nav-defaults";
 import styles from "./public-header.module.css";
-
-const fallbackNavigation = [
-  { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
-  { href: "/work", label: "Work" },
-  { href: "/services", label: "Services" },
-  { href: "/videos", label: "Videos" },
-  { href: "/press", label: "Press" },
-  { href: "/events", label: "Events" },
-] as const;
-
-type NavItem = { href: string; label: string; children?: readonly NavItem[] };
 
 /**
  * Folds flat navigation into groups so the bar stays short as sections are

@@ -1,10 +1,44 @@
 .workspace,
-.form,
 .calendar,
 .list,
 .day {
   display: grid;
   gap: 1rem;
+}
+
+/* Links, not buttons: adding a booking is a twelve-control form that lives on
+   its own route now, so it has to be something you can open in a new tab. */
+.addBooking,
+.emptyAction {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.addBooking {
+  border: 1px solid transparent;
+  background: var(--brand-j);
+  color: var(--on-brand, #fff);
+}
+
+.addBooking:hover {
+  filter: brightness(1.06);
+}
+
+.emptyAction {
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  background: color-mix(in srgb, var(--surface) 92%, var(--ink) 8%);
+  color: inherit;
+}
+
+.emptyAction:hover {
+  border-color: color-mix(in srgb, var(--brand-j) 50%, transparent);
+  background: color-mix(in srgb, var(--brand-j) 10%, var(--surface));
 }
 
 /* Range controls -------------------------------------------------------- */
@@ -88,10 +122,6 @@
 }
 
 /* Calendar body --------------------------------------------------------- */
-
-.form {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
-}
 
 .calendar {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
@@ -221,35 +251,7 @@
   color: color-mix(in srgb, var(--ink) 58%, transparent);
 }
 
-/* Schedule conflicts ---------------------------------------------------- */
-
-.warning {
-  display: grid;
-  gap: 0.5rem;
-  padding: 0.95rem 1.05rem;
-  border: 1px solid var(--warning-line);
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--warning-surface) 80%, transparent);
-  color: var(--warning);
-}
-
-.warning h3 {
-  margin: 0;
-  font-size: 0.86rem;
-  color: inherit;
-}
-
-.warning ul {
-  display: grid;
-  gap: 0.3rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: 0.83rem;
-}
-
 @media (max-width: 40rem) {
-  .form,
   .calendar {
     grid-template-columns: 1fr;
   }

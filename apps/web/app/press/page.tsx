@@ -11,6 +11,7 @@ import {
   demoCovers,
   demoPress,
 } from "../../lib/demo/content";
+import { contentCovers } from "../../lib/media";
 import { pageMetadata, unavailableMetadata } from "../../lib/seo";
 import styles from "../editorial-feed.module.css";
 
@@ -33,6 +34,9 @@ export default async function PressPage() {
   const demo = demoContentEnabled();
   const usingDemo = demo && itemsRaw.length === 0;
   const items = itemsRaw.length ? itemsRaw : demo ? demoPress : [];
+  // Published records carry their own imagery; the demo map is only a
+  // fallback for the fixture path.
+  const covers = await contentCovers(items);
   return (
     <PublicShell
       settings={shellSettings}
@@ -72,8 +76,12 @@ export default async function PressPage() {
           {items.length ? (
             <ol className={styles.pressList}>
               {items.map((item, index) => {
-                const cover =
-                  item.slug && usingDemo ? demoCovers[item.slug] : undefined;
+                // Published records carry their own imagery; the demo map is
+                // only a fallback for the fixture path.
+                const cover = item.slug
+                  ? (covers[item.slug] ??
+                    (usingDemo ? demoCovers[item.slug] : undefined))
+                  : undefined;
                 return (
                   <li className={styles.pressRow} key={item.id}>
                     <span className={styles.pressIndex}>

@@ -12,6 +12,7 @@ import {
   demoCovers,
   demoVideos,
 } from "../../lib/demo/content";
+import { contentCovers } from "../../lib/media";
 import { pageMetadata, unavailableMetadata } from "../../lib/seo";
 import styles from "../editorial-feed.module.css";
 
@@ -48,6 +49,9 @@ export default async function VideosPage({
           filters.category ? item.category === filters.category : true,
         )
       : [];
+  // Published records carry their own imagery; the demo map is only a
+  // fallback for the fixture path.
+  const covers = await contentCovers(items);
   const categories = [
     ...new Set(
       (allItemsRaw.length ? allItemsRaw : demo ? demoVideos : [])
@@ -114,10 +118,11 @@ export default async function VideosPage({
           {items.length ? (
             <ol className={styles.videoList}>
               {items.map((item, index) => {
+                // Published records carry their own imagery; the demo map is
+                // only a fallback for the fixture path.
                 const cover = item.slug
-                  ? usingDemo
-                    ? demoCovers[item.slug]
-                    : undefined
+                  ? (covers[item.slug] ??
+                    (usingDemo ? demoCovers[item.slug] : undefined))
                   : undefined;
                 const href = item.external_url || item.embed_url;
                 return (

@@ -30,3 +30,27 @@ func TestRuntimeConfigEnforcesEnvironmentIsolationAndProductionSecrets(t *testin
 		t.Fatal("invalid limit accepted")
 	}
 }
+
+// The admin pickers post a folder per surface. An upload folder the policy does
+// not list is rejected with 400, so a picker whose folder is missing here is a
+// feature that silently cannot upload anything — which is exactly what happened
+// to event banners and product images.
+func TestPolicyAllowsEveryFolderTheConsolePostsFrom(t *testing.T) {
+	config, err := LoadRuntimeConfig("local", func(key string) string {
+		return map[string]string{
+			"CLOUDINARY_FOLDER":         "joe-kuntani/local",
+			"CLOUDINARY_CLOUD_NAME":     "cloud",
+			"CLOUDINARY_API_KEY":        "key",
+			"CLOUDINARY_API_SECRET":     "secret",
+			"CLOUDINARY_WEBHOOK_SECRET": "hook",
+		}[key]
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, folder := range []string{"content", "press", "documents", "brand", "events", "merch"} {
+		if !config.Policy.Folders[folder] {
+			t.Fatalf("uploads from the %q surface are rejected by the policy", folder)
+		}
+	}
+}

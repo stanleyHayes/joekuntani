@@ -110,5 +110,5 @@ func Run(ctx context.Context, database *mongo.Database, environment string, regi
 // Registry intentionally contains no demo records. Feature slices may add
 // clearly labelled, non-sensitive placeholders after reserving a seed name.
 func Registry() []Seed {
-	return []Seed{initialContentSeed()}
+	return []Seed{initialContentSeed(), eventFixturesSeed()}
 }

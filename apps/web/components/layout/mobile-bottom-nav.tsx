@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 
-import { NavIcon } from "./nav-icons";
 import styles from "./mobile-bottom-nav.module.css";
-
-type NavItem = { href: string; label: string };
+import { fallbackNavigation, type NavItem } from "./nav-defaults";
+import { NavIcon } from "./nav-icons";
 
 type MobileBottomNavProps = {
   currentPath?: string;
@@ -49,20 +48,26 @@ function shortcutsFor(navigation: readonly NavItem[]): NavItem[] {
   // the wordmark scrolls away with the header.
   const picked: NavItem[] = [published.get("/") ?? HOME];
   for (const href of PRIORITY) {
-    if (picked.length > SHORTCUT_SLOTS) break;
+    if (picked.length >= SHORTCUT_SLOTS) break;
     const item = published.get(href);
     if (item) picked.push(item);
   }
-  return picked.slice(0, SHORTCUT_SLOTS + 1);
+  return picked;
 }
 
 export function MobileBottomNav({
   currentPath,
-  navigation = [],
+  // Same fallback as the header: an unreachable settings API must not collapse
+  // the bar to a lone Home link while the header still shows a full nav.
+  navigation = fallbackNavigation,
   cta,
 }: MobileBottomNavProps) {
   const shortcuts = shortcutsFor(navigation);
   const enquiry = cta ?? { href: "/book", label: "Make an enquiry" };
+  // The enquiry slot is still a route, so it reports its current state like any
+  // other tab. Without this it kept its brand wash on every page and never lit
+  // the indicator on its own — the one tab you could not locate yourself on.
+  const enquiryActive = linkIsActive(currentPath, enquiry.href);
 
   return (
     <nav
@@ -91,7 +96,12 @@ export function MobileBottomNav({
           {/* "Book" rather than the settings CTA label — a five-up bar cannot
               hold "Make an enquiry", and the header and menu both still carry
               the authored wording. */}
-          <Link className={styles.action} href={enquiry.href}>
+          <Link
+            className={styles.action}
+            href={enquiry.href}
+            aria-current={enquiryActive ? "page" : undefined}
+            data-active={enquiryActive ? "true" : "false"}
+          >
             <NavIcon href="/book" className={styles.icon} />
             <span className={styles.label}>Book</span>
           </Link>

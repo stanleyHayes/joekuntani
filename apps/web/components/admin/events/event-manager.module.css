@@ -8,9 +8,6 @@
   background: var(--color-surface);
   padding: clamp(1rem, 2vw, 1.5rem);
 }
-.ticketPanel {
-  grid-column: 1 / -1;
-}
 .list {
   display: grid;
   gap: 0.65rem;
@@ -23,81 +20,42 @@
   border-top: 1px solid var(--color-border);
   display: grid;
   gap: 0.35rem;
+  justify-items: start;
   padding-top: 0.65rem;
 }
-.form {
-  display: grid;
-  gap: 0.8rem;
-  margin-top: 1rem;
-}
-.grid {
-  display: grid;
-  gap: 0.8rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.field {
-  display: grid;
-  gap: 0.3rem;
-}
-.field span {
+
+/* Editing an event is a navigation now, not a dialog, so these are links. They
+   borrow the button chrome so a row does not read as two kinds of control
+   sitting next to each other. */
+.add,
+.rowLink {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
   font-size: 0.8rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.field input,
-.field textarea,
-.field select {
-  background: var(--color-background);
-  border: 1px solid var(--color-border);
-  color: inherit;
-  font: inherit;
-  min-width: 0;
-  padding: 0.7rem;
-}
-.bannerFields {
-  border: 1px solid var(--color-border);
-  display: grid;
-  gap: 0.8rem;
-  margin: 0;
-  padding: 1rem;
-}
-.preview {
-  background: var(--color-background);
-  border-inline-start: 0.25rem solid var(--color-accent);
-  margin: 0;
-  padding: 0.75rem;
-}
-.field textarea {
-  min-height: 5rem;
-  resize: vertical;
-}
-.check {
-  align-items: center;
-  display: flex;
-  gap: 0.5rem;
-}
-.error {
-  color: var(--color-danger, #a72b18);
-  grid-column: 1 / -1;
-}
-@media (max-width: 52rem) {
-  .manager,
-  .grid {
-    grid-template-columns: 1fr;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .manager * {
-    scroll-behavior: auto;
-  }
+  min-height: 2.35rem;
+  padding: 0.4rem 0.95rem;
+  text-decoration: none;
 }
 
-/* Wraps a labelled control together with its AI assist bar, which must sit
-   outside the <label> so its buttons do not become part of the control name. */
-.fieldGroup {
-  display: grid;
-  gap: 0;
-  align-content: start;
-  min-width: 0;
+.add {
+  background: var(--brand-j);
+  border: 1px solid transparent;
+  color: var(--on-brand, #fff);
+}
+
+.add:hover {
+  filter: brightness(1.06);
+}
+
+.rowLink {
+  background: color-mix(in srgb, var(--surface) 92%, var(--ink) 8%);
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  color: inherit;
+}
+
+.rowLink:hover {
+  background: color-mix(in srgb, var(--brand-j) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--brand-j) 50%, transparent);
 }

@@ -10,15 +10,16 @@ import type { PublicService } from "../../components/services/types";
 export const DEMO_BANNER =
   "Demo preview — research-backed placeholders for layout only. Not approved production claims. Replace via CMS.";
 
+/**
+ * Demo fixtures are opt-in only. This used to fail open — an unset
+ * NEXT_PUBLIC_DEMO_CONTENT fell through to an environment guess, so any build
+ * whose NEXT_PUBLIC_APP_ENV was missing or misspelled served placeholder copy
+ * as if it were approved production inventory. Absence of the flag now means
+ * off, and nothing but an explicit opt-in turns it on.
+ */
 export function demoContentEnabled() {
   const flag = process.env.NEXT_PUBLIC_DEMO_CONTENT;
-  if (flag === "0" || flag === "false") return false;
-  if (flag === "1" || flag === "true") return true;
-  if (process.env.VITEST === "true" || process.env.NODE_ENV === "test") {
-    return false;
-  }
-  const env = process.env.NEXT_PUBLIC_APP_ENV || process.env.APP_ENV || "local";
-  return env === "local" || env === "development";
+  return flag === "1" || flag === "true";
 }
 
 const stamp = "2026-08-06T00:00:00Z";

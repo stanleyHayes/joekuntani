@@ -12,15 +12,19 @@ import { adminPageMeta } from "../../lib/admin-page-meta";
  * change unmounted the sidebar, which reset its independent scroll position and
  * threw away collapsed/expanded state.
  *
- * `/admin/login` and its MFA step sit under this segment but must render bare —
- * signing in through a shell that assumes a session would be nonsense. A route
- * group would express that in the file tree, but it would mean relocating every
- * workspace route, so the check lives here instead.
+ * `/admin/login`, its MFA step, and `/admin/accept-invite` sit under this
+ * segment but must render bare — signing in, or activating an account that has
+ * no password yet, through a shell that assumes a session would be nonsense. A
+ * route group would express that in the file tree, but it would mean relocating
+ * every workspace route, so the check lives here instead.
  */
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/admin";
 
-  if (pathname.startsWith("/admin/login")) {
+  if (
+    pathname.startsWith("/admin/login") ||
+    pathname.startsWith("/admin/accept-invite")
+  ) {
     return <>{children}</>;
   }
 

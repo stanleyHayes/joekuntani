@@ -78,6 +78,42 @@
   gap: 0.4rem;
 }
 
+/* Editing a product is a navigation now, not a dialog, so these are links.
+   They borrow the button chrome so the row does not read as two kinds of
+   control sitting next to each other. */
+.addProduct,
+.rowLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.addProduct {
+  border: 1px solid transparent;
+  background: var(--brand-j);
+  color: var(--on-brand, #fff);
+}
+
+.addProduct:hover {
+  filter: brightness(1.06);
+}
+
+.rowLink {
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  background: color-mix(in srgb, var(--surface) 92%, var(--ink) 8%);
+  color: inherit;
+}
+
+.rowLink:hover {
+  border-color: color-mix(in srgb, var(--brand-j) 50%, transparent);
+  background: color-mix(in srgb, var(--brand-j) 10%, var(--surface));
+}
+
 .variants td[data-low="true"] {
   color: var(--warning);
   font-weight: 750;

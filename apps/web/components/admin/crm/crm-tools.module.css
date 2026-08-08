@@ -1,0 +1,59 @@
+.tools,
+.saved,
+.grid,
+.panel,
+.actions {
+  display: grid;
+  gap: 1rem;
+}
+
+.tools {
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.saved {
+  gap: 0.6rem;
+}
+
+/* Two directory forms abreast where there is room. Each panel keeps its own
+   submit button next to the fields it belongs to, so nothing needs a sticky
+   bar the way a single long form does. */
+.grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  align-items: start;
+}
+
+.panel {
+  border: 1px solid var(--border);
+  padding: 1rem;
+  background: var(--surface);
+}
+
+.actions {
+  grid-template-columns: repeat(auto-fit, minmax(8rem, max-content));
+  align-items: end;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border-radius: 999px;
+  color: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.back:hover {
+  border-color: color-mix(in srgb, var(--brand-j) 50%, transparent);
+  background: color-mix(in srgb, var(--brand-j) 10%, var(--surface));
+}

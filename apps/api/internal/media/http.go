@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -29,6 +30,7 @@ func (handler *HTTPHandler) Routes() http.Handler {
 	router.Post("/uploads", handler.requestUpload)
 	router.Post("/callbacks/cloudinary", handler.completeUpload)
 	router.Post("/assets/{assetID}/upload", handler.retryUpload)
+	router.Post("/assets/{assetID}/confirm", handler.confirmUpload)
 	router.Patch("/assets/{assetID}", handler.update)
 	router.Delete("/assets/{assetID}", handler.delete)
 	return router
@@ -43,8 +45,52 @@ func (handler *HTTPHandler) RetryUploadHandler() http.Handler {
 func (handler *HTTPHandler) CallbackHandler() http.Handler {
 	return http.HandlerFunc(handler.completeUpload)
 }
+func (handler *HTTPHandler) ConfirmUploadHandler() http.Handler {
+	return http.HandlerFunc(handler.confirmUpload)
+}
 func (handler *HTTPHandler) UpdateHandler() http.Handler { return http.HandlerFunc(handler.update) }
 func (handler *HTTPHandler) DeleteHandler() http.Handler { return http.HandlerFunc(handler.delete) }
+
+// PublicAssetHandler serves one ready asset to an unauthenticated reader.
+func (handler *HTTPHandler) PublicAssetHandler() http.Handler {
+	return http.HandlerFunc(handler.publicAsset)
+}
+
+// publicAssetResponse is deliberately narrower than the admin projection. The
+// public site needs to know where the file is, what type it is and whether it
+// is usable; it has no business seeing folders, byte sizes, uploader or
+// reference counts.
+type publicAssetResponse struct {
+	ID        string   `json:"id"`
+	PublicURL string   `json:"public_url"`
+	MIMEType  string   `json:"mime_type"`
+	Status    string   `json:"status"`
+	AltText   string   `json:"alt_text"`
+	Width     int      `json:"width"`
+	Height    int      `json:"height"`
+	Tags      []string `json:"tags"`
+	UpdatedAt string   `json:"updated_at"`
+}
+
+func (handler *HTTPHandler) publicAsset(response http.ResponseWriter, request *http.Request) {
+	asset, err := handler.service.PublicAsset(request.Context(), chi.URLParam(request, "assetID"))
+	if err != nil {
+		// Every failure is a 404. Distinguishing "no such asset" from "exists
+		// but is not ready" would let an anonymous caller probe the library.
+		mediaProblem(response, http.StatusNotFound, "Asset not found")
+		return
+	}
+	tags := asset.Tags
+	if tags == nil {
+		tags = []string{}
+	}
+	mediaJSON(response, http.StatusOK, publicAssetResponse{
+		ID: asset.PublicID, PublicURL: asset.PublicURL, MIMEType: asset.MIMEType,
+		Status: string(asset.Status), AltText: asset.AltText,
+		Width: asset.Width, Height: asset.Height, Tags: tags,
+		UpdatedAt: asset.UpdatedAt.UTC().Format(time.RFC3339),
+	})
+}
 func (handler *HTTPHandler) retryUpload(response http.ResponseWriter, request *http.Request) {
 	actor, ok := handler.resolve(response, request)
 	if !ok {
@@ -60,6 +106,32 @@ func (handler *HTTPHandler) retryUpload(response http.ResponseWriter, request *h
 		return
 	}
 	mediaJSON(response, http.StatusOK, map[string]any{"asset": safeAsset(asset), "upload": signed})
+}
+
+// confirmUpload completes an asset from the provider reply the browser holds,
+// for when the provider's callback cannot reach this API. Unlike the callback
+// route this one is authenticated as a normal admin action; the reply's own
+// signature, checked in the service, is what proves the upload really happened.
+func (handler *HTTPHandler) confirmUpload(response http.ResponseWriter, request *http.Request) {
+	actor, ok := handler.resolve(response, request)
+	if !ok {
+		return
+	}
+	if request.ContentLength == 0 || request.ContentLength > 64<<10 {
+		mediaProblem(response, http.StatusBadRequest, "Invalid upload response")
+		return
+	}
+	body, err := io.ReadAll(http.MaxBytesReader(response, request.Body, 64<<10))
+	if err != nil || len(body) == 0 {
+		mediaProblem(response, http.StatusBadRequest, "Invalid upload response")
+		return
+	}
+	asset, err := handler.service.ConfirmUpload(request.Context(), actor, chi.URLParam(request, "assetID"), body)
+	if err != nil {
+		writeMediaError(response, err)
+		return
+	}
+	mediaJSON(response, http.StatusOK, map[string]any{"asset": safeAsset(asset)})
 }
 
 type assetResponse struct {

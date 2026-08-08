@@ -59,6 +59,7 @@ export function MediaAdmin() {
       onRetry={retryUpload}
       onSave={saveMetadata}
       onDelete={deleteAsset}
+      onRefresh={listAssets}
     />
   );
 }
@@ -88,10 +89,47 @@ export async function requestUpload(input: {
     return { ...mapAsset(body.asset), status: "draft" };
   if (!response.ok || !body.upload) throw new Error();
   try {
-    await sendToProvider(body.upload, input.file, input.tags);
-    return mapAsset(body.asset);
+    const reply = await sendToProvider(body.upload, input.file, input.tags);
+    // Confirm from the provider's own signed reply rather than waiting for its
+    // callback, which cannot reach an API that has no public hostname. A failure
+    // here is not fatal: the callback may still arrive, and the re-read below
+    // reports whichever path won.
+    await confirmUpload(body.asset.id, reply);
+    // `body.asset` is the record as it stood *before* the file reached the
+    // provider — status "uploading", no public URL. Returning it left every
+    // freshly uploaded asset stuck on an UPLOADING badge with a placeholder
+    // icon, even once the provider callback had marked it ready. Re-read it
+    // instead, and keep the pre-upload record only if the re-read fails.
+    return (await refreshAsset(body.asset.id)) ?? mapAsset(body.asset);
   } catch {
     return { ...mapAsset(body.asset), status: "failed" };
+  }
+}
+
+/**
+ * Re-reads one asset's server-side state.
+ *
+ * The provider confirms an upload out of band, by calling back into the API —
+ * the browser cannot report completion itself, because the callback is signed
+ * with a secret it must never hold. So the client's only honest move is to ask
+ * the API what it now believes.
+ */
+export async function refreshAsset(id: string): Promise<MediaAsset | null> {
+  const assets = await listAssets();
+  return assets?.find((asset) => asset.id === id) ?? null;
+}
+
+export async function listAssets(): Promise<MediaAsset[] | null> {
+  try {
+    const response = await fetch("/api/admin/media", {
+      credentials: "include",
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    const body = (await response.json()) as { assets: SafeAsset[] };
+    return body.assets.map(mapAsset);
+  } catch {
+    return null;
   }
 }
 export async function retryUpload(id: string, file: File): Promise<MediaAsset> {
@@ -154,6 +192,29 @@ async function sendToProvider(
     body: form,
   });
   if (!response.ok) throw new Error();
+  // The provider's reply is the only proof the upload landed that we are
+  // guaranteed to receive. Its callback cannot reach an API with no public
+  // hostname, so relying on it alone left every upload stuck at "uploading" in
+  // development and stranded any dropped callback in production. Hand the reply
+  // back so the API can verify its signature and mark the asset ready.
+  return (await response.json()) as unknown;
+}
+/**
+ * Hands the provider's signed upload reply to the API so the asset becomes ready.
+ *
+ * Swallows its own failure on purpose. The provider callback remains the other
+ * route to the same state, and a confirm that loses a race with it comes back as
+ * a conflict — not something worth failing an upload the user can see succeeded.
+ */
+async function confirmUpload(assetID: string, reply: unknown) {
+  try {
+    await api(`/api/admin/media/${encodeURIComponent(assetID)}/confirm`, {
+      method: "POST",
+      body: JSON.stringify(reply),
+    });
+  } catch {
+    // Deliberately ignored — see above.
+  }
 }
 export async function dimensionsFor(file: File) {
   if (!file.type.startsWith("image/")) return { width: 0, height: 0 };

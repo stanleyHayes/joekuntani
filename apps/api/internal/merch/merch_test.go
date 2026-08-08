@@ -2,8 +2,10 @@ package merch
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -228,5 +230,24 @@ func TestApplyWebhookRejectsForeignReferences(t *testing.T) {
 	}, "hash")
 	if !errors.Is(err, ErrInvalid) {
 		t.Fatalf("ticket references must not reach the merch store, got %v", err)
+	}
+}
+
+// A product with no variants yet misses the variant map entirely. A nil slice
+// marshals to JSON null, and the console reads product.variants.length straight
+// off the response — so the first product created before its variants took the
+// whole merchandise screen down with a TypeError.
+func TestVariantsOrEmptyNeverMarshalsToNull(t *testing.T) {
+	encoded, err := json.Marshal(Product{Variants: variantsOrEmpty(nil)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(encoded), `"variants":[]`) {
+		t.Fatalf("variants encoded as null: %s", encoded)
+	}
+
+	kept := []Variant{{PublicID: "v1"}}
+	if got := variantsOrEmpty(kept); len(got) != 1 || got[0].PublicID != "v1" {
+		t.Fatalf("existing variants were not preserved: %#v", got)
 	}
 }

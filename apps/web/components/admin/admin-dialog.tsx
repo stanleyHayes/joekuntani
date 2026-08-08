@@ -105,7 +105,18 @@ export function AdminDialog({
             <X size={18} aria-hidden="true" />
           </button>
         </header>
-        <div className={styles.body}>{children}</div>
+        {/* The dialog portals to document.body, outside the shell's
+            `.admin-stage` wrapper, so every `.admin-stage label/input/select/
+            button` rule stopped applying the moment a form moved into a dialog
+            — which is why dialog forms rendered as raw native controls with
+            labels running inline into their inputs. Re-establishing the scope
+            here restores the shared form chrome for every dialog at once.
+            It goes inside the body rather than on the backdrop, whose
+            `place-items: center` would otherwise fight `.admin-stage`'s
+            `align-content: start` at equal specificity. */}
+        <div className={styles.body}>
+          <div className="admin-stage">{children}</div>
+        </div>
       </div>
     </div>
   );

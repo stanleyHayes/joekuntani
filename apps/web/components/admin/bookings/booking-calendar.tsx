@@ -1,135 +1,26 @@
 "use client";
 
 import { CalendarPlusIcon } from "@phosphor-icons/react";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DateField } from "../../ui/date-field";
 import { EmptyState } from "../../ui/empty-state";
-import { Select } from "../../ui/select";
-import { AdminDialog } from "../admin-dialog";
 import { AdminErrorState } from "../admin-feedback";
+import {
+  api,
+  type Booking,
+  bookingEditorHref,
+  calendarRange,
+  local,
+  type Status,
+  type View,
+  type Warning,
+} from "./booking-api";
 import styles from "./booking-calendar.module.css";
+import { ScheduleConflicts } from "./schedule-conflicts";
 
-type Status = "tentative" | "confirmed" | "cancelled";
-type Booking = {
-  id: string;
-  enquiry_id: string;
-  title: string;
-  service_id: string;
-  start_at: string;
-  end_at: string;
-  venue: string;
-  city: string;
-  country: string;
-  status: Status;
-  fee: string;
-  currency: string;
-  requirements: Record<string, string>;
-  version: number;
-};
-type Warning = Pick<
-  Booking,
-  "id" | "title" | "status" | "start_at" | "end_at"
-> & { booking_id: string };
-type View = "month" | "week" | "list";
-
-async function api(path: string, init?: RequestInit) {
-  const csrf = document.cookie.match(/(?:^|; )jk_admin_csrf=([^;]+)/)?.[1];
-  const response = await fetch(path, {
-    ...init,
-    credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json",
-      ...(csrf ? { "X-CSRF-Token": decodeURIComponent(csrf) } : {}),
-      ...init?.headers,
-    },
-  });
-  if (!response.ok) throw new Error("Booking request failed");
-  if (response.status === 204) return null;
-  return response.json();
-}
-const local = (value: string, timezone: string) =>
-  new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: timezone,
-  }).format(new Date(value));
-function zonedISOString(value: string, timezone: string) {
-  const [date, clock] = value.split("T");
-  const [year, month, day] = date.split("-").map(Number);
-  const [hour, minute] = clock.split(":").map(Number);
-  const desired = Date.UTC(year, month - 1, day, hour, minute);
-  let candidate = desired;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const parts = new Intl.DateTimeFormat("en-CA", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-      timeZone: timezone,
-    }).formatToParts(new Date(candidate));
-    const values = Object.fromEntries(
-      parts.map((part) => [part.type, part.value]),
-    );
-    const observed = Date.UTC(
-      Number(values.year),
-      Number(values.month) - 1,
-      Number(values.day),
-      Number(values.hour),
-      Number(values.minute),
-    );
-    candidate += desired - observed;
-  }
-  return new Date(candidate).toISOString();
-}
-export function calendarRange(anchor: Date, view: View, timezone: string) {
-  const localAnchor = new Intl.DateTimeFormat("en-CA", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short",
-    timeZone: timezone,
-  }).formatToParts(anchor);
-  const values = Object.fromEntries(
-    localAnchor.map((part) => [part.type, part.value]),
-  );
-  const year = Number(values.year);
-  const month = Number(values.month);
-  const day = Number(values.day);
-  const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(
-    values.weekday,
-  );
-  let start = new Date(Date.UTC(year, month - 1, day));
-  let end: Date;
-  if (view === "month") {
-    start = new Date(Date.UTC(year, month - 1, 1));
-    end = new Date(Date.UTC(year, month, 1));
-  } else if (view === "week") {
-    start.setUTCDate(start.getUTCDate() - weekday);
-    end = new Date(start);
-    end.setUTCDate(end.getUTCDate() + 7);
-  } else {
-    end = new Date(start);
-    end.setUTCDate(end.getUTCDate() + 90);
-  }
-  const localMidnight = (date: Date) =>
-    `${date.getUTCFullYear().toString().padStart(4, "0")}-${(
-      date.getUTCMonth() + 1
-    )
-      .toString()
-      .padStart(
-        2,
-        "0",
-      )}-${date.getUTCDate().toString().padStart(2, "0")}T00:00`;
-  return {
-    start: new Date(zonedISOString(localMidnight(start), timezone)),
-    end: new Date(zonedISOString(localMidnight(end), timezone)),
-  };
-}
 export function BookingCalendar() {
   const [items, setItems] = useState<Booking[]>([]),
-    [createOpen, setCreateOpen] = useState(false),
     [timezone, setTimezone] = useState("Africa/Accra"),
     [view, setView] = useState<View>("month"),
     [anchor, setAnchor] = useState(() => new Date()),
@@ -173,43 +64,6 @@ export function BookingCalendar() {
     const timer = window.setTimeout(() => void load(), 0);
     return () => window.clearTimeout(timer);
   }, [load]);
-  async function create(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    try {
-      const result = await api("/api/admin/bookings", {
-        method: "POST",
-        body: JSON.stringify({
-          enquiry_id: data.get("enquiry_id"),
-          title: data.get("title"),
-          service_id: data.get("service_id"),
-          start_at: zonedISOString(String(data.get("start_at")), timezone),
-          end_at: zonedISOString(String(data.get("end_at")), timezone),
-          venue: data.get("venue"),
-          city: data.get("city"),
-          country: String(data.get("country")).toUpperCase(),
-          status: data.get("status"),
-          fee: data.get("fee"),
-          currency: String(data.get("currency")).toUpperCase(),
-          requirements: { notes: String(data.get("requirements") ?? "") },
-          version: 0,
-        }),
-      });
-      setWarnings(result.warnings);
-      form.reset();
-      setCreateOpen(false);
-      await load();
-      setMessage(
-        result.warnings.length
-          ? "Booking saved with schedule warnings."
-          : "Booking saved.",
-      );
-      setError("");
-    } catch {
-      setError("Booking could not be saved.");
-    }
-  }
   async function status(item: Booking, next: Status) {
     try {
       const result = await api(`/api/admin/bookings/${item.id}`, {
@@ -270,13 +124,9 @@ export function BookingCalendar() {
           </p>
         </div>
         <div className="stage-head__actions">
-          <button
-            className="primary"
-            type="button"
-            onClick={() => setCreateOpen(true)}
-          >
+          <Link className={styles.addBooking} href={bookingEditorHref}>
             Add booking
-          </button>
+          </Link>
         </div>
       </header>
       <div className="stage-filters">
@@ -334,106 +184,16 @@ export function BookingCalendar() {
           retry={error === "Bookings could not be loaded."}
         />
       ) : null}
-      {warnings.length > 0 && (
-        <aside className={styles.warning}>
-          <h3>Schedule conflicts</h3>
-          <ul>
-            {warnings.map((w) => (
-              <li key={w.booking_id}>
-                <strong>{w.status}</strong> {w.title}:{" "}
-                {local(w.start_at, timezone)}–{local(w.end_at, timezone)}
-              </li>
-            ))}
-          </ul>
-        </aside>
-      )}
-      {createOpen ? (
-        <AdminDialog
-          title="Add booking"
-          description="Create a calendar booking from an existing CRM enquiry."
-          onClose={() => setCreateOpen(false)}
-          wide
-        >
-          <form className={styles.form} onSubmit={create}>
-            <label>
-              Title
-              <input name="title" required minLength={2} />
-            </label>
-            <label>
-              CRM enquiry ID
-              <input name="enquiry_id" required pattern="[0-9a-f-]{36}" />
-            </label>
-            <label>
-              Service ID
-              <input name="service_id" required pattern="[0-9a-f-]{36}" />
-            </label>
-            <label>
-              Starts
-              <DateField
-                name="start_at"
-                aria-label="Starts"
-                mode="datetime"
-                required
-              />
-            </label>
-            <label>
-              Ends
-              <DateField
-                name="end_at"
-                aria-label="Ends"
-                mode="datetime"
-                required
-              />
-            </label>
-            <label>
-              Venue
-              <input name="venue" maxLength={200} />
-            </label>
-            <label>
-              City
-              <input name="city" maxLength={100} />
-            </label>
-            <label>
-              Country
-              <input name="country" defaultValue="GH" maxLength={2} />
-            </label>
-            <label>
-              Status
-              <Select
-                name="status"
-                defaultValue="tentative"
-                options={[
-                  { value: "tentative", label: "Tentative" },
-                  { value: "confirmed", label: "Confirmed" },
-                ]}
-                aria-label="Booking status"
-              />
-            </label>
-            <label>
-              Fee
-              <input name="fee" defaultValue="0.00" inputMode="decimal" />
-            </label>
-            <label>
-              Currency
-              <input name="currency" defaultValue="GHS" maxLength={3} />
-            </label>
-            <label>
-              Requirements
-              <textarea name="requirements" maxLength={500} />
-            </label>
-            <button type="submit">Create booking</button>
-          </form>
-        </AdminDialog>
-      ) : null}
+      <ScheduleConflicts timezone={timezone} warnings={warnings} />
       {error ? null : grouped.length === 0 ? (
         <EmptyState
           tone="calendar"
           title="Joe’s diary is clear here"
           description={`Nothing is booked between ${rangeLabel}. Widen the view, or put the first hold in the diary.`}
           action={
-            <button type="button" onClick={() => setCreateOpen(true)}>
+            <Link className={styles.emptyAction} href={bookingEditorHref}>
               Add booking
-            </button>
+            </Link>
           }
         />
       ) : (

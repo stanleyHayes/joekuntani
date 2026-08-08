@@ -14,33 +14,118 @@
 .hero {
   position: relative;
   display: none;
-  padding: clamp(2.25rem, 4vw, 3.75rem);
+  isolation: isolate;
+  padding: clamp(2.5rem, 4.2vw, 4rem);
   color: #f6f1e8;
-  background: #0c0b09;
+  /* Two ambient blooms — gold behind the lockup, cyan under the guarantees —
+     over a near-black ground. Replaces the old hairline grid. */
+  background:
+    radial-gradient(
+      40rem 30rem at 6% 2%,
+      color-mix(in srgb, var(--brand-j) 15%, transparent),
+      transparent 68%
+    ),
+    radial-gradient(
+      36rem 32rem at 98% 92%,
+      color-mix(in srgb, var(--brand-k) 14%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(168deg, #131118 0%, #0a090d 48%, #07070a 100%);
 }
 
-.hero::after {
+/* Filmic grain, so the large flat blooms never band on wide displays. */
+.hero::before {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: repeating-linear-gradient(
-    90deg,
-    color-mix(in srgb, #f6f1e8 5%, transparent) 0 1px,
-    transparent 1px 5.5rem
-  );
-  mask-image: linear-gradient(
+  z-index: 1;
+  opacity: 0.45;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* Seam where the brand column meets the form column. */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  z-index: 3;
+  width: 1px;
+  background: linear-gradient(
     180deg,
     transparent,
-    black 22%,
-    black 72%,
+    color-mix(in srgb, var(--brand-j) 50%, transparent) 24%,
+    color-mix(in srgb, var(--brand-k) 50%, transparent) 76%,
     transparent
   );
   pointer-events: none;
 }
 
+/* ---------- Watermarks ---------- */
+
+.heroMarks {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* Both marks are sized to bleed; this is what crops them to the column. */
+  overflow: clip;
+  pointer-events: none;
+}
+
+/* Outlined lockup initials, bled off the right edge so the crop reads as
+   deliberate rather than as a letterform that ran out of room. */
+.heroMonogram {
+  position: absolute;
+  top: 1.25rem;
+  right: -3.5rem;
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(9rem, 14vw, 13.5rem);
+  font-weight: 750;
+  letter-spacing: -0.07em;
+  line-height: 0.82;
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in srgb, #f6f1e8 15%, transparent);
+}
+
+/* Groove rings — a record read from the corner. */
+.heroRings {
+  position: absolute;
+  right: -14rem;
+  bottom: -12rem;
+  width: 42rem;
+  height: 42rem;
+  color: color-mix(in srgb, #f6f1e8 9%, transparent);
+  animation: hero-rings-turn 120s linear infinite;
+}
+
+.heroRings circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Alpha lives on each stroke, not on the group, so the brand ring can carry
+   more weight than the plain grooves around it. */
+.heroRingAccent {
+  stroke: color-mix(in srgb, var(--brand-j) 24%, transparent);
+  stroke-width: 2;
+  stroke-dasharray: 34 20;
+}
+
+.heroRingCore {
+  fill: color-mix(in srgb, var(--brand-k) 28%, transparent);
+  stroke: none;
+}
+
+/* ---------- Brand column content ---------- */
+
 .heroInner {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: grid;
   grid-template-rows: auto 1fr auto;
   gap: 2rem;
@@ -58,6 +143,9 @@
   height: 2.75rem;
   border-radius: 0.75rem;
   object-fit: cover;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #f6f1e8 16%, transparent),
+    0 10px 26px color-mix(in srgb, #000 55%, transparent);
 }
 
 .heroBrand {
@@ -80,8 +168,16 @@
 .heroStatement {
   align-self: center;
   display: grid;
-  gap: 1.25rem;
-  max-width: 22ch;
+  gap: 1.35rem;
+  max-width: 20ch;
+}
+
+.heroStatement::before {
+  content: "";
+  width: 3.5rem;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--brand-j), var(--brand-k));
 }
 
 .heroDisplay {
@@ -91,6 +187,7 @@
   font-weight: 750;
   letter-spacing: -0.055em;
   line-height: 0.94;
+  text-wrap: balance;
 }
 
 .heroDisplay em {
@@ -100,30 +197,35 @@
 
 .heroCopy {
   margin: 0;
-  max-width: 30ch;
+  max-width: 32ch;
   font-size: 0.98rem;
   line-height: 1.6;
-  color: color-mix(in srgb, #f6f1e8 66%, transparent);
+  color: color-mix(in srgb, #f6f1e8 62%, transparent);
 }
 
+/* Stacked rather than three columns: the guarantees read as a list of facts,
+   and the freed width lets the ring watermark breathe behind them. */
 .heroRail {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  column-gap: clamp(0.9rem, 1.8vw, 1.6rem);
   margin: 0;
-  border-top: 1px solid color-mix(in srgb, #f6f1e8 18%, transparent);
+  max-width: 30rem;
 }
 
 .heroRailItem {
   position: relative;
   display: grid;
-  align-content: start;
-  gap: 0.4rem;
-  padding-top: 1.25rem;
+  grid-template-columns: minmax(0, 7rem) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.35rem 1.1rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid color-mix(in srgb, #f6f1e8 14%, transparent);
 }
 
-/* Registration notch: each guarantee is struck onto the rule above it, the
-   same hairline language as the ambient grid behind the hero. */
+.heroRailItem:last-child {
+  border-bottom: 1px solid color-mix(in srgb, #f6f1e8 14%, transparent);
+}
+
+/* Registration notch: each guarantee is struck onto the rule above it. */
 .heroRailItem::before {
   content: "";
   position: absolute;
@@ -588,13 +690,19 @@
   }
 }
 
+@keyframes hero-rings-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (min-width: 900px) {
   .split {
     grid-template-columns: minmax(20rem, 1.05fr) minmax(24rem, 0.95fr);
   }
 
   .hero {
-    display: block;
+    display: grid;
     min-height: 100dvh;
   }
 
@@ -641,7 +749,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel {
+  .panel,
+  .heroRings {
     animation: none;
   }
 

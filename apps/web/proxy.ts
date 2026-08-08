@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function proxy(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith("/admin/login"))
+  // Both are reached by people who have no session yet — an invitee cannot sign
+  // in until the acceptance page has given them a password to sign in with.
+  if (
+    request.nextUrl.pathname.startsWith("/admin/login") ||
+    request.nextUrl.pathname.startsWith("/admin/accept-invite")
+  )
     return NextResponse.next();
   const apiBase = process.env.API_BASE_URL;
   if (!apiBase) return redirectToLogin(request);

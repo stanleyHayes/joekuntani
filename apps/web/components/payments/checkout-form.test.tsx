@@ -13,6 +13,7 @@ const receipt = {
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   const values = new Map<string, string>();
   vi.stubGlobal("localStorage", {
     clear: () => values.clear(),
@@ -134,7 +135,214 @@ it.each([
   },
   { checkout_url: "https://pay.test", expires_at: "2020-01-01T00:00:00Z" },
   { checkout_url: "https://pay.test" },
+  { checkout_url: "https://pay.test", expires_at: "sometime soon" },
+  { checkout_url: "not a url at all", expires_at: "2099-01-01T00:00:00Z" },
+  { checkout_url: 42, expires_at: "2099-01-01T00:00:00Z" },
+  "https://pay.test",
   null,
 ])("rejects unsafe or incomplete payment response %#", (value) => {
   expect(checkoutURL(value)).toBe("");
+});
+
+it("accepts a live https session URL", () => {
+  expect(
+    checkoutURL({
+      checkout_url: "https://pay.example.test/session/abc",
+      expires_at: "2099-01-01T00:00:00Z",
+    }),
+  ).toBe("https://pay.example.test/session/abc");
+});
+
+// The form is noValidate, so the handler is the only thing standing between an
+// empty form and a pointless order request.
+it("blocks submission until the buyer details and terms are complete", () => {
+  const fetchMock = vi.fn();
+  vi.stubGlobal("fetch", fetchMock);
+  render(<CheckoutForm eventId={eventId} ticketTypeId={ticketTypeId} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Reserve and continue" }));
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "Complete your name and email, then accept the ticket terms.",
+  );
+  expect(fetchMock).not.toHaveBeenCalled();
+
+  fireEvent.change(screen.getByLabelText("Full name"), {
+    target: { value: "Ama Mensah" },
+  });
+  fireEvent.change(screen.getByLabelText("Email"), {
+    target: { value: "ama@example.test" },
+  });
+  // Name and email alone are not enough — the terms box is still unchecked.
+  fireEvent.click(screen.getByRole("button", { name: "Reserve and continue" }));
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it("trims the optional phone and clamps the quantity before ordering", async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(new Response(null, { status: 503 }));
+  vi.stubGlobal("fetch", fetchMock);
+  render(<CheckoutForm eventId={eventId} ticketTypeId={ticketTypeId} />);
+
+  const quantity = screen.getByLabelText("Quantity");
+  fireEvent.change(quantity, { target: { value: "5000" } });
+  expect(quantity).toHaveValue(1000);
+  fireEvent.change(quantity, { target: { value: "0" } });
+  expect(quantity).toHaveValue(1);
+  fireEvent.change(quantity, { target: { value: "4" } });
+  expect(quantity).toHaveValue(4);
+
+  fireEvent.change(screen.getByLabelText(/Phone/), {
+    target: { value: "  +233200000000  " },
+  });
+  fireEvent.change(screen.getByLabelText("Full name"), {
+    target: { value: "  Ama Mensah  " },
+  });
+  fireEvent.change(screen.getByLabelText("Email"), {
+    target: { value: " ama@example.test " },
+  });
+  fireEvent.click(screen.getByRole("checkbox"));
+  fireEvent.click(screen.getByRole("button", { name: "Reserve and continue" }));
+
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+  expect(JSON.parse(String(fetchMock.mock.calls[0][1].body))).toMatchObject({
+    buyer_name: "Ama Mensah",
+    buyer_email: "ama@example.test",
+    buyer_phone: "+233200000000",
+    terms_version: "2026-08-05",
+    items: [{ ticket_type_id: ticketTypeId, quantity: 4 }],
+  });
+});
+
+it("locks the submit button and warns while the order is being created", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => new Promise<Response>(() => {})),
+  );
+  render(<CheckoutForm eventId={eventId} ticketTypeId={ticketTypeId} />);
+  completeForm();
+
+  const button = await screen.findByRole("button", {
+    name: "Reserving tickets…",
+  });
+  expect(button).toBeDisabled();
+  expect(screen.getByRole("status")).toHaveTextContent("Do not close this page");
+});
+
+it("reports an unusable order payload instead of starting a payment", async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(
+      new Response(JSON.stringify({ reference: "not-a-reference" }), {
+        status: 201,
+      }),
+    );
+  vi.stubGlobal("fetch", fetchMock);
+  render(<CheckoutForm eventId={eventId} ticketTypeId={ticketTypeId} />);
+  completeForm();
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "The order service returned an invalid response.",
+  );
+  expect(fetchMock).toHaveBeenCalledOnce();
+});
+
+it.each([
+  [409, "These tickets are no longer available in the requested quantity."],
+  [410, "These tickets are no longer available in the requested quantity."],
+  [422, "These tickets are no longer available in the requested quantity."],
+  [500, "Checkout could not be started. Please try again."],
+])("explains a %i from the order service", async (status, message) => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(new Response(null, { status })),
+  );
+  render(<CheckoutForm eventId={eventId} ticketTypeId={ticketTypeId} />);
+  completeForm();
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(message);
+  expect(
+    screen.getByRole("button", { name: "Reserve and continue" }),
+  ).toBeEnabled();
+});
+
+// The order exists at this point, so the reference has to stay on screen for the
+// buyer to quote when the payment step is the thing that failed.
+it("keeps the order reference visible when the payment step fails", async () => {
+  const holdEnds = new Date(Date.now() + 600_000).toISOString();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) =>
+      String(input).endsWith("/checkout")
+        ? new Response(null, { status: 502 })
+        : new Response(
+            JSON.stringify({ ...receipt, hold_expires_at: holdEnds }),
+            { status: 201 },
+          ),
+    ),
+  );
+  render(<CheckoutForm eventId={eventId} ticketTypeId={ticketTypeId} />);
+  completeForm();
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Checkout could not be started. Please try again.",
+  );
+  expect(screen.getByText("JKT-2026-ABC12345")).toBeInTheDocument();
+  expect(screen.getByText(/GHS\s+120\.00/)).toBeInTheDocument();
+});
+
+// Guards the hold timer: a reservation that lapses mid-payment must stop
+// pretending it is still valid.
+it("expires the hold if it lapses while the payment session is opening", async () => {
+  const holdEnds = new Date(Date.now() + 400).toISOString();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) =>
+      String(input).endsWith("/checkout")
+        ? new Promise<Response>(() => {})
+        : new Response(
+            JSON.stringify({ ...receipt, hold_expires_at: holdEnds }),
+            { status: 201 },
+          ),
+    ),
+  );
+  render(<CheckoutForm eventId={eventId} ticketTypeId={ticketTypeId} />);
+  completeForm();
+
+  expect(
+    await screen.findByRole("button", { name: "Opening secure payment…" }),
+  ).toBeDisabled();
+  expect(
+    await screen.findByText("Your ticket hold has ended", undefined, {
+      timeout: 3000,
+    }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: /secure payment/i }),
+  ).not.toBeInTheDocument();
+});
+
+it("redirects the window itself when no navigate override is supplied", async () => {
+  const assign = vi.fn();
+  vi.stubGlobal("location", { assign, href: "http://localhost/" });
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) =>
+      String(input).endsWith("/checkout")
+        ? new Response(
+            JSON.stringify({
+              checkout_url: "https://pay.example.test/session/abc",
+              expires_at: "2099-08-05T20:25:00Z",
+            }),
+            { status: 201 },
+          )
+        : new Response(JSON.stringify(receipt), { status: 201 }),
+    ),
+  );
+  render(<CheckoutForm eventId={eventId} ticketTypeId={ticketTypeId} />);
+  completeForm();
+
+  await waitFor(() =>
+    expect(assign).toHaveBeenCalledWith("https://pay.example.test/session/abc"),
+  );
 });

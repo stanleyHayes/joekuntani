@@ -292,7 +292,11 @@
   gap: 0.35rem;
   border: 0;
   background: transparent;
-  font: inherit;
+  /* `font-family`, not the `font` shorthand: the shorthand also resets weight
+     and size to the inherited values, which wiped the .navLink rule above and
+     left this trigger lighter than every sibling link — and killed the
+     hover/current weight steps with it. */
+  font-family: inherit;
   cursor: pointer;
 }
 

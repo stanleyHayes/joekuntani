@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { ROLE_LABELS } from "../../../lib/admin-nav";
 import { AdminDialog } from "../admin-dialog";
 import { EmptyState } from "../../ui/empty-state";
+import { Select } from "../../ui/select";
 import { AdminErrorState, AdminSkeleton } from "../admin-feedback";
 import styles from "./team-workspace.module.css";
 
@@ -34,11 +35,17 @@ const ROLES = [
   "analyst",
 ] as const;
 
+const ROLE_OPTIONS = ROLES.map((role) => ({
+  value: role,
+  label: ROLE_LABELS[role],
+}));
+
 export function TeamWorkspace() {
   const [users, setUsers] = useState<StaffUser[] | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [forbidden, setForbidden] = useState(false);
 
   async function load() {
@@ -67,7 +74,9 @@ export function TeamWorkspace() {
     event.preventDefault();
     setStatus("");
     setError("");
+    setInviteLink(null);
     const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
     const response = await fetch("/api/admin/auth/users", {
       method: "POST",
       credentials: "include",
@@ -76,22 +85,30 @@ export function TeamWorkspace() {
         "X-CSRF-Token": csrfCookie(),
       },
       body: JSON.stringify({
-        name: form.get("name"),
         email: form.get("email"),
-        password: form.get("password"),
         role: form.get("role"),
       }),
     });
     if (!response.ok) {
       setError(
-        "Could not provision staff. Check email uniqueness and password length.",
+        "Could not send that invitation. Check that the email address is valid and not already in use.",
       );
       return;
     }
+    const body = (await response.json()) as {
+      email?: string;
+      accept_url?: string;
+      emailed?: boolean;
+    };
     setStatus(
-      "Staff user created. Share credentials out of band; administrators need MFA enrollment on first login.",
+      body.emailed
+        ? `Invitation sent to ${body.email}. It expires in 15 minutes — tell them to open it now, or send a fresh one.`
+        : `Invitation created for ${body.email}. Email delivery is not configured, so send them the link below yourself.`,
     );
-    event.currentTarget.reset();
+    // Surfaced whenever delivery did not happen — otherwise the account exists
+    // with no way for anyone to reach it.
+    setInviteLink(body.emailed ? null : (body.accept_url ?? null));
+    formElement.reset();
     setInviteOpen(false);
     await load();
   }
@@ -182,46 +199,49 @@ export function TeamWorkspace() {
       {inviteOpen ? (
         <AdminDialog
           title="Invite staff"
-          description="Create a staff account and assign its initial role."
+          description="An address and a role is all this needs. They set their own password and their own name from the link, which works once and expires in 15 minutes."
           onClose={() => setInviteOpen(false)}
         >
           <form className={styles.panel} onSubmit={provision}>
             <div className={styles.grid}>
               <label>
-                Name
-                <input name="name" required maxLength={120} />
-              </label>
-              <label>
                 Email
                 <input name="email" type="email" required />
               </label>
               <label>
-                Temporary password
-                <input
-                  name="password"
-                  type="password"
+                Role
+                <Select
+                  name="role"
+                  defaultValue="content_editor"
+                  options={ROLE_OPTIONS}
                   required
-                  minLength={12}
                 />
               </label>
-              <label>
-                Role
-                <select name="role" defaultValue="content_editor">
-                  {ROLES.map((role) => (
-                    <option key={role} value={role}>
-                      {ROLE_LABELS[role]}
-                    </option>
-                  ))}
-                </select>
-              </label>
             </div>
-            <button type="submit">Create staff user</button>
+            <button type="submit">Send invitation</button>
           </form>
         </AdminDialog>
       ) : null}
 
       {error ? <p role="alert">{error}</p> : null}
       {status ? <p role="status">{status}</p> : null}
+      {inviteLink ? (
+        <div className={styles.inviteLink}>
+          <p>
+            Send this link to the invitee now. It works once and expires 15
+            minutes after it was issued.
+          </p>
+          <div>
+            <input readOnly value={inviteLink} aria-label="Invitation link" />
+            <button
+              type="button"
+              onClick={() => void navigator.clipboard?.writeText(inviteLink)}
+            >
+              Copy
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className={styles.panel}>
         <h3>Directory</h3>
@@ -254,20 +274,14 @@ export function TeamWorkspace() {
                   <td>{user.name}</td>
                   <td>{user.email}</td>
                   <td>
-                    <select
+                    <Select
                       value={user.role}
                       aria-label={`Role for ${user.name}`}
-                      onChange={(event) =>
-                        void changeRole(user.id, event.target.value)
-                      }
+                      onChange={(role) => void changeRole(user.id, role)}
                       disabled={user.status !== "active"}
-                    >
-                      {ROLES.map((role) => (
-                        <option key={role} value={role}>
-                          {ROLE_LABELS[role]}
-                        </option>
-                      ))}
-                    </select>
+                      options={ROLE_OPTIONS}
+                      required
+                    />
                   </td>
                   <td>{user.status}</td>
                   <td>

@@ -2,8 +2,9 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BrandMark, BRAND_LOGO_SRC } from "../../layout/brand-mark";
+import { BrandMark } from "../../layout/brand-mark";
 import { ButtonPending } from "../admin-feedback";
+import { AuthHero } from "./auth-hero";
 import styles from "./auth-form.module.css";
 
 export function LoginForm() {
@@ -57,47 +58,18 @@ export function LoginForm() {
 
   return (
     <main className={styles.split}>
-      <aside className={styles.hero} aria-hidden="true">
-        <div className={styles.heroInner}>
-          <div className={styles.heroTop}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              alt=""
-              className={styles.heroLogo}
-              height={160}
-              src={BRAND_LOGO_SRC}
-              width={160}
-            />
-            <div>
-              <p className={styles.heroBrand}>Joe Kuntani</p>
-              <p className={styles.heroTag}>Staff console</p>
-            </div>
-          </div>
-          <div className={styles.heroStatement}>
-            <p className={styles.heroDisplay}>
-              Run the <em>whole</em> show.
-            </p>
-            <p className={styles.heroCopy}>
-              Publishing, bookings, CRM and live ticketing — one console, one
-              audited trail.
-            </p>
-          </div>
-          <dl className={styles.heroRail}>
-            <div className={styles.heroRailItem}>
-              <dt>Access</dt>
-              <dd>Second factor enforced</dd>
-            </div>
-            <div className={styles.heroRailItem}>
-              <dt>Sessions</dt>
-              <dd>Expire after 12 hours</dd>
-            </div>
-            <div className={styles.heroRailItem}>
-              <dt>Changes</dt>
-              <dd>Audited server-side</dd>
-            </div>
-          </dl>
-        </div>
-      </aside>
+      <AuthHero
+        tag="Staff console"
+        lead="Run the "
+        accent="whole"
+        trail=" show."
+        copy="Publishing, bookings, CRM and live ticketing — one console, one audited trail."
+        facts={[
+          { term: "Access", detail: "Second factor enforced" },
+          { term: "Sessions", detail: "Expire after 12 hours" },
+          { term: "Changes", detail: "Audited server-side" },
+        ]}
+      />
 
       <section className={styles.panel} aria-labelledby="sign-in-title">
         <div className={styles.brandRow}>

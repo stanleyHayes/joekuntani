@@ -74,11 +74,15 @@ export function EventCard({
 }
 
 export function TicketCard({ ticket }: { ticket: PublicTicketType }) {
-  const available = ticket.availability === "on_sale";
   const remaining = Math.max(
     0,
     ticket.capacity - ticket.sold - ticket.reserved,
   );
+  // Inventory decides availability, not the stored flag alone. A tier still
+  // marked `on_sale` after its last seat went renders "0 remaining" — and used
+  // to render a live checkout link beside it, sending buyers into an order that
+  // cannot be filled. The flag lags the count; the count is the truth.
+  const available = ticket.availability === "on_sale" && remaining > 0;
   return (
     <article className={styles.ticket}>
       <h3>{ticket.name}</h3>
@@ -86,7 +90,11 @@ export function TicketCard({ ticket }: { ticket: PublicTicketType }) {
       <p>
         {formatMoney(ticket.price, ticket.currency)} · {remaining} remaining
       </p>
-      <p className={styles.status}>{availabilityLabel(ticket.availability)}</p>
+      <p className={styles.status}>
+        {remaining === 0 && ticket.availability === "on_sale"
+          ? availabilityLabel("sold_out")
+          : availabilityLabel(ticket.availability)}
+      </p>
       <p className={styles.meta}>
         Sales close {formatDate(ticket.sales_end, "UTC")}. Order limit{" "}
         {ticket.min_per_order}–{ticket.max_per_order}.
@@ -102,7 +110,9 @@ export function TicketCard({ ticket }: { ticket: PublicTicketType }) {
         >
           {available
             ? "Checkout coming soon"
-            : availabilityLabel(ticket.availability)}
+            : remaining === 0 && ticket.availability === "on_sale"
+              ? availabilityLabel("sold_out")
+              : availabilityLabel(ticket.availability)}
         </span>
       )}
     </article>

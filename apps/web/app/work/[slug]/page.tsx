@@ -10,6 +10,7 @@ import {
   demoWork,
 } from "../../../lib/demo/content";
 import { canonicalURL, contentMetadata, jsonLd } from "../../../lib/seo";
+import { publicImageURL } from "../../../lib/media";
 import { getPublicSettings } from "../../../lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +44,10 @@ export default async function WorkDetailPage({ params }: Props) {
   const item = cmsItem || demoItem;
   if (!item) notFound();
   const usingDemo = Boolean(demoItem);
-  const cover = demoItem ? demoCovers[slug] : undefined;
+  // The record's own first gallery image, falling back to the demo cover.
+  const cover =
+    (await publicImageURL(item.gallery_asset_ids?.[0] ?? "")) ??
+    (demoItem ? demoCovers[slug] : undefined);
   const url = canonicalURL(
     item.seo.canonical_url || `/work/${slug}`,
     settings?.seo.canonical_base,

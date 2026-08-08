@@ -253,6 +253,57 @@
   font-size: 0.76rem;
 }
 
+/* Local preview of the pending upload, so the operator confirms they picked the
+   right picture before it ever leaves the machine. */
+.filePreview {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--media-line);
+  border-radius: var(--radius-control);
+  background: var(--media-soft);
+}
+
+.filePreviewThumb {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3.25rem;
+  height: 3.25rem;
+  overflow: hidden;
+  border-radius: calc(var(--radius-control) - 0.15rem);
+  background: var(--media-panel);
+  color: var(--media-muted);
+}
+
+.filePreviewThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.filePreviewMeta {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.filePreviewMeta strong {
+  overflow: hidden;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filePreviewMeta > span {
+  color: var(--media-muted);
+}
+
 .library input[type="file"]::file-selector-button {
   margin-right: 0.65rem;
   padding: 0.45rem 0.65rem;
@@ -372,7 +423,107 @@
 }
 
 .grid li {
+  position: relative;
   min-width: 0;
+}
+
+/* Sibling of the card button, not a child — nested buttons are invalid, and the
+   card itself already opens the details dialog. */
+.cardDelete.cardDelete {
+  position: absolute;
+  z-index: 1;
+  top: 0.45rem;
+  left: 0.45rem;
+  display: grid;
+  place-items: center;
+  width: 1.85rem;
+  /* `.admin-stage button` sets min-height: 2.4rem, which outranks `height` and
+     would stretch the circle into an upright ellipse. */
+  min-height: 0;
+  height: 1.85rem;
+  padding: 0;
+  border: 1px solid var(--media-line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--media-panel) 88%, transparent);
+  color: var(--media-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease;
+}
+
+/* Revealed on hover or focus so the grid stays calm, but never hidden from
+   keyboards or touch, where there is no hover to reveal it. */
+.grid li:hover .cardDelete,
+.cardDelete:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .cardDelete.cardDelete {
+    opacity: 1;
+  }
+}
+
+.cardDelete.cardDelete:hover {
+  border-color: color-mix(in srgb, #e45d68 60%, transparent);
+  color: color-mix(in srgb, #e45d68 78%, var(--ink));
+}
+
+.pending {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--warning-line) 45%, transparent);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--warning-surface) 40%, transparent);
+  color: var(--warning);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.pending button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.1rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--warning-line) 60%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirm {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.confirm p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.confirmName {
+  overflow-wrap: anywhere;
+  font-weight: 750;
+}
+
+.confirmActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding-top: 0.35rem;
 }
 
 .grid button {

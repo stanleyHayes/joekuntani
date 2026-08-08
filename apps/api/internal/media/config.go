@@ -38,7 +38,10 @@ func LoadRuntimeConfig(environment string, getenv Environment) (RuntimeConfig, e
 	if environment == "production" && !configured {
 		return RuntimeConfig{}, errors.New("production media provider configuration is incomplete")
 	}
-	return RuntimeConfig{Cloudinary: cloudinary, Configured: configured, Policy: Policy{FolderPrefix: prefix, Folders: set("content", "press", "documents"), MIME: set("image/jpeg", "image/png", "image/webp", "application/pdf"), Transforms: set("hero", "card", "thumbnail", "social"), Hosts: set("res.cloudinary.com"), MaxBytes: int64(maxBytes), MaxWidth: maxDimension, MaxHeight: maxDimension}}, nil
+	// "brand" carries the logo, favicon and social card. It is not offered in the
+	// media library's folder tabs — those three are set from Settings — but the
+	// upload policy still has to admit it, or every brand asset field 400s.
+	return RuntimeConfig{Cloudinary: cloudinary, Configured: configured, Policy: Policy{FolderPrefix: prefix, Folders: set("content", "press", "documents", "brand", "events", "merch"), MIME: set("image/jpeg", "image/png", "image/webp", "application/pdf"), Transforms: set("hero", "card", "thumbnail", "social"), Hosts: set("res.cloudinary.com"), MaxBytes: int64(maxBytes), MaxWidth: maxDimension, MaxHeight: maxDimension}}, nil
 }
 func positiveInt(value string, fallback int) (int, error) {
 	if strings.TrimSpace(value) == "" {

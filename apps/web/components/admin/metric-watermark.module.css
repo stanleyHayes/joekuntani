@@ -36,6 +36,12 @@
   animation: watermark-spark 8s ease-in-out infinite;
   transform-origin: center;
 }
+/* After the variant rules on purpose — same 0-2-0 specificity, so source order
+   is what lets a still mark opt out of its variant's animation. */
+.mark[data-motion="still"] {
+  animation: none;
+  will-change: auto;
+}
 @keyframes watermark-orbit {
   to {
     transform: rotate(360deg);

@@ -1,0 +1,326 @@
+.field {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+/* Image pickers sit among plain text inputs in long forms. Giving them their
+   own plate stops the tiles reading as loose decoration between fields, and
+   keeps the label, the hint and the images visibly part of one control. */
+.panel {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+.panelHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+}
+
+.label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.count {
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.66rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.hint,
+.note,
+.failed {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.hint,
+.note {
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+.failed {
+  color: color-mix(in srgb, #e45d68 66%, var(--ink));
+  font-weight: 600;
+}
+
+/* Single asset ---------------------------------------------------------- */
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.thumb {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--surface) 86%, var(--ink) 14%);
+  color: color-mix(in srgb, var(--ink) 45%, transparent);
+}
+
+/* The single-image field is not in a grid, so it states its own footprint. */
+.thumbSolo {
+  width: 4.75rem;
+  height: 4.75rem;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Dashed only while empty, so a set image reads as content rather than a slot. */
+.thumb[data-empty="true"] {
+  border-style: dashed;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* The file input is the control; the label is its visible surface. Scoped
+   through `.actions` (0-2-0) so the shared `.admin-stage button` chrome cannot
+   drag these back to its own corners. */
+.actions .upload,
+.actions .remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--ink) 8%);
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.actions .upload:hover,
+.actions .remove:hover {
+  border-color: color-mix(in srgb, var(--brand-j) 50%, transparent);
+  background: color-mix(in srgb, var(--brand-j) 10%, var(--surface));
+}
+
+.actions .upload[data-busy="true"] {
+  cursor: progress;
+  opacity: 0.75;
+}
+
+.actions .remove {
+  color: color-mix(in srgb, var(--ink) 68%, transparent);
+}
+
+/* A document has no thumbnail, so its filename carries the recognition. It
+   takes the full row before the buttons wrap under it, and truncates rather
+   than pushing them off the panel. */
+.filename {
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: color-mix(in srgb, var(--ink) 80%, transparent);
+}
+
+.upload input[type="file"],
+.addTile input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.upload:focus-within,
+.addTile:focus-within {
+  outline: 2px solid var(--focus, var(--brand-k));
+  outline-offset: 2px;
+}
+
+/* Multiple assets -------------------------------------------------------- */
+
+/* A grid rather than a wrapping flex row: tiles now hold a caption and a tool
+   strip, so they need a shared column width instead of each sizing itself. */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  gap: 0.6rem;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  position: relative;
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+/* The first image is what the public page renders as its hero, so it is
+   outlined and captioned. Nothing else in the form communicated that order
+   carried meaning. */
+.tile[data-lead="true"] .thumb {
+  border-color: color-mix(in srgb, var(--brand-j) 60%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-j) 35%, transparent);
+}
+
+.lead {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  background: var(--brand-j);
+  color: #14110c;
+  font-size: 0.58rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tileTools {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.tileAction {
+  min-width: 0;
+  padding: 0.15rem 0.4rem;
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.tileAction:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.removeThumb {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 999px;
+  background: var(--surface-raised, var(--surface));
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
+  cursor: pointer;
+}
+
+.removeThumb:hover {
+  border-color: color-mix(in srgb, #e45d68 55%, transparent);
+  color: color-mix(in srgb, #e45d68 70%, var(--ink));
+}
+
+/* Was a 3.25rem box holding two words at 0.58rem: "Add image" wrapped and
+   spilled out under the dashed border. It now matches the tile grid and gives
+   the caption a line to sit on. */
+.addTile {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0.4rem;
+  border: 1px dashed color-mix(in srgb, var(--ink) 22%, transparent);
+  border-radius: 0.7rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--ink) 58%, transparent);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.addTile:hover {
+  border-color: color-mix(in srgb, var(--brand-j) 55%, transparent);
+  color: var(--ink);
+}
+
+.addTile[data-busy="true"] {
+  cursor: progress;
+}
+
+.spinner {
+  animation: asset-spin 850ms linear infinite;
+}
+
+@keyframes asset-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .actions .upload,
+  .actions .remove,
+  .addTile {
+    transition: none;
+  }
+
+  .spinner {
+    animation: none;
+  }
+}

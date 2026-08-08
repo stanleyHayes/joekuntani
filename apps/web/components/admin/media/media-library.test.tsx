@@ -36,8 +36,38 @@ describe("MediaLibrary", () => {
       screen.getByRole("button", { name: "View performance.jpg" }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Delete asset" }));
+    // Confirmation first, and a referenced asset cannot get past it.
     expect(remove).not.toHaveBeenCalled();
-    expect(screen.getByRole("status")).toHaveTextContent("used in 1 place");
+    expect(screen.getByRole("alert")).toHaveTextContent("used in 1 place");
+    expect(
+      screen.getByRole("button", { name: "Delete permanently" }),
+    ).toBeDisabled();
+  });
+
+  it("asks before deleting and abandons cleanly", async () => {
+    const remove = vi.fn(async () => undefined);
+    render(
+      <MediaLibrary
+        initialAssets={[{ ...asset, referenceCount: 0 }]}
+        onDelete={remove}
+      />,
+    );
+    // The card carries its own delete affordance, so removing an asset does
+    // not require opening it first.
+    fireEvent.click(
+      screen.getByRole("button", { name: "Delete performance.jpg" }),
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Delete this asset?" }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Keep it" }));
+    expect(remove).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("dialog", { name: "Delete this asset?" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "View performance.jpg" }),
+    ).toBeInTheDocument();
   });
   it("validates uploads before invoking a provider", async () => {
     const upload = vi.fn();
@@ -205,6 +235,7 @@ describe("MediaLibrary", () => {
       screen.getByRole("button", { name: "View performance.jpg" }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Delete asset" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete permanently" }));
     await waitFor(() => expect(remove).toHaveBeenCalledWith("asset-1"));
     expect(screen.getByText("No assets yet")).toBeInTheDocument();
     const failing = vi.fn(async () => {
@@ -221,6 +252,7 @@ describe("MediaLibrary", () => {
       screen.getByRole("button", { name: "View performance.jpg" }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Delete asset" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete permanently" }));
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent(
         "could not be deleted",
@@ -244,7 +276,9 @@ describe("MediaLibrary", () => {
     expect(
       screen.queryByRole("dialog", { name: "Asset details" }),
     ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /press-kit.pdf/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "View press-kit.pdf" }),
+    );
     expect(screen.getByText("PDF")).toBeInTheDocument();
     expect(
       screen.getByText("press-kit.pdf", { selector: "p" }),

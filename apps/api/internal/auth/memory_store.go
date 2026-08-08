@@ -12,12 +12,13 @@ type MemoryStore struct {
 	Users       map[string]User
 	Sessions    map[string]Session
 	Preferences map[string]Preferences
+	Invitations map[string]Invitation
 	Audits      []AuditEvent
 	AuditError  error
 }
 
 func NewMemoryStore(users ...User) *MemoryStore {
-	store := &MemoryStore{Users: map[string]User{}, Sessions: map[string]Session{}, Preferences: map[string]Preferences{}}
+	store := &MemoryStore{Users: map[string]User{}, Sessions: map[string]Session{}, Preferences: map[string]Preferences{}, Invitations: map[string]Invitation{}}
 	for _, user := range users {
 		store.Users[user.ID] = user
 	}
@@ -152,6 +153,82 @@ func (store *MemoryStore) ListUsers(_ context.Context) ([]StaffRecord, error) {
 		})
 	}
 	return out, nil
+}
+
+func (store *MemoryStore) ProvisionInvitedStaff(_ context.Context, name, email string, role Role, mfaSecret, tokenHash string, expiresAt time.Time, audit AuditEvent) (string, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	now := time.Now().UTC()
+	// Mirrors MongoStore: an address that never accepted is reissued rather than
+	// locked out, while an accepted account stays a conflict so an invite cannot
+	// be used to reset a live administrator.
+	for existingID, user := range store.Users {
+		if user.Email != email {
+			continue
+		}
+		if user.Status != "invited" {
+			return "", ErrConflict
+		}
+		// Acceptance deletes the entry, so anything still here is unspent — and
+		// must stop working now that a newer link exists.
+		for hash, invitation := range store.Invitations {
+			if invitation.UserID == existingID {
+				delete(store.Invitations, hash)
+			}
+		}
+		user.Name, user.Role = name, role
+		user.MFAEnabled, user.MFASecret, user.UpdatedAt = mfaSecret != "", mfaSecret, now
+		store.Users[existingID] = user
+		if store.Invitations == nil {
+			store.Invitations = map[string]Invitation{}
+		}
+		store.Invitations[tokenHash] = Invitation{UserID: existingID, Name: name, Email: email, Role: role, ExpiresAt: expiresAt}
+		store.Audits = append(store.Audits, audit)
+		return user.PublicID, nil
+	}
+	publicID := fmt.Sprintf("018f47f6-9f5d-7d3a-8d4e-%012d", len(store.Users)+1)
+	id := fmt.Sprintf("user-%d", len(store.Users)+1)
+	// No password hash at all: an invited account cannot be authenticated
+	// against until acceptance writes one.
+	store.Users[id] = User{
+		ID: id, PublicID: publicID, Name: name, Email: email,
+		Role: role, MFAEnabled: mfaSecret != "", MFASecret: mfaSecret, Status: "invited", UpdatedAt: now,
+	}
+	if store.Invitations == nil {
+		store.Invitations = map[string]Invitation{}
+	}
+	store.Invitations[tokenHash] = Invitation{UserID: id, Name: name, Email: email, Role: role, ExpiresAt: expiresAt}
+	store.Audits = append(store.Audits, audit)
+	return publicID, nil
+}
+
+func (store *MemoryStore) FindInvitation(_ context.Context, tokenHash string) (Invitation, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	invitation, ok := store.Invitations[tokenHash]
+	if !ok {
+		return Invitation{}, ErrInvitationInvalid
+	}
+	return invitation, nil
+}
+
+func (store *MemoryStore) AcceptInvitation(_ context.Context, tokenHash, passwordHash string, now time.Time, audit AuditEvent) error {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+	invitation, ok := store.Invitations[tokenHash]
+	if !ok || !now.Before(invitation.ExpiresAt) {
+		return ErrInvitationInvalid
+	}
+	user, ok := store.Users[invitation.UserID]
+	if !ok {
+		return ErrUserNotFound
+	}
+	user.PasswordHash, user.Status, user.UpdatedAt = passwordHash, "active", now
+	store.Users[invitation.UserID] = user
+	// Spent, not just marked: a replayed link finds nothing to accept.
+	delete(store.Invitations, tokenHash)
+	store.Audits = append(store.Audits, audit)
+	return nil
 }
 
 func (store *MemoryStore) ProvisionStaff(_ context.Context, name, email, password string, role Role, mfaSecret string) (string, error) {

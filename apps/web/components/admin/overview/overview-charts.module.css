@@ -13,6 +13,42 @@
   --series-2: #007e9c; /* teal  — secondary series */
   --track: color-mix(in srgb, var(--ink) 12%, transparent);
   --viz-label: color-mix(in srgb, var(--ink) 62%, transparent);
+
+  /* One gap inside a band, a wider one between bands, so the KPI row and the
+     chart grid read as two groups rather than eight loose cards. This element
+     previously carried colour tokens only, which left the two bands touching. */
+  --viz-gap: 1rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* Watermark plate. `isolation` keeps the mark's negative z-index inside the
+   card, so it sits over the card's own background but under every child —
+   including the sparkline SVG — without the content needing its own layer. */
+.kpi,
+.block {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.kpi > [data-variant],
+.block > [data-variant] {
+  z-index: -1;
+  right: -2.4rem;
+  bottom: -2.6rem;
+  width: 9.5rem;
+  height: 9.5rem;
+  /* The validated chart hues rather than the raw logo gold: these are the steps
+     of the same brand hues that hold up on both the cream and near-black
+     admin surfaces. Alternating them keeps the KPI row from looking stamped. */
+  color: var(--series-1);
+  opacity: 0.11;
+}
+
+.kpi:nth-child(even) > [data-variant],
+.block:nth-child(even) > [data-variant] {
+  color: var(--series-2);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,15 +67,15 @@
 
 .kpis {
   display: grid;
-  gap: 0.9rem;
+  gap: var(--viz-gap);
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
 }
 
 .kpi {
   display: grid;
-  gap: 0.3rem;
+  gap: 0.4rem;
   align-content: start;
-  padding: 1.15rem 1.25rem;
+  padding: 1.25rem 1.35rem 1.35rem;
   border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
   border-radius: 1.05rem;
   background: var(--surface);
@@ -74,19 +110,26 @@
 
 .charts {
   display: grid;
-  gap: 1rem;
+  gap: var(--viz-gap);
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
 }
 
 .block {
   display: grid;
-  gap: 0.9rem;
+  gap: 1rem;
   align-content: start;
   min-width: 0;
-  padding: 1.15rem 1.25rem;
+  padding: 1.25rem 1.35rem 1.35rem;
   border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
   border-radius: 1.05rem;
   background: var(--surface);
+}
+
+/* An empty block still stretches to its row's height, so let the placeholder
+   claim the leftover track and sit centred in it instead of hanging off the
+   heading with dead space beneath. */
+.block:has(> .blank) {
+  grid-template-rows: auto 1fr;
 }
 
 .blockHead {
@@ -245,11 +288,15 @@
 }
 
 .blank {
+  display: grid;
+  align-content: center;
+  min-height: 4rem;
+  max-width: 24rem;
   margin: 0;
-  padding: 0.9rem 0;
   color: var(--viz-label);
   font-size: 0.85rem;
   line-height: 1.5;
+  text-wrap: pretty;
 }
 
 @media (prefers-reduced-motion: reduce) {

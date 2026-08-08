@@ -1,12 +1,7 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
-import { BookingCalendar, calendarRange } from "./booking-calendar";
+import { calendarRange } from "./booking-api";
+import { BookingCalendar } from "./booking-calendar";
 
 const booking = {
   id: "018f47f6-9f5d-4d3a-8d4e-45f0f7d4c201",
@@ -33,22 +28,6 @@ beforeEach(() => {
   vi.stubGlobal(
     "fetch",
     vi.fn(async (_path: string, init?: RequestInit) => {
-      if (init?.method === "POST")
-        return Response.json(
-          {
-            booking,
-            warnings: [
-              {
-                booking_id: crypto.randomUUID(),
-                title: "Other show",
-                status: "confirmed",
-                start_at: booking.start_at,
-                end_at: booking.end_at,
-              },
-            ],
-          },
-          { status: 201 },
-        );
       if (init?.method === "PATCH")
         return Response.json({
           booking: { ...booking, status: "confirmed", version: 2 },
@@ -72,49 +51,13 @@ it("switches month week and list views and exposes private iCal", async () => {
     expect.stringContaining("calendar.ics"),
   );
 });
-it("creates in the configured timezone and surfaces confirmed conflicts", async () => {
+it("sends adding a booking to its own page rather than a dialog", async () => {
   render(<BookingCalendar />);
   await screen.findByText("Accra show");
-  expect(
-    screen.queryByRole("dialog", { name: "Add booking" }),
-  ).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Add booking" }));
-  const dialog = screen.getByRole("dialog", { name: "Add booking" });
-  const form = within(dialog)
-    .getByRole("button", { name: "Create booking" })
-    .closest("form")!;
-  for (const [name, value] of Object.entries({
-    title: "New show",
-    enquiry_id: booking.enquiry_id,
-    service_id: booking.service_id,
-    start_at: "2026-08-20T18:00",
-    end_at: "2026-08-20T20:00",
-    venue: "Venue",
-    city: "Accra",
-    country: "GH",
-    fee: "10.00",
-    currency: "GHS",
-  })) {
-    fireEvent.change(form.querySelector(`[name="${name}"]`)!, {
-      target: { value },
-    });
-  }
-  fireEvent.submit(form);
-  expect(
-    await screen.findByText("Booking saved with schedule warnings."),
-  ).toBeInTheDocument();
-  expect(screen.getByText(/confirmed/)).toBeInTheDocument();
-  await waitFor(() =>
-    expect(fetch).toHaveBeenCalledWith(
-      "/api/admin/bookings",
-      expect.objectContaining({ method: "POST" }),
-    ),
-  );
-  const call = vi
-    .mocked(fetch)
-    .mock.calls.find(([, init]) => init?.method === "POST")!;
-  expect(JSON.parse(String(call[1]?.body)).start_at).toBe(
-    "2026-08-20T18:00:00.000Z",
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Add booking" })).toHaveAttribute(
+    "href",
+    "/admin/bookings/new",
   );
 });
 it("uses CSRF protected lifecycle actions", async () => {

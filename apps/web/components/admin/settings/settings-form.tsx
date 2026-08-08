@@ -1,7 +1,7 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import { requestUpload } from "../media/media-admin";
+import { FormEvent, useEffect, useState } from "react";
+import { AssetUploadField } from "../media/asset-picker";
 import type {
   PublicSettings,
   SettingsCTA,
@@ -205,18 +205,18 @@ export function SettingsForm() {
               patch("brand", { ...draft.brand, tagline: value })
             }
           />
-          <AssetField
+          <AssetUploadField
             label="Logo image"
-            hint="upload from your device, or paste a media library ID"
+            hint="Shown in the site header and on shared links."
             folder="brand"
             value={draft.brand.logo_asset_id}
             onChange={(value) =>
               patch("brand", { ...draft.brand, logo_asset_id: value })
             }
           />
-          <AssetField
+          <AssetUploadField
             label="Browser tab icon"
-            hint="upload from your device, or paste a media library ID"
+            hint="The small icon shown on a browser tab."
             folder="brand"
             value={draft.brand.favicon_asset_id}
             onChange={(value) =>
@@ -224,35 +224,41 @@ export function SettingsForm() {
             }
           />
           <Field
-            label="Fallback page title" hint="used when a page has no title of its own"
+            label="Fallback page title"
+            hint="used when a page has no title of its own"
             value={draft.seo.default_title}
             onChange={(value) =>
               patch("seo", { ...draft.seo, default_title: value })
             }
           />
           <Field
-            label="Browser tab title pattern" hint="use %s where the page name goes"
+            label="Browser tab title pattern"
+            hint="use %s where the page name goes"
             value={draft.seo.title_template}
             onChange={(value) =>
               patch("seo", { ...draft.seo, title_template: value })
             }
           />
           <Field
-            label="Search result description" hint="one sentence shown by Google"
+            label="Search result description"
+            hint="one sentence shown by Google"
             value={draft.seo.description}
             onChange={(value) =>
               patch("seo", { ...draft.seo, description: value })
             }
           />
           <Field
-            label="Website address" hint="e.g. https://joekuntani.com"
+            label="Website address"
+            hint="e.g. https://joekuntani.com"
             value={draft.seo.canonical_base}
             onChange={(value) =>
               patch("seo", { ...draft.seo, canonical_base: value })
             }
           />
-          <Field
-            label="Default sharing image" hint="asset ID used when a page is shared"
+          <AssetUploadField
+            label="Default sharing image"
+            hint="Used when a page is shared and has no image of its own."
+            folder="brand"
             value={draft.seo.social_image_asset_id}
             onChange={(value) =>
               patch("seo", { ...draft.seo, social_image_asset_id: value })
@@ -418,7 +424,8 @@ export function SettingsForm() {
         <h2>Consent copy</h2>
         <div className={styles.grid}>
           <Field
-            label="Consent version" hint="bump this when the wording changes"
+            label="Consent version"
+            hint="bump this when the wording changes"
             value={draft.consent.version}
             onChange={(value) =>
               patch("consent", { ...draft.consent, version: value })
@@ -439,7 +446,8 @@ export function SettingsForm() {
             }
           />
           <Field
-            label="Privacy page address" hint="e.g. /privacy"
+            label="Privacy page address"
+            hint="e.g. /privacy"
             value={draft.consent.privacy_url}
             onChange={(value) =>
               patch("consent", { ...draft.consent, privacy_url: value })
@@ -589,110 +597,15 @@ export function SettingsForm() {
   );
 }
 /**
- * An asset slot. The ID stays a plain editable field so a known media-library
- * ID can still be pasted, and the picker beside it uploads a file straight from
- * the device through the same signed Cloudinary flow the media library uses.
- */
-function AssetField({
-  label,
-  hint,
-  folder,
-  value,
-  onChange,
-}: {
-  label: string;
-  hint?: string;
-  folder: string;
-  value: string;
-  onChange(value: string): void;
-}) {
-  const [state, setState] = useState<"" | "uploading" | "pending" | "failed">(
-    "",
-  );
-  const [preview, setPreview] = useState("");
-
-  async function pick(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setState("uploading");
-    try {
-      const asset = await requestUpload({
-        file,
-        folder,
-        altText: label,
-        tags: ["brand"],
-      });
-      onChange(asset.id);
-      setPreview(asset.publicUrl);
-      // A draft asset means the media provider is not configured yet; the
-      // record exists but nothing has reached Cloudinary.
-      setState(asset.status === "ready" ? "" : "pending");
-    } catch {
-      setState("failed");
-    } finally {
-      event.target.value = "";
-    }
-  }
-
-  return (
-    <div className={styles.assetField}>
-      <label className={styles.field}>
-        <span className={styles.fieldLabel}>{label}</span>
-        <input
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-        />
-        {hint ? <span className={styles.fieldHint}>{hint}</span> : null}
-      </label>
-      <div className={styles.assetTools}>
-        {preview ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img className={styles.assetPreview} src={preview} alt="" />
-        ) : null}
-        <label className={styles.assetUpload}>
-          {state === "uploading" ? "Uploading…" : "Upload from device"}
-          <input
-            type="file"
-            accept="image/*"
-            aria-label={`Upload ${label} from device`}
-            disabled={state === "uploading"}
-            onChange={pick}
-          />
-        </label>
-        {value ? (
-          <button
-            type="button"
-            className={styles.assetClear}
-            onClick={() => {
-              onChange("");
-              setPreview("");
-              setState("");
-            }}
-          >
-            Clear
-          </button>
-        ) : null}
-        {state === "failed" ? (
-          <span className={styles.assetFailed} role="alert">
-            Upload did not complete. Try again.
-          </span>
-        ) : null}
-        {state === "pending" ? (
-          <span className={styles.assetNote}>
-            Saved. The media provider is still finishing the transfer.
-          </span>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-/**
  * Turns a secret_status key into a service name. The heading already says these
  * are keys, so "email_configured" reads as "Email" and the state is left to the
  * value beside it.
  */
 function serviceLabel(name: string) {
-  const words = name.replace(/_configured$/, "").replaceAll("_", " ").trim();
+  const words = name
+    .replace(/_configured$/, "")
+    .replaceAll("_", " ")
+    .trim();
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 function Field({

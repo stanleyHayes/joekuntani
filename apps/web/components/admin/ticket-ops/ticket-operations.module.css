@@ -164,7 +164,23 @@
 .rowActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Order rows carry a 2.4rem-tall button, which the stage's shared 0.75rem cell
+   padding leaves sitting almost on the row divider. Specificity 0-1-2 so it
+   wins against `.admin-stage td` regardless of stylesheet order. */
+.workspace table :is(th, td) {
+  padding-block: 0.9rem;
+}
+
+@media (max-width: 44rem) {
+  /* Cells stack at this width and lose their vertical padding, so the action
+     pair needs its own separation from the financials line above it. */
+  .rowActions {
+    margin-top: 0.4rem;
+  }
 }
 
 .dialogForm {

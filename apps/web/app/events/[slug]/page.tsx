@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { getPublicEvent } from "../../../components/events/data";
-import {
-  formatDateRange,
-  TicketCard,
-} from "../../../components/events/event-ui";
+import { EventDetails } from "../../../components/public-info/event-details";
 import styles from "../../../components/events/events.module.css";
 import { PublicShell } from "../../../components/layout/public-shell";
 import { DemoBanner } from "../../../components/ui/demo-banner";
@@ -18,6 +15,7 @@ import {
   pageMetadata,
   unavailableMetadata,
 } from "../../../lib/seo";
+import { publicImageURL } from "../../../lib/media";
 import { getPublicSettings } from "../../../lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +61,10 @@ export default async function EventDetailPage({
   const usingDemo = Boolean(demoEvent);
   const event = result.data ?? demoEvent ?? null;
   const url = canonicalURL(`/events/${slug}`, settings?.seo.canonical_base);
-  const cover = usingDemo && event ? demoEventCovers[event.slug] : undefined;
+  // A published event's banner is its own; the demo map only covers fixtures.
+  const cover =
+    (await publicImageURL(event?.banner_asset_id ?? "")) ??
+    (usingDemo && event ? demoEventCovers[event.slug] : undefined);
   return (
     <PublicShell
       settings={settings}
@@ -134,134 +135,7 @@ export default async function EventDetailPage({
             </p>
           </section>
         ) : (
-          <>
-            <header className={`${styles.hero} shell-container`}>
-              <p className="eyebrow">
-                {usingDemo ? "Demo event" : "Published event"}
-              </p>
-              <h1>{event.title}</h1>
-              <p className={styles.lede}>{event.summary}</p>
-              <p>{formatDateRange(event)}</p>
-              {cover ? (
-                <figure className={styles.detailMedia}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={cover} alt="" width={1600} height={900} />
-                  <figcaption>Demo media — replace via CMS</figcaption>
-                </figure>
-              ) : null}
-              <a className={styles.primary} href="#tickets">
-                Review ticket availability
-              </a>
-            </header>
-            <section
-              className={`${styles.section} shell-container`}
-              aria-labelledby="event-details"
-            >
-              <div className={styles.sectionHead}>
-                <span>01</span>
-                <h2 id="event-details">Event details</h2>
-                <p>Where this date happens, and when doors run.</p>
-              </div>
-              <div className={styles.detailBody}>
-                <p className={styles.detailProse}>{event.description}</p>
-                <div className={styles.factPanel}>
-                  <dl className={styles.facts}>
-                    <div>
-                      <dt>Venue</dt>
-                      <dd>{event.venue.name}</dd>
-                    </div>
-                    <div>
-                      <dt>Address</dt>
-                      <dd>
-                        {event.venue.address}, {event.venue.city},{" "}
-                        {event.venue.country_code}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Local date and time</dt>
-                      <dd>{formatDateRange(event)}</dd>
-                    </div>
-                    <div>
-                      <dt>Timezone</dt>
-                      <dd>{event.timezone}</dd>
-                    </div>
-                  </dl>
-                  {event.venue.map_url ? (
-                    <a
-                      className={styles.mapLink}
-                      href={event.venue.map_url}
-                      rel="noopener noreferrer"
-                    >
-                      Open approved venue map
-                    </a>
-                  ) : null}
-                  {event.venue.accessibility ? (
-                    <div className={styles.accessNote}>
-                      <h3>Venue accessibility</h3>
-                      <p>{event.venue.accessibility}</p>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </section>
-            <section
-              className={`${styles.section} shell-container`}
-              aria-labelledby="event-policies"
-            >
-              <div className={styles.sectionHead}>
-                <span>02</span>
-                <h2 id="event-policies">Entry and event policies</h2>
-                <p>Door rules, refunds and age guidance for this date.</p>
-              </div>
-              <div className={styles.policyGrid}>
-                <article className={styles.policy}>
-                  <h3>Entry</h3>
-                  <p>{event.policies.entry}</p>
-                </article>
-                <article className={styles.policy}>
-                  <h3>Refunds</h3>
-                  <p>{event.policies.refunds}</p>
-                </article>
-                <article className={styles.policy}>
-                  <h3>Age guidance</h3>
-                  <p>
-                    {event.policies.age_guidance ||
-                      `Minimum age: ${event.policies.age_limit}`}
-                  </p>
-                </article>
-                {event.policies.accessibility ? (
-                  <article className={styles.policy}>
-                    <h3>Accessibility</h3>
-                    <p>{event.policies.accessibility}</p>
-                  </article>
-                ) : null}
-              </div>
-            </section>
-            <section
-              className={`${styles.section} shell-container`}
-              id="tickets"
-              aria-labelledby="tickets-title"
-            >
-              <div className={styles.sectionHead}>
-                <span>03</span>
-                <h2 id="tickets-title">Tickets</h2>
-                <p>
-                  Published ticket types, live availability and order limits.
-                </p>
-              </div>
-              {event.tickets.length ? (
-                <div className={styles.tickets}>
-                  {event.tickets.map((ticket) => (
-                    <TicketCard key={ticket.id} ticket={ticket} />
-                  ))}
-                </div>
-              ) : (
-                <p className={styles.notice} role="status">
-                  No published ticket types are available.
-                </p>
-              )}
-            </section>
-          </>
+          <EventDetails event={event} coverSrc={cover} usingDemo={usingDemo} />
         )}
       </main>
     </PublicShell>

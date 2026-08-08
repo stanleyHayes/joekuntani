@@ -84,13 +84,10 @@ it("edits, saves and publishes without rendering secret values", async () => {
   });
   for (const label of [
     /^Public brand name/,
-    /^Logo image/,
-    /^Browser tab icon/,
     /^Fallback page title/,
     /^Browser tab title pattern/,
     /^Search result description/,
     /^Website address/,
-    /^Default sharing image/,
     /^Public email/,
     /^Public phone/,
     /^Location shown publicly/,
@@ -109,8 +106,24 @@ it("edits, saves and publishes without rendering secret values", async () => {
       target: { value: `${(input as HTMLInputElement).value}x` },
     });
   }
+  // Images are chosen from the device, never by typing an asset id: there is a
+  // file picker and no text box to paste a media-library UUID into.
+  for (const image of [
+    "Logo image",
+    "Browser tab icon",
+    "Default sharing image",
+  ]) {
+    expect(screen.getByText(image)).toBeVisible();
+    expect(screen.queryByRole("textbox", { name: image })).toBeNull();
+    expect(screen.getByLabelText(`Choose ${image}`)).toHaveAttribute(
+      "type",
+      "file",
+    );
+  }
   // Structured lists are edited as rows, never as raw JSON.
-  expect(screen.queryByRole("textbox", { name: /^Primary navigation/ })).toBeNull();
+  expect(
+    screen.queryByRole("textbox", { name: /^Primary navigation/ }),
+  ).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Add footer link" }));
   const footerText = screen.getAllByLabelText(/^Link text/)[0];
   fireEvent.change(footerText, { target: { value: "Privacy" } });

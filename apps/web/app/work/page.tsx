@@ -13,6 +13,7 @@ import {
   demoCovers,
   demoWork,
 } from "../../lib/demo/content";
+import { contentCovers } from "../../lib/media";
 import { pageMetadata, unavailableMetadata } from "../../lib/seo";
 import styles from "./work.module.css";
 
@@ -52,6 +53,9 @@ export default async function WorkPage({
             (filters.tag ? item.tags.includes(filters.tag) : true),
         )
       : [];
+  // Published records carry their own imagery; the demo map is only a
+  // fallback for the fixture path.
+  const covers = await contentCovers(items);
   const categorySource = allItemsRaw.length
     ? allItemsRaw
     : demo
@@ -131,7 +135,10 @@ export default async function WorkPage({
               {items.map((item, index) => (
                 <WorkCard
                   cover={
-                    usingDemo && item.slug ? demoCovers[item.slug] : undefined
+                    item.slug
+                      ? (covers[item.slug] ??
+                        (usingDemo ? demoCovers[item.slug] : undefined))
+                      : undefined
                   }
                   index={index}
                   item={item}

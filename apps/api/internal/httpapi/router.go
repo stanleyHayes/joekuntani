@@ -38,6 +38,7 @@ type Options struct {
 	AdminMediaList           http.Handler
 	AdminMediaUpload         http.Handler
 	AdminMediaRetry          http.Handler
+	AdminMediaConfirm        http.Handler
 	AdminMediaUpdate         http.Handler
 	AdminMediaDelete         http.Handler
 	MediaCallback            http.Handler
@@ -58,6 +59,7 @@ type Options struct {
 	AdminServicesRetire      http.Handler
 	PublicContentList        http.Handler
 	PublicContentDetail      http.Handler
+	PublicMediaAsset         http.Handler
 	AdminContentList         http.Handler
 	AdminContentCreate       http.Handler
 	AdminContentPreview      http.Handler
@@ -126,6 +128,9 @@ func NewHandler(options ...Options) http.Handler {
 	if configuration.AdminMediaRetry != nil {
 		router.Method(http.MethodPost, "/api/admin/media/{assetID}/upload", configuration.AdminMediaRetry)
 	}
+	if configuration.AdminMediaConfirm != nil {
+		router.Method(http.MethodPost, "/api/admin/media/{assetID}/confirm", configuration.AdminMediaConfirm)
+	}
 	if configuration.AdminMediaUpdate != nil {
 		router.Method(http.MethodPatch, "/api/admin/media/{assetID}", configuration.AdminMediaUpdate)
 	}
@@ -186,6 +191,12 @@ func NewHandler(options ...Options) http.Handler {
 	}
 	if configuration.PublicContentDetail != nil {
 		router.Method(http.MethodGet, "/api/public/content/{kind}/{slug}", configuration.PublicContentDetail)
+	}
+	// Public content carries bare asset ids, so the site needs a way to turn one
+	// into a URL without a session. Without this route every CMS image and
+	// social card resolved to nothing.
+	if configuration.PublicMediaAsset != nil {
+		router.Method(http.MethodGet, "/api/public/media/assets/{assetID}", configuration.PublicMediaAsset)
 	}
 	if configuration.AdminContentList != nil {
 		router.Method(http.MethodGet, "/api/admin/content/{kind}", configuration.AdminContentList)

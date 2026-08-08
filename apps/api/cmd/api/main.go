@@ -81,7 +81,18 @@ func main() {
 	authStore := auth.NewMongoStore(mongoClient.Database(), secretBox)
 	authService := auth.NewService(authStore, nil, 12*time.Hour)
 	secureCookies := appEnvironment != "local" && appEnvironment != "development" && appEnvironment != "test"
-	authHandler, err := auth.NewHTTPHandler(authService, auth.HTTPConfig{SecureCookies: secureCookies, Production: appEnvironment == "production", AllowedOrigin: os.Getenv("PUBLIC_WEB_URL"), TrustedProxyCIDRs: splitNonempty(os.Getenv("AUTH_TRUSTED_PROXY_CIDRS"))})
+	// Optional: without it, invitations are still issued and the administrator
+	// passes the returned link on by hand rather than onboarding being blocked.
+	var invitationMailer auth.InvitationMailer
+	if resendKey := os.Getenv("RESEND_API_KEY"); resendKey != "" {
+		mailer, mailerErr := auth.NewResendInvitationMailer(&http.Client{Timeout: 10 * time.Second}, envOrDefault("RESEND_API_URL", "https://api.resend.com/emails"), resendKey, os.Getenv("RESEND_FROM_EMAIL"))
+		if mailerErr != nil {
+			logger.Warn("staff invitation email disabled", "error", mailerErr)
+		} else {
+			invitationMailer = mailer
+		}
+	}
+	authHandler, err := auth.NewHTTPHandler(authService, auth.HTTPConfig{SecureCookies: secureCookies, Production: appEnvironment == "production", AllowedOrigin: os.Getenv("PUBLIC_WEB_URL"), TrustedProxyCIDRs: splitNonempty(os.Getenv("AUTH_TRUSTED_PROXY_CIDRS")), PublicWebURL: os.Getenv("PUBLIC_WEB_URL"), InvitationMailer: invitationMailer})
 	if err != nil {
 		logger.Error("authentication HTTP configuration failed", "error", err)
 		os.Exit(1)
@@ -183,6 +194,17 @@ func main() {
 	enquiryStore := enquiries.NewMongoStore(mongoClient.Database())
 	enquiryDomain := enquiries.NewDomain(enquiryStore, services.NewMongoStore(mongoClient.Database()), captcha, enquiries.NewWindowLimiter(rateLimit, rateWindow, maxRateEntries), enquiries.ConfiguredRiskAssessor{CaptchaEnabled: captchaEnabled}, nil, enquiryIPKey)
 	enquiryHandler := enquiries.NewHTTPHandler(enquiryDomain, trustedEnquiryProxies)
+	// Without a sender the outbox rows pile up unsent, so the fallback fails
+	// loudly per message rather than pretending the mail went out.
+	var enquirySender enquiries.Sender = enquiries.UnavailableSender{}
+	if resendKey := os.Getenv("RESEND_API_KEY"); resendKey != "" {
+		enquirySender, err = enquiries.NewResendSender(mongoClient.Database(), &http.Client{Timeout: 10 * time.Second}, envOrDefault("RESEND_API_URL", "https://api.resend.com/emails"), resendKey, os.Getenv("RESEND_FROM_EMAIL"), envOrDefault("ENQUIRY_INTERNAL_INBOX", os.Getenv("RESEND_FROM_EMAIL")), os.Getenv("PUBLIC_WEB_URL"))
+		if err != nil {
+			logger.Error("enquiry notification configuration failed", "error", err)
+			os.Exit(1)
+		}
+	}
+	enquiryWorker := enquiries.NewWorker(enquiryStore, enquirySender)
 	ticketHoldDuration, err := time.ParseDuration(envOrDefault("TICKET_HOLD_DURATION", "10m"))
 	if err != nil {
 		logger.Error("ticket hold configuration failed", "error", err)
@@ -239,9 +261,13 @@ func main() {
 		logger.Error("ticket delivery configuration failed", "error", err)
 		os.Exit(1)
 	}
-	crmService := crm.NewService(crm.NewMongoStore(mongoClient.Database()), nil, nil)
+	crmStore := crm.NewMongoStore(mongoClient.Database())
+	crmService := crm.NewService(crmStore, nil, nil)
 	privacyStore := privacy.NewMongoStore(mongoClient.Database())
 	crmService.SetRetentionGuard(privacy.NewContactGuard(privacyStore))
+	// Bridges the public `enquiries` collection to the `crm_enquiries` records
+	// the console reads. Without it a submission is stored but never surfaces.
+	crmIntakeWorker := crm.NewIntakeWorker(crm.NewMongoPendingEnquiries(mongoClient.Database()), crmStore, crmService)
 	crmHandler := crm.NewHandler(crmService, func(request *http.Request) (crm.Actor, error) {
 		principal, ok := auth.PrincipalFromContext(request.Context())
 		if !ok {
@@ -501,9 +527,11 @@ func main() {
 			AdminMediaList:           authHandler.Protect(auth.PermissionContentEdit, false, mediaHandler.ListHandler()),
 			AdminMediaUpload:         authHandler.Protect(auth.PermissionContentEdit, true, mediaHandler.RequestUploadHandler()),
 			AdminMediaRetry:          authHandler.Protect(auth.PermissionContentEdit, true, mediaHandler.RetryUploadHandler()),
+			AdminMediaConfirm:        authHandler.Protect(auth.PermissionContentEdit, true, mediaHandler.ConfirmUploadHandler()),
 			AdminMediaUpdate:         authHandler.Protect(auth.PermissionContentEdit, true, mediaHandler.UpdateHandler()),
 			AdminMediaDelete:         authHandler.Protect(auth.PermissionContentEdit, true, mediaHandler.DeleteHandler()),
 			MediaCallback:            mediaHandler.CallbackHandler(),
+			PublicMediaAsset:         mediaHandler.PublicAssetHandler(),
 			PublicServicesList:       servicesHandler.PublicListHandler(),
 			PublicServicesDetail:     servicesHandler.PublicDetailHandler(),
 			PublicEnquirySubmit:      enquiryHandler.SubmitHandler(),
@@ -564,20 +592,22 @@ func main() {
 	shutdownContext, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	go func() {
-		if workerErr := privacyWorker.Run(shutdownContext, 24*time.Hour, 50); workerErr != nil && !errors.Is(workerErr, context.Canceled) {
-			logger.Error("privacy retention worker stopped", "error", workerErr)
+		if superviseWorker(shutdownContext, logger, "privacy retention", func(ctx context.Context) error {
+			return privacyWorker.Run(ctx, 24*time.Hour, 50)
+		}) {
 			stop()
 		}
 	}()
 	go func() {
-		if workerErr := ticketing.NewExpiryWorker(ticketOrderService, 30*time.Second).Run(shutdownContext); workerErr != nil && !errors.Is(workerErr, context.Canceled) {
-			logger.Error("ticket hold expiry worker stopped", "error", workerErr)
+		expiry := ticketing.NewExpiryWorker(ticketOrderService, 30*time.Second)
+		if superviseWorker(shutdownContext, logger, "ticket hold expiry", expiry.Run) {
 			stop()
 		}
 	}()
 	go func() {
-		if workerErr := ticketDeliveryWorker.Run(shutdownContext, 30*time.Second); workerErr != nil && !errors.Is(workerErr, context.Canceled) {
-			logger.Error("ticket delivery worker stopped", "error", workerErr)
+		if superviseWorker(shutdownContext, logger, "ticket delivery", func(ctx context.Context) error {
+			return ticketDeliveryWorker.Run(ctx, 30*time.Second)
+		}) {
 			stop()
 		}
 	}()
@@ -604,6 +634,26 @@ func main() {
 			}
 			if workerErr := workflowWorker.RunOnce(shutdownContext, 100); workerErr != nil && !errors.Is(workerErr, context.Canceled) {
 				logger.Error("CRM notification worker failed", "error", workerErr)
+			}
+			select {
+			case <-shutdownContext.Done():
+				return
+			case <-ticker.C:
+			}
+		}
+	}()
+	// Enquiry intake and enquiry mail share a tick: an enquirer waiting on an
+	// acknowledgement and a booker waiting for the lead to appear are the same
+	// impatience, and both read from the same submission.
+	go func() {
+		ticker := time.NewTicker(15 * time.Second)
+		defer ticker.Stop()
+		for {
+			if workerErr := crmIntakeWorker.RunOnce(shutdownContext, 100); workerErr != nil && !errors.Is(workerErr, context.Canceled) {
+				logger.Error("enquiry CRM intake failed", "error", workerErr)
+			}
+			if workerErr := enquiryWorker.RunOnce(shutdownContext); workerErr != nil && !errors.Is(workerErr, context.Canceled) {
+				logger.Error("enquiry notification worker failed", "error", workerErr)
 			}
 			select {
 			case <-shutdownContext.Done():
@@ -663,4 +713,47 @@ func listenAddr() string {
 		return ":" + port
 	}
 	return envOrDefault("API_ADDR", ":8080")
+}
+
+// maxWorkerFailures bounds how many consecutive restarts a background worker
+// gets before the process gives up and lets the platform restart it.
+const maxWorkerFailures = 5
+
+// superviseWorker keeps a background worker running across transient faults and
+// reports whether the process should shut down.
+//
+// These workers return on their first error — ticketing.ExpiryWorker.Run bails
+// out the moment a single Expire call fails — and that error used to trigger a
+// full API shutdown. One slow Mongo query was therefore enough to take the
+// public API offline with it, which is how a loaded database turned into a
+// dead site rather than a briefly degraded one. Transient faults now restart
+// the worker with linear backoff; a genuinely broken dependency still escalates
+// after maxWorkerFailures so the failure stays visible instead of looping
+// silently forever.
+func superviseWorker(ctx context.Context, logger *slog.Logger, name string, run func(context.Context) error) bool {
+	failures := 0
+	for ctx.Err() == nil {
+		started := time.Now()
+		err := run(ctx)
+		if err == nil || errors.Is(err, context.Canceled) || ctx.Err() != nil {
+			return false
+		}
+		// A worker that ran healthily for a while before failing is recovering
+		// from a new fault, not stuck in a crash loop, so it earns a fresh budget.
+		if time.Since(started) > time.Minute {
+			failures = 0
+		}
+		failures++
+		if failures >= maxWorkerFailures {
+			logger.Error("worker stopped", "worker", name, "error", err, "consecutive_failures", failures)
+			return true
+		}
+		logger.Warn("worker restarting after failure", "worker", name, "error", err, "consecutive_failures", failures)
+		select {
+		case <-ctx.Done():
+			return false
+		case <-time.After(time.Duration(failures) * 2 * time.Second):
+		}
+	}
+	return false
 }

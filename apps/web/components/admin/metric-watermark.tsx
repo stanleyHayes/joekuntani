@@ -4,14 +4,19 @@ export type MetricWatermarkVariant = "grid" | "orbit" | "spark" | "wave";
 
 export function MetricWatermark({
   variant = "orbit",
+  motion = "drift",
 }: {
   variant?: MetricWatermarkVariant;
+  /** `still` drops the animation — use it behind charts, where a moving
+      backdrop competes with the data for attention. */
+  motion?: "drift" | "still";
 }) {
   return (
     <svg
       aria-hidden="true"
       className={styles.mark}
       data-variant={variant}
+      data-motion={motion}
       viewBox="0 0 160 160"
     >
       {variant === "orbit" ? (

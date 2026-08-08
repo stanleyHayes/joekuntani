@@ -83,9 +83,20 @@ func (s *MongoStore) ListProducts(ctx context.Context, activeOnly bool) ([]Produ
 		return nil, err
 	}
 	for index := range products {
-		products[index].Variants = variants[products[index].PublicID]
+		// A product with no variants misses the map entirely, and a nil slice
+		// marshals to JSON null rather than []. The console reads
+		// product.variants.length straight off the response, so a product
+		// awaiting its first variant crashed the whole merchandise screen.
+		products[index].Variants = variantsOrEmpty(variants[products[index].PublicID])
 	}
 	return products, nil
+}
+
+func variantsOrEmpty(variants []Variant) []Variant {
+	if variants == nil {
+		return []Variant{}
+	}
+	return variants
 }
 
 func (s *MongoStore) ProductBySlug(ctx context.Context, slug string) (Product, error) {
@@ -102,7 +113,7 @@ func (s *MongoStore) ProductBySlug(ctx context.Context, slug string) (Product, e
 	if err != nil {
 		return Product{}, err
 	}
-	product.Variants = variants[document.PublicID]
+	product.Variants = variantsOrEmpty(variants[document.PublicID])
 	return product, nil
 }
 

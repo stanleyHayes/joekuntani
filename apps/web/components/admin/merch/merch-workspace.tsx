@@ -1,77 +1,22 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { AdminDialog } from "../admin-dialog";
 import { AdminErrorState, AdminSkeleton } from "../admin-feedback";
 import { EmptyState } from "../../ui/empty-state";
+import {
+  api,
+  productEditorHref,
+  type Order,
+  type Product,
+  type Variant,
+} from "./merch-api";
 import styles from "./merch-workspace.module.css";
-
-type Variant = {
-  id: string;
-  product_id: string;
-  sku: string;
-  label: string;
-  price: string;
-  currency: string;
-  stock: number;
-  active: boolean;
-  sort_order: number;
-};
-
-type Product = {
-  id: string;
-  slug: string;
-  name: string;
-  summary: string;
-  description: string;
-  category: string;
-  image_asset_ids: string[];
-  active: boolean;
-  sort_order: number;
-  variants: Variant[];
-};
-
-type Order = {
-  id: string;
-  reference: string;
-  currency: string;
-  total: string;
-  status: string;
-  created_at: string;
-  buyer: { name: string; email: string; phone: string };
-  delivery: { address: string; city: string; country_code: string };
-  lines: { product_name: string; variant_label: string; quantity: number }[];
-};
-
-const blankProduct: Product = {
-  id: "",
-  slug: "",
-  name: "",
-  summary: "",
-  description: "",
-  category: "",
-  image_asset_ids: [],
-  active: false,
-  sort_order: 0,
-  variants: [],
-};
-
-function csrfCookie() {
-  const prefix = "jk_admin_csrf=";
-  return (
-    document.cookie
-      .split(";")
-      .map((value) => value.trim())
-      .find((value) => value.startsWith(prefix))
-      ?.slice(prefix.length) ?? ""
-  );
-}
 
 export function MerchWorkspace() {
   const [products, setProducts] = useState<Product[] | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [draft, setDraft] = useState<Product>(blankProduct);
-  const [editorOpen, setEditorOpen] = useState(false);
   const [variantOpen, setVariantOpen] = useState(false);
   const [variantDraft, setVariantDraft] = useState<Variant | null>(null);
   const [pending, setPending] = useState(false);
@@ -84,31 +29,30 @@ export function MerchWorkspace() {
       api<{ orders: Order[] }>("/api/admin/merch/orders"),
     ]);
     if (productsResult.status === "fulfilled")
-      setProducts(productsResult.value.products ?? []);
+      // A product with no variants can arrive with `variants: null`. The type
+      // says otherwise, so normalising here keeps every reader below from
+      // having to defend against it — one of them did not, and crashed the
+      // screen on the first product created before its variants.
+      setProducts(
+        (productsResult.value.products ?? []).map((product) => ({
+          ...product,
+          variants: product.variants ?? [],
+        })),
+      );
     else setError("Merchandise could not be loaded.");
     if (ordersResult.status === "fulfilled")
       setOrders(ordersResult.value.orders ?? []);
   }
 
+  // Deferred by a zero-delay timer so the initial fetch never resolves inside
+  // the effect body — see team-workspace for the same idiom. Calling the loader
+  // directly trips react-hooks/set-state-in-effect.
   useEffect(() => {
-    void load();
+    const timer = window.setTimeout(() => {
+      void load();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
-
-  async function saveProduct(event: FormEvent) {
-    event.preventDefault();
-    setPending(true);
-    setError("");
-    try {
-      await api("/api/admin/merch/products", { method: "PUT", body: draft });
-      setMessage("Product saved.");
-      setEditorOpen(false);
-      await load();
-    } catch {
-      setError("The product was not accepted. Check the name and slug.");
-    } finally {
-      setPending(false);
-    }
-  }
 
   async function saveVariant(event: FormEvent) {
     event.preventDefault();
@@ -167,17 +111,9 @@ export function MerchWorkspace() {
           </p>
         </div>
         <div className="stage-head__actions">
-          <button
-            className="primary"
-            type="button"
-            disabled={pending}
-            onClick={() => {
-              setDraft(blankProduct);
-              setEditorOpen(true);
-            }}
-          >
+          <Link className={styles.addProduct} href={productEditorHref("")}>
             Add product
-          </button>
+          </Link>
         </div>
       </header>
 
@@ -210,15 +146,12 @@ export function MerchWorkspace() {
                   </span>
                 </div>
                 <div className={styles.rowTools}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDraft(product);
-                      setEditorOpen(true);
-                    }}
+                  <Link
+                    className={styles.rowLink}
+                    href={productEditorHref(product.id)}
                   >
                     Edit
-                  </button>
+                  </Link>
                   <button
                     type="button"
                     onClick={() => {
@@ -359,93 +292,6 @@ export function MerchWorkspace() {
         )}
       </section>
 
-      {editorOpen ? (
-        <AdminDialog
-          title={draft.id ? `Edit ${draft.name}` : "Add product"}
-          description="Products hold the public copy. Price and stock live on variants."
-          onClose={() => setEditorOpen(false)}
-          wide
-        >
-          <form className={styles.form} onSubmit={saveProduct}>
-            <div className={styles.fieldGrid}>
-              <label>
-                Name
-                <input
-                  value={draft.name}
-                  onChange={(event) =>
-                    setDraft({ ...draft, name: event.target.value })
-                  }
-                  required
-                />
-              </label>
-              <label>
-                Slug <span className={styles.hint}>— the /shop address</span>
-                <input
-                  value={draft.slug}
-                  onChange={(event) =>
-                    setDraft({ ...draft, slug: event.target.value })
-                  }
-                  required
-                />
-              </label>
-              <label>
-                Category
-                <input
-                  value={draft.category}
-                  onChange={(event) =>
-                    setDraft({ ...draft, category: event.target.value })
-                  }
-                />
-              </label>
-              <label>
-                Display order
-                <input
-                  type="number"
-                  value={draft.sort_order}
-                  onChange={(event) =>
-                    setDraft({
-                      ...draft,
-                      sort_order: Number(event.target.value) || 0,
-                    })
-                  }
-                />
-              </label>
-              <label className={styles.wide}>
-                Summary <span className={styles.hint}>— shown on the card</span>
-                <input
-                  value={draft.summary}
-                  onChange={(event) =>
-                    setDraft({ ...draft, summary: event.target.value })
-                  }
-                />
-              </label>
-              <label className={styles.wide}>
-                Description
-                <textarea
-                  value={draft.description}
-                  onChange={(event) =>
-                    setDraft({ ...draft, description: event.target.value })
-                  }
-                />
-              </label>
-            </div>
-            <label className={styles.check}>
-              <input
-                type="checkbox"
-                checked={draft.active}
-                onChange={(event) =>
-                  setDraft({ ...draft, active: event.target.checked })
-                }
-              />
-              Show this product in the public shop
-            </label>
-            <button className="primary" type="submit" disabled={pending}>
-              Save product
-            </button>
-          </form>
-        </AdminDialog>
-      ) : null}
-
       {variantOpen && variantDraft ? (
         <AdminDialog
           title={variantDraft.id ? "Edit variant" : "Add variant"}
@@ -528,24 +374,4 @@ export function MerchWorkspace() {
       ) : null}
     </section>
   );
-}
-
-async function api<T>(
-  path: string,
-  init: { method?: string; body?: unknown } = {},
-): Promise<T> {
-  const response = await fetch(path, {
-    method: init.method ?? "GET",
-    cache: "no-store",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(init.method && init.method !== "GET"
-        ? { "X-CSRF-Token": csrfCookie() }
-        : {}),
-    },
-    body: init.body === undefined ? undefined : JSON.stringify(init.body),
-  });
-  if (!response.ok) throw new Error(String(response.status));
-  return response.status === 204 ? ({} as T) : ((await response.json()) as T);
 }

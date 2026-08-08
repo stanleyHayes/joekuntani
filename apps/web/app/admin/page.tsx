@@ -9,38 +9,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const lanes = [
-  {
-    label: "Publish",
-    value: "CMS",
-    sub: "Homepage, work, press, media",
-    href: "/admin/content",
-    tone: "j" as const,
-  },
-  {
-    label: "Live",
-    value: "Events",
-    sub: "Showtimes, holds, check-in",
-    href: "/admin/events",
-    tone: "k" as const,
-  },
-  {
-    label: "Pipeline",
-    value: "CRM",
-    sub: "Enquiries and bookings",
-    href: "/admin/crm",
-    tone: "j" as const,
-  },
-  {
-    label: "Govern",
-    value: "Audit",
-    sub: "Exports, privacy, trail",
-    href: "/admin/audit",
-    tone: "k" as const,
-  },
-] as const;
-const watermarkVariants = ["grid", "orbit", "wave", "spark"] as const;
-
 const sections = [
   {
     title: "Publish",

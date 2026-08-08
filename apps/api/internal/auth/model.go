@@ -90,6 +90,10 @@ var (
 	ErrUserNotFound        = errors.New("user not found")
 	ErrSecurityUnavailable = errors.New("security event persistence unavailable")
 	ErrConflict            = errors.New("authentication state conflict")
+	// Deliberately one error for missing, expired and already-spent tokens: the
+	// acceptance endpoint is unauthenticated, so distinguishing them would let a
+	// caller probe which invitations exist.
+	ErrInvitationInvalid = errors.New("invitation invalid or expired")
 )
 
 type Store interface {
@@ -97,6 +101,9 @@ type Store interface {
 	FindUserByID(context.Context, string) (User, error)
 	ListUsers(context.Context) ([]StaffRecord, error)
 	ProvisionStaff(context.Context, string, string, string, Role, string) (string, error)
+	ProvisionInvitedStaff(context.Context, string, string, Role, string, string, time.Time, AuditEvent) (string, error)
+	FindInvitation(context.Context, string) (Invitation, error)
+	AcceptInvitation(context.Context, string, string, time.Time, AuditEvent) error
 	UpdateProfile(context.Context, string, string, time.Time, AuditEvent) error
 	ChangePassword(context.Context, string, string, string, time.Time, AuditEvent) error
 	UpdateRole(context.Context, string, Role, time.Time, AuditEvent) error

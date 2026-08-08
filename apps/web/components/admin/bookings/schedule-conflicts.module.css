@@ -1,0 +1,24 @@
+.warning {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.95rem 1.05rem;
+  border: 1px solid var(--warning-line);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--warning-surface) 80%, transparent);
+  color: var(--warning);
+}
+
+.warning h3 {
+  margin: 0;
+  font-size: 0.86rem;
+  color: inherit;
+}
+
+.warning ul {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.83rem;
+}

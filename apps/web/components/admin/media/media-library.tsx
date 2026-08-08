@@ -1,6 +1,13 @@
 "use client";
 
-import { FormEvent, useDeferredValue, useMemo, useState } from "react";
+import {
+  type ChangeEvent,
+  FormEvent,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import Image from "next/image";
 import {
   ArrowClockwise,
@@ -53,6 +60,9 @@ export type MediaLibraryProps = {
   ) => Promise<MediaAsset>;
   onDelete?: (id: string) => Promise<void>;
   onRetry?: (id: string, file: File) => Promise<MediaAsset>;
+  /** Re-reads the library. Uploads are confirmed by an out-of-band provider
+      callback, so the only way to observe one landing is to ask again. */
+  onRefresh?: () => Promise<MediaAsset[] | null>;
 };
 
 const allowedTypes = [
@@ -69,6 +79,7 @@ export function MediaLibrary({
   onSave,
   onDelete,
   onRetry,
+  onRefresh,
 }: MediaLibraryProps) {
   const [assets, setAssets] = useState(initialAssets);
   const [selectedID, setSelectedID] = useState("");
@@ -77,6 +88,38 @@ export function MediaLibrary({
   const [busy, setBusy] = useState(false);
   const [retryFile, setRetryFile] = useState<File | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
+  // Deletion removes the file from the provider as well as the record, so it
+  // asks first. Held as the asset rather than a boolean because the card
+  // buttons can delete something other than the currently-selected asset.
+  const [pendingDelete, setPendingDelete] = useState<MediaAsset | null>(null);
+  // A filename alone does not tell you whether you picked the right photo, and
+  // the only way to check used to be uploading it. Rendered from the local file,
+  // so nothing is sent until the operator submits.
+  const [chosen, setChosen] = useState<{
+    url: string;
+    name: string;
+    isImage: boolean;
+  } | null>(null);
+
+  // Cleanup closes over the previous entry, so each object URL is released when
+  // it is superseded and again when the library unmounts.
+  useEffect(() => {
+    if (!chosen) return;
+    return () => URL.revokeObjectURL(chosen.url);
+  }, [chosen]);
+
+  function previewChoice(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    setChosen(
+      file
+        ? {
+            url: URL.createObjectURL(file),
+            name: file.name,
+            isImage: file.type.startsWith("image/"),
+          }
+        : null,
+    );
+  }
   const [query, setQuery] = useState("");
   const [folderFilter, setFolderFilter] = useState("all");
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
@@ -101,6 +144,21 @@ export function MediaLibrary({
     () => assets.filter((asset) => asset.status === "ready").length,
     [assets],
   );
+  const pendingCount = useMemo(
+    () => assets.filter((asset) => asset.status === "uploading").length,
+    [assets],
+  );
+
+  async function refresh() {
+    if (!onRefresh) return;
+    setBusy(true);
+    try {
+      const latest = await onRefresh();
+      if (latest) setAssets(latest);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function upload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -144,6 +202,7 @@ export function MediaLibrary({
           : "Draft saved. Provider completion is pending and can be retried.",
       );
       form.reset();
+      setChosen(null);
       setUploadOpen(false);
     } catch {
       setNotice(
@@ -181,24 +240,30 @@ export function MediaLibrary({
     }
   }
 
-  async function remove() {
-    if (!selected || !onDelete) return;
-    if (selected.referenceCount > 0) {
+  async function remove(target?: MediaAsset) {
+    const asset = target ?? selected;
+    if (!asset || !onDelete) return;
+    if (asset.referenceCount > 0) {
       setNotice(
-        `This asset is used in ${selected.referenceCount} place${selected.referenceCount === 1 ? "" : "s"} and cannot be deleted.`,
+        `This asset is used in ${asset.referenceCount} place${asset.referenceCount === 1 ? "" : "s"} and cannot be deleted.`,
       );
+      setPendingDelete(null);
       return;
     }
     setBusy(true);
     try {
-      await onDelete(selected.id);
-      const remaining = assets.filter((asset) => asset.id !== selected.id);
+      await onDelete(asset.id);
+      const remaining = assets.filter((item) => item.id !== asset.id);
       setAssets(remaining);
       setSelectedID(remaining[0]?.id ?? "");
+      setDetailsOpen(false);
       setNotice("Asset deleted.");
     } catch {
       setNotice("The asset could not be deleted. It remains available.");
     } finally {
+      // Dismissed either way: the outcome is reported in the page notice, which
+      // sits behind this dialog.
+      setPendingDelete(null);
       setBusy(false);
     }
   }
@@ -287,6 +352,25 @@ export function MediaLibrary({
         </p>
       ) : null}
 
+      {/* An asset sits in `uploading` until the media provider calls back into
+          the API to confirm it. That is out of the browser's hands, so say so
+          rather than leaving a badge that looks like a hung upload. */}
+      {pendingCount > 0 ? (
+        <p className={styles.pending}>
+          <span>
+            {pendingCount} asset{pendingCount === 1 ? " is" : "s are"} waiting
+            for the media provider to confirm the transfer. They become usable
+            once it does.
+          </span>
+          {onRefresh ? (
+            <button type="button" disabled={busy} onClick={() => void refresh()}>
+              <ArrowClockwise size={15} aria-hidden="true" />
+              Check again
+            </button>
+          ) : null}
+        </p>
+      ) : null}
+
       {uploadOpen ? (
         <AdminDialog
           title="Upload asset"
@@ -314,7 +398,33 @@ export function MediaLibrary({
                   type="file"
                   accept={allowedTypes.join(",")}
                   required
+                  onChange={previewChoice}
                 />
+                {chosen ? (
+                  <span className={styles.filePreview}>
+                    <span
+                      className={styles.filePreviewThumb}
+                      data-kind={chosen.isImage ? "image" : "file"}
+                    >
+                      {chosen.isImage ? (
+                        // Local blob URL, not a remote asset: next/image cannot
+                        // optimise it and there is nothing to optimise.
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={chosen.url} alt="" />
+                      ) : (
+                        <FilePdf size={22} weight="duotone" aria-hidden="true" />
+                      )}
+                    </span>
+                    <span className={styles.filePreviewMeta}>
+                      <strong>{chosen.name}</strong>
+                      <span>
+                        {chosen.isImage
+                          ? "Preview only — nothing is uploaded until you submit."
+                          : "No preview for this file type."}
+                      </span>
+                    </span>
+                  </span>
+                ) : null}
               </label>
               <label>
                 Folder
@@ -420,6 +530,17 @@ export function MediaLibrary({
             <ul className={styles.grid} aria-label="Media assets">
               {filteredAssets.map((asset) => (
                 <li key={asset.id}>
+                  {/* Outside the card button — a button cannot nest inside a
+                      button, and the card itself opens the details dialog. */}
+                  <button
+                    type="button"
+                    className={styles.cardDelete}
+                    aria-label={`Delete ${asset.filename}`}
+                    disabled={!onDelete}
+                    onClick={() => setPendingDelete(asset)}
+                  >
+                    <Trash size={15} aria-hidden="true" />
+                  </button>
                   <button
                     type="button"
                     aria-label={`View ${asset.filename}`}
@@ -581,7 +702,7 @@ export function MediaLibrary({
                     type="button"
                     aria-label="Delete asset"
                     disabled={busy || !onDelete}
-                    onClick={remove}
+                    onClick={() => setPendingDelete(selected)}
                   >
                     <Trash size={17} aria-hidden="true" />
                     Delete
@@ -589,6 +710,41 @@ export function MediaLibrary({
                 </div>
               </form>
             </aside>
+          </AdminDialog>
+        ) : null}
+
+        {pendingDelete ? (
+          <AdminDialog
+            title="Delete this asset?"
+            description="The file is removed from the media provider as well as this library. This cannot be undone."
+            onClose={() => setPendingDelete(null)}
+          >
+            <div className={styles.confirm}>
+              <p className={styles.confirmName}>{pendingDelete.filename}</p>
+              {pendingDelete.referenceCount > 0 ? (
+                <p role="alert">
+                  This asset is used in {pendingDelete.referenceCount} place
+                  {pendingDelete.referenceCount === 1 ? "" : "s"}, so it cannot
+                  be deleted. Remove it from those items first.
+                </p>
+              ) : (
+                <p>Nothing currently references this asset.</p>
+              )}
+              <div className={styles.confirmActions}>
+                <button type="button" onClick={() => setPendingDelete(null)}>
+                  Keep it
+                </button>
+                <button
+                  className={styles.danger}
+                  type="button"
+                  disabled={busy || pendingDelete.referenceCount > 0}
+                  onClick={() => void remove(pendingDelete)}
+                >
+                  <Trash size={17} aria-hidden="true" />
+                  Delete permanently
+                </button>
+              </div>
+            </div>
           </AdminDialog>
         ) : null}
       </div>

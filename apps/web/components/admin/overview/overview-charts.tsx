@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { AdminSkeleton } from "../admin-feedback";
+import {
+  MetricWatermark,
+  type MetricWatermarkVariant,
+} from "../metric-watermark";
 import styles from "./overview-charts.module.css";
 
 type NamedCount = { name: string; count: number };
@@ -68,21 +72,31 @@ export function OverviewCharts() {
           label="Enquiries"
           value={analytics?.conversion_total ?? 0}
           sub="Conversions recorded across the site"
+          watermark="spark"
         />
         <Kpi
           label="Bookings"
           value={analytics?.booking_submitted ?? 0}
           sub="Booking requests submitted"
+          watermark="wave"
         />
+        {/* Sourced from the ticketing ledger, not analytics.ticket_purchases.
+            The analytics counter only increments on a client-side event fired
+            from the public site, so orders completed through the Paystack
+            webhook never reach it — this KPI read 0 while the Ticket inventory
+            block directly below it reported 2 sold, from the same page. The
+            ledger is the record money is reconciled against, so it wins. */}
         <Kpi
           label="Tickets sold"
-          value={analytics?.ticket_purchases ?? 0}
+          value={inventory?.quantity_sold ?? 0}
           sub="Completed ticket purchases"
+          watermark="grid"
         />
         <Kpi
           label="Published"
           value={analytics?.content_published ?? 0}
           sub="Live content pieces"
+          watermark="orbit"
         />
       </div>
 
@@ -92,27 +106,32 @@ export function OverviewCharts() {
           meta="by stage"
           data={toCounts(analytics?.pipeline)}
           empty="No enquiries have entered the pipeline yet."
+          watermark="wave"
         />
         <BarBlock
           title="Bookings"
           meta="by status"
           data={toCounts(analytics?.bookings_by_status)}
           empty="No bookings recorded yet."
+          watermark="orbit"
         />
         <BarBlock
           title="Top sources"
           meta="where visitors arrive from"
           data={analytics?.top_sources ?? []}
           empty="No referral sources measured yet."
+          watermark="spark"
         />
         <BarBlock
           title="Top pages"
           meta="most visited"
           data={analytics?.top_paths ?? []}
           empty="No page views measured yet."
+          watermark="grid"
         />
 
         <section className={styles.block} aria-labelledby="overview-inventory">
+          <MetricWatermark variant="grid" motion="still" />
           <div className={styles.blockHead}>
             <h3 className={styles.blockTitle} id="overview-inventory">
               Ticket inventory
@@ -179,13 +198,16 @@ function Kpi({
   label,
   value,
   sub,
+  watermark,
 }: {
   label: string;
   value: number;
   sub: string;
+  watermark: MetricWatermarkVariant;
 }) {
   return (
     <article className={styles.kpi}>
+      <MetricWatermark variant={watermark} />
       <p className={styles.kpiLabel}>{label}</p>
       <strong className={styles.kpiValue}>{value.toLocaleString()}</strong>
       <p className={styles.kpiSub}>{sub}</p>
@@ -198,11 +220,13 @@ function BarBlock({
   meta,
   data,
   empty,
+  watermark,
 }: {
   title: string;
   meta: string;
   data: NamedCount[];
   empty: string;
+  watermark: MetricWatermarkVariant;
 }) {
   const id = `overview-${title.toLowerCase().replaceAll(" ", "-")}`;
   const ranked = [...data].sort((a, b) => b.count - a.count).slice(0, 6);
@@ -210,6 +234,7 @@ function BarBlock({
 
   return (
     <section className={styles.block} aria-labelledby={id}>
+      <MetricWatermark variant={watermark} motion="still" />
       <div className={styles.blockHead}>
         <h3 className={styles.blockTitle} id={id}>
           {title}
@@ -248,6 +273,7 @@ function AudienceBlock({ metrics }: { metrics: AudienceMetric[] }) {
 
   return (
     <section className={styles.block} aria-labelledby="overview-audience">
+      <MetricWatermark variant="wave" motion="still" />
       <div className={styles.blockHead}>
         <h3 className={styles.blockTitle} id="overview-audience">
           Audience

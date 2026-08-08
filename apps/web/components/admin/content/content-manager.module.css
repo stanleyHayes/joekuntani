@@ -4,6 +4,12 @@
   min-width: 0;
 }
 
+.stack {
+  min-width: 0;
+  display: grid;
+  gap: 1.15rem;
+}
+
 /* ---- Header ---- */
 
 .header {
@@ -83,41 +89,36 @@
   border-color: color-mix(in srgb, var(--brand-k) 55%, transparent);
 }
 
+/* Both row controls are links now that the editor is a route, so they carry
+   button chrome rather than button semantics. */
 .newDraft {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   min-height: 2.4rem;
-  border: 0;
   border-radius: 999px;
   padding: 0.4rem 1.15rem;
   background: var(--brand-j);
-  color: #14110c;
-  font: inherit;
+  color: var(--on-brand, #14110c);
   font-size: 0.86rem;
   font-weight: 750;
   letter-spacing: -0.01em;
-  cursor: pointer;
+  text-decoration: none;
 }
 
-.newDraft:hover:not(:disabled) {
+.newDraft:hover {
   filter: brightness(1.05);
 }
 
-.newDraft:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.newDraft:focus-visible {
+.newDraft:focus-visible,
+.editLink:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
 /* ---- Role notice ---- */
 
-.permission,
-.warning {
+.permission {
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -127,22 +128,13 @@
   line-height: 1.5;
 }
 
-.permission::before,
-.warning::before {
+.permission::before {
   content: "";
   flex: none;
   width: 0.45rem;
   height: 0.45rem;
   border-radius: 999px;
   background: var(--accent);
-}
-
-.warning {
-  color: var(--feedback-warning, var(--accent));
-}
-
-.warning::before {
-  background: var(--feedback-warning, var(--accent));
 }
 
 /* ---- Control bar ---- */
@@ -192,15 +184,10 @@
   display: grid;
   gap: 0.35rem;
   min-width: 0;
-}
-
-.field > span,
-.fieldGrid .field {
   font-size: 0.8rem;
 }
 
 .field input,
-.field textarea,
 .field select {
   width: 100%;
   min-height: 2.75rem;
@@ -212,13 +199,7 @@
   font: inherit;
 }
 
-.field textarea {
-  min-height: 8rem;
-  resize: vertical;
-}
-
 .field input:focus-visible,
-.field textarea:focus-visible,
 .field select:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
@@ -307,108 +288,22 @@
   color: var(--ink);
 }
 
-.editButton {
+.editLink {
+  display: inline-flex;
+  align-items: center;
   flex: none;
   min-height: 2.35rem;
   border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
   border-radius: 999px;
   padding: 0.4rem 1rem;
-  background: transparent;
   color: inherit;
-  font: inherit;
   font-size: 0.84rem;
   font-weight: 650;
-  cursor: pointer;
+  text-decoration: none;
 }
 
-.editButton:hover {
+.editLink:hover {
   border-color: color-mix(in srgb, var(--brand-j) 60%, transparent);
-}
-
-.editButton:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-
-/* ---- Editor dialog ---- */
-
-.stack {
-  min-width: 0;
-  display: grid;
-  gap: 1.15rem;
-}
-
-.form,
-.fields {
-  display: grid;
-  gap: 1rem;
-}
-
-.toolbar,
-.actions,
-.schedule {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: end;
-}
-
-.audit {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1.5rem;
-  margin-block: 0.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
-}
-
-.audit div {
-  min-width: 8rem;
-}
-
-.audit dt {
-  color: var(--text-muted, var(--ink-soft));
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.audit dd {
-  margin: 0.25rem 0 0;
-  font-size: 0.9rem;
-}
-
-.message {
-  margin: 0;
-  padding: 0.75rem 0.9rem;
-  border-radius: 0.75rem;
-  background: color-mix(in srgb, var(--brand-k) 12%, transparent);
-  font-size: 0.9rem;
-}
-
-.error {
-  background: color-mix(
-    in srgb,
-    var(--feedback-danger, #f87171) 14%,
-    transparent
-  );
-  color: var(--feedback-danger);
-}
-
-.status {
-  display: block;
-  color: var(--text-muted, var(--ink-soft));
-  font-size: 0.85rem;
-}
-
-.preview {
-  white-space: pre-wrap;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  border: 1px dashed color-mix(in srgb, var(--ink) 18%, transparent);
-  font-size: 0.9rem;
-  line-height: 1.55;
 }
 
 /* Two up on tablet: four controls in one row only becomes legible once there
@@ -431,13 +326,4 @@
   .list {
     grid-template-columns: repeat(auto-fill, minmax(25rem, 1fr));
   }
-}
-
-/* Wraps a labelled control together with its AI assist bar, which must sit
-   outside the <label> so its buttons do not become part of the control name. */
-.fieldGroup {
-  display: grid;
-  gap: 0;
-  align-content: start;
-  min-width: 0;
 }

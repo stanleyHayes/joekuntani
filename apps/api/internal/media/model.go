@@ -81,6 +81,15 @@ type Provider interface {
 	Delete(context.Context, Asset) error
 }
 
+// UploadResponseVerifier is the optional half of Provider for backends that sign
+// the reply they hand the browser, letting an upload be completed without
+// waiting on an inbound callback. It is kept separate from Provider so a backend
+// without signed replies stays a valid Provider — ConfirmUpload reports the
+// feature unavailable rather than failing to compile.
+type UploadResponseVerifier interface {
+	VerifyUploadResponse(context.Context, []byte) (Completion, error)
+}
+
 type Repository interface {
 	CreateDraftWithAudit(context.Context, Asset, AuditEvent) error
 	MarkUploading(context.Context, string, AuditEvent) error

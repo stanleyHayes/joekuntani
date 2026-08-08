@@ -24,6 +24,8 @@ type HTTPHandler struct {
 	secure         bool
 	limiter        *rateLimiter
 	allowedOrigin  string
+	publicWebURL   string
+	mailer         InvitationMailer
 	trustedProxies []*net.IPNet
 }
 
@@ -32,6 +34,12 @@ type HTTPConfig struct {
 	AllowedOrigin             string
 	TrustedProxyCIDRs         []string
 	RateLimitCapacity         int
+	// Origin the invitation link points at. Defaults to AllowedOrigin, which is
+	// the public web app in every deployment.
+	PublicWebURL string
+	// Optional. Without it invitations are still created and their links
+	// returned to the administrator to pass on by hand.
+	InvitationMailer InvitationMailer
 }
 
 func NewHTTPHandler(service *Service, config HTTPConfig) (*HTTPHandler, error) {
@@ -54,7 +62,11 @@ func NewHTTPHandler(service *Service, config HTTPConfig) (*HTTPHandler, error) {
 	if capacity <= 0 {
 		capacity = 10_000
 	}
-	return &HTTPHandler{service: service, secure: config.SecureCookies, allowedOrigin: origin, trustedProxies: trusted, limiter: newRateLimiter(5, time.Minute, capacity)}, nil
+	publicWebURL := strings.TrimSpace(config.PublicWebURL)
+	if publicWebURL == "" {
+		publicWebURL = origin
+	}
+	return &HTTPHandler{service: service, secure: config.SecureCookies, allowedOrigin: origin, publicWebURL: publicWebURL, mailer: config.InvitationMailer, trustedProxies: trusted, limiter: newRateLimiter(5, time.Minute, capacity)}, nil
 }
 
 func (handler *HTTPHandler) Routes() http.Handler {
@@ -62,6 +74,10 @@ func (handler *HTTPHandler) Routes() http.Handler {
 	router.With(handler.sameOrigin).Post("/login", handler.rateLimit(handler.login))
 	router.With(handler.sameOrigin).Post("/mfa/verify", handler.rateLimit(handler.completeMFA))
 	router.With(handler.sameOrigin).Get("/mfa/setup", handler.rateLimit(handler.mfaSetup))
+	// Unauthenticated by necessity — the invitee has no account to sign in with
+	// yet. The token is the only credential, so both routes are rate limited.
+	router.With(handler.sameOrigin).Get("/invitations/{token}", handler.rateLimit(handler.readInvitation))
+	router.With(handler.sameOrigin).Post("/invitations/{token}/accept", handler.rateLimit(handler.acceptInvitation))
 	router.Group(func(protected chi.Router) {
 		protected.Use(handler.authenticate)
 		protected.Get("/me", handler.me)
@@ -273,7 +289,7 @@ func (handler *HTTPHandler) provisionUser(response http.ResponseWriter, request 
 		return
 	}
 	principal := request.Context().Value(principalKey{}).(Principal)
-	id, err := handler.service.ProvisionStaff(request.Context(), principal, input)
+	invitation, token, err := handler.service.InviteStaff(request.Context(), principal, input)
 	if err != nil {
 		status := http.StatusBadRequest
 		if errors.Is(err, ErrForbidden) {
@@ -281,10 +297,48 @@ func (handler *HTTPHandler) provisionUser(response http.ResponseWriter, request 
 		} else if errors.Is(err, ErrConflict) {
 			status = http.StatusConflict
 		}
-		problem(response, status, "Unable to provision staff user")
+		problem(response, status, "Unable to invite staff user")
 		return
 	}
-	jsonResponse(response, http.StatusCreated, map[string]any{"id": id})
+	body := map[string]any{"id": invitation.UserID, "email": invitation.Email, "expires_at": invitation.ExpiresAt}
+	// The link is returned to the administrator as well as mailed. Delivery can
+	// fail or be unconfigured, and an invitation nobody can reach is a dead
+	// account that only an operator with database access could clear.
+	if acceptURL, err := AcceptURL(handler.publicWebURL, token); err == nil {
+		body["accept_url"] = acceptURL
+		if handler.mailer != nil {
+			body["emailed"] = handler.mailer.SendStaffInvitation(request.Context(), invitation.Email, invitation.Name, acceptURL) == nil
+		}
+	}
+	jsonResponse(response, http.StatusCreated, body)
+}
+
+func (handler *HTTPHandler) readInvitation(response http.ResponseWriter, request *http.Request) {
+	invitation, err := handler.service.Invitation(request.Context(), chi.URLParam(request, "token"))
+	if err != nil {
+		problem(response, http.StatusNotFound, "This invitation is no longer valid")
+		return
+	}
+	jsonResponse(response, http.StatusOK, invitation)
+}
+
+func (handler *HTTPHandler) acceptInvitation(response http.ResponseWriter, request *http.Request) {
+	var input struct {
+		Password string `json:"password"`
+	}
+	if !decodeJSON(response, request, &input) {
+		return
+	}
+	err := handler.service.AcceptInvitation(request.Context(), chi.URLParam(request, "token"), input.Password)
+	if errors.Is(err, ErrInvalidCredentials) {
+		problem(response, http.StatusBadRequest, "Choose a password of at least 12 characters")
+		return
+	}
+	if err != nil {
+		problem(response, http.StatusNotFound, "This invitation is no longer valid")
+		return
+	}
+	response.WriteHeader(http.StatusNoContent)
 }
 
 func (handler *HTTPHandler) updateProfile(response http.ResponseWriter, request *http.Request) {
