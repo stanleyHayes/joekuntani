@@ -63,7 +63,12 @@ export function EventManager() {
           <EmptyState
             tone="calendar"
             title="No events on the board"
-            description="No approved event content exists yet."
+            description="Start with a private draft, add ticket types, then preview it before publishing."
+            action={
+              <Link className={styles.emptyAction} href={eventEditorHref("")}>
+                Create the first event
+              </Link>
+            }
           />
         ) : (
           <div className={styles.board}>

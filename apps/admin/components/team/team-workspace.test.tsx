@@ -65,7 +65,7 @@ describe("TeamWorkspace", () => {
     render(<TeamWorkspace />);
 
     const heading = await screen.findByRole("heading", {
-      name: "Users & roles",
+      name: "Staff directory",
     });
     // The action has to live in the same `stage-head` element as the copy —
     // that is what keeps it pinned right instead of stacking below the lede.

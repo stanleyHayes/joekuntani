@@ -10,6 +10,7 @@
   background: transparent !important;
 }
 .add,
+.emptyAction,
 .rowLink {
   display: inline-flex;
   align-items: center;
@@ -27,6 +28,11 @@
 .add {
   border: 1px solid var(--brand-j);
   border-radius: 0;
+  background: var(--brand-j);
+  color: #171208;
+}
+.emptyAction {
+  border-radius: 999px;
   background: var(--brand-j);
   color: #171208;
 }
@@ -168,6 +174,7 @@
   }
   .list li,
   .add,
+  .emptyAction,
   .rowLink {
     transition: none;
   }

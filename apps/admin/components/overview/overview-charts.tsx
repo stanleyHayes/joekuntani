@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AdminSkeleton } from "../admin-feedback";
 import {
@@ -112,6 +113,8 @@ export function OverviewCharts() {
           meta="by stage"
           data={toCounts(analytics?.pipeline)}
           empty="No enquiries have entered the pipeline yet."
+          href="/crm"
+          action="Open CRM"
           watermark="wave"
         />
         <BarBlock
@@ -119,20 +122,17 @@ export function OverviewCharts() {
           meta="by status"
           data={toCounts(analytics?.bookings_by_status)}
           empty="No bookings recorded yet."
+          href="/bookings"
+          action="Open bookings"
           watermark="orbit"
-        />
-        <BarBlock
-          title="Top sources"
-          meta="where visitors arrive from"
-          data={analytics?.top_sources ?? []}
-          empty="No referral sources measured yet."
-          watermark="spark"
         />
         <BarBlock
           title="Top pages"
           meta="most visited"
           data={analytics?.top_paths ?? []}
           empty="No page views measured yet."
+          href="/analytics"
+          action="Open analytics"
           watermark="grid"
         />
 
@@ -188,9 +188,11 @@ export function OverviewCharts() {
               </ul>
             </>
           ) : (
-            <p className={styles.blank}>
-              Publish an event with ticket types to track inventory here.
-            </p>
+            <EmptyPanel
+              action="Create an event"
+              href="/events/new"
+              text="Publish an event with ticket types to track inventory here."
+            />
           )}
         </section>
 
@@ -325,12 +327,16 @@ function BarBlock({
   meta,
   data,
   empty,
+  href,
+  action,
   watermark,
 }: {
   title: string;
   meta: string;
   data: NamedCount[];
   empty: string;
+  href: string;
+  action: string;
   watermark: MetricWatermarkVariant;
 }) {
   const id = `overview-${title.toLowerCase().replaceAll(" ", "-")}`;
@@ -362,7 +368,7 @@ function BarBlock({
           ))}
         </dl>
       ) : (
-        <p className={styles.blank}>{empty}</p>
+        <EmptyPanel action={action} href={href} text={empty} />
       )}
     </section>
   );
@@ -395,12 +401,32 @@ function AudienceBlock({ metrics }: { metrics: AudienceMetric[] }) {
           </p>
         </>
       ) : (
-        <p className={styles.blank}>
-          No approved audience metrics yet. Import them to chart follower
-          growth.
-        </p>
+        <EmptyPanel
+          action="Open analytics"
+          href="/analytics"
+          text="No approved audience metrics yet. Import them to chart follower growth."
+        />
       )}
     </section>
+  );
+}
+
+function EmptyPanel({
+  action,
+  href,
+  text,
+}: {
+  action: string;
+  href: string;
+  text: string;
+}) {
+  return (
+    <div className={styles.blank}>
+      <p>{text}</p>
+      <Link href={href}>
+        {action} <span aria-hidden="true">→</span>
+      </Link>
+    </div>
   );
 }
 

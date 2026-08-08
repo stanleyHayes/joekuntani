@@ -1,7 +1,7 @@
 .frame {
   --admin-rail: #0c1218;
   --admin-rail-ink: #f4efe6;
-  --admin-rail-muted: rgba(244, 239, 230, 0.58);
+  --admin-rail-muted: rgba(244, 239, 230, 0.72);
   --admin-rail-line: rgba(244, 239, 230, 0.1);
   --admin-signal: var(--brand-j);
   --admin-accent: var(--brand-k);

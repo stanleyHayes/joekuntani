@@ -278,14 +278,17 @@
 
 @media (max-width: 46rem) {
   .hero {
-    flex-direction: column;
-    align-items: stretch;
+    align-items: flex-end;
     gap: 1rem;
     padding: 1.15rem 1.1rem;
   }
 
+  .heroCopy {
+    flex-basis: 100%;
+  }
+
   .heroActions {
-    width: 100%;
+    width: auto;
   }
 
   .primaryAction,

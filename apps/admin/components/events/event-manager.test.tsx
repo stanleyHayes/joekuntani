@@ -21,12 +21,17 @@ describe("EventManager", () => {
     render(<EventManager />);
     expect(screen.getByRole("status")).toHaveTextContent("Loading events");
     expect(
-      await screen.findByText("No approved event content exists yet."),
+      await screen.findByText(
+        "Start with a private draft, add ticket types, then preview it before publishing.",
+      ),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Add event" })).toHaveAttribute(
       "href",
       "/events/new",
     );
+    expect(
+      screen.getByRole("link", { name: "Create the first event" }),
+    ).toHaveAttribute("href", "/events/new");
   });
 
   it("routes to the editor instead of opening a dialog", async () => {

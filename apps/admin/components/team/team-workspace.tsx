@@ -171,7 +171,7 @@ export function TeamWorkspace() {
       <section className={styles.workspace}>
         <header>
           <p>Team</p>
-          <h2>Users & roles</h2>
+          <h2>Staff directory</h2>
         </header>
         <AdminErrorState
           title="Administrator access required"
@@ -194,7 +194,7 @@ export function TeamWorkspace() {
       <header className="stage-head">
         <div className="stage-head__copy">
           <p className="stage-head__eyebrow">Team</p>
-          <h2 id="team-heading">Users &amp; roles</h2>
+          <h2 id="team-heading">Staff directory</h2>
           <p className="stage-head__lede">
             Provision staff, change roles, and disable accounts. Sessions revoke
             when roles change.
