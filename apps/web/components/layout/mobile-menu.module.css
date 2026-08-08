@@ -48,8 +48,23 @@
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
   text-decoration: none;
   min-width: 0;
+}
+
+/* Keep the drawer lockup optically identical to the persistent header. The
+   shared BrandMark intentionally owns structure only; each shell supplies its
+   display treatment, and the drawer previously fell back to body typography. */
+.brand :global(.brand-mark__text) {
+  padding-top: 0.08em;
+  font-family: var(--font-brand);
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0.015em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .topActions {
