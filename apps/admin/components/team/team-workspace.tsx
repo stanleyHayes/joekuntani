@@ -199,7 +199,7 @@ export function TeamWorkspace() {
       {inviteOpen ? (
         <AdminDialog
           title="Invite staff"
-          description="An address and a role is all this needs. They set their own password and their own name from the link, which works once and expires in 15 minutes."
+          description="An address and a role is all this needs. They set their own password from the link, then can correct the display name derived from their email in Profile. The link works once and expires in 15 minutes."
           onClose={() => setInviteOpen(false)}
         >
           <form className={styles.panel} onSubmit={provision}>
