@@ -691,13 +691,11 @@
 
 @media (max-width: 31rem) {
   .topbar {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      "lead actions"
-      "intro intro";
-    gap: 0.35rem 0.6rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "lead intro actions";
+    gap: 0.5rem;
     min-height: 0;
-    padding-block: 0.5rem 0.65rem;
+    padding-block: 0.5rem;
   }
 
   .topbarActions {
@@ -705,6 +703,7 @@
   }
 
   .pageIntro {
+    min-width: 0;
     padding-inline: 0.1rem;
   }
 
@@ -714,7 +713,11 @@
 
   .pageTitle {
     margin: 0;
-    font-size: 1.08rem;
+    overflow: hidden;
+    font-size: clamp(0.94rem, 4vw, 1.08rem);
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
