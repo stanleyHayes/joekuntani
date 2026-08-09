@@ -24,6 +24,7 @@ export async function contentMetadata(
     return {
       title: fallback.title,
       description: fallback.description,
+      keywords: keywordsFor(),
       alternates: { canonical: fallback.path },
     };
   const settings = await getPublicSettings();
@@ -45,6 +46,9 @@ export async function contentMetadata(
   return {
     title,
     description,
+    // A record's tags are the editor's own keywords, so they extend the brand
+    // set rather than needing a second field to maintain.
+    keywords: keywordsFor(item.tags),
     alternates: canonical ? { canonical } : undefined,
     openGraph: {
       type: "website",
@@ -64,11 +68,49 @@ export async function contentMetadata(
   };
 }
 
+/**
+ * Search keywords.
+ *
+ * The site published none at all. These describe what Joe is actually booked
+ * for — the terms someone hiring would type — rather than stuffing synonyms:
+ * search engines discount keyword spam, and a booker searching "comedian for
+ * corporate event Accra" is worth more than a hundred generic impressions.
+ *
+ * Global terms apply everywhere; a page adds its own on top.
+ */
+const BRAND_KEYWORDS = [
+  "Joe Kuntani",
+  "Numero Uno",
+  "Ghanaian comedian",
+  "guitar comedian",
+  "music comedian",
+  "comedy and guitar",
+  "live comedy Ghana",
+  "Accra comedian",
+  "book a comedian in Ghana",
+  "corporate MC Ghana",
+  "wedding entertainer Ghana",
+  "stand-up comedy Accra",
+];
+
+export function keywordsFor(extra: readonly string[] = []): string[] {
+  // De-duplicated case-insensitively so a page repeating a brand term does not
+  // emit it twice.
+  const seen = new Map<string, string>();
+  for (const keyword of [...BRAND_KEYWORDS, ...extra]) {
+    const value = keyword.trim();
+    if (value) seen.set(value.toLowerCase(), value);
+  }
+  return [...seen.values()];
+}
+
 export async function pageMetadata(input: {
   title: string;
   description: string;
   path: string;
   socialImageAssetID?: string;
+  /** Page-specific terms, added to the brand set. */
+  keywords?: readonly string[];
 }): Promise<Metadata> {
   const settings = await getPublicSettings();
   const canonical = canonicalURL(input.path, settings?.seo?.canonical_base);
@@ -83,6 +125,7 @@ export async function pageMetadata(input: {
   return {
     title: input.title,
     description: input.description,
+    keywords: keywordsFor(input.keywords),
     alternates: canonical ? { canonical } : undefined,
     openGraph: {
       type: "website",

@@ -21,6 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Shop",
     description: "Official Joe Kuntani merchandise, shipped from Ghana.",
     path: "/shop",
+    keywords: ["Joe Kuntani merchandise", "comedy merch Ghana", "tour t-shirt"],
   });
 }
 
