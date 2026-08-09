@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { eventCovers } from "../../lib/media";
 import { getPublicSettings } from "../../lib/settings";
 import { EventCard } from "../../components/events/event-ui";
+import { EventCalendar } from "../../components/events/event-calendar";
 import { EventFilters } from "../../components/events/event-filters";
 import { getPublicEvents } from "../../components/events/data";
 import type { PublicEvent } from "../../components/events/types";
@@ -101,6 +102,20 @@ export default async function EventsPage({
             filters={filters}
             safeDate={safeDate(filters.date)}
           />
+          {/* Deliberately the unfiltered list: a calendar answers "is he free
+              that weekend", which a filtered view cannot. The list below
+              respects the filters. */}
+          {source.length ? (
+            <section
+              className={styles.calendarSection}
+              aria-labelledby="events-calendar"
+            >
+              <h2 className={styles.calendarTitle} id="events-calendar">
+                The calendar
+              </h2>
+              <EventCalendar events={source} />
+            </section>
+          ) : null}
           {result.state === "error" && !usingDemo ? (
             <p className={styles.notice} role="alert">
               Published events are temporarily unavailable. No event or ticket

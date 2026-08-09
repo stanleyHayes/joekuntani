@@ -916,6 +916,34 @@
   }
 }
 
+/* Between the phone collapse and the three-column layout there is no room for
+   a poster beside the copy, so it becomes a full-width strip on its own row.
+   The lead has to be moved down with it: `.bannerLead` spans three rows from
+   row 1, so a strip left in the flow displaces it and the copy inherits the
+   narrow lead track. */
+@media (min-width: 48.01rem) and (max-width: 51.99rem) {
+  .banner[data-has-art="true"] .bannerArt {
+    grid-row: 1;
+    grid-column: 1 / -1;
+  }
+  .banner[data-has-art="true"] .bannerLead {
+    grid-row: 2 / span 3;
+  }
+}
+
+/* The single-column collapse lives in the `.banner` block above, but an
+   attribute selector outranks a bare class — so without restating it here the
+   poster kept its column on a phone and wrapped the title to one letter per
+   line. */
+@media (max-width: 48rem) {
+  .banner[data-has-art="true"] {
+    grid-template-columns: 1fr;
+  }
+  .banner[data-has-art="true"] .bannerArt {
+    grid-column: 1 / -1;
+  }
+}
+
 .bannerArt {
   margin: 0;
   overflow: hidden;
