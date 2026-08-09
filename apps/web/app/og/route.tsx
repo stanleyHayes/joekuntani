@@ -1,6 +1,42 @@
 import { ImageResponse } from "next/og";
 
+import { publicImage } from "../../lib/seo";
 import { getPublicSettings } from "../../lib/settings";
+
+/**
+ * The brand logo as a data URI, or undefined.
+ *
+ * Fetched here rather than handed to the renderer as a URL: the renderer would
+ * do that fetch itself while drawing, and a slow or unreachable CDN would throw
+ * mid-render and return a 500 — leaving shared links with no image at all,
+ * which is worse than the card without a logo. Resolving first means any
+ * failure just falls back to the mark.
+ */
+async function brandLogo(assetID: string): Promise<string | undefined> {
+  const url = await publicImage(assetID);
+  if (!url) return undefined;
+  try {
+    // `no-store`, not `force-cache`: routing a few hundred kilobytes of binary
+    // through the data cache made this time out on every render. The card is
+    // fetched by link scrapers rather than by readers, so the repeat cost is
+    // small, and the budget is generous because a cold connect can spend most
+    // of undici's own ten-second connect budget before a byte moves.
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(8000),
+      cache: "no-store",
+    });
+    if (!response.ok) return undefined;
+    const type = response.headers.get("content-type") ?? "";
+    if (!type.startsWith("image/")) return undefined;
+    const body = Buffer.from(await response.arrayBuffer());
+    // Past roughly a megabyte the base64 copy costs more than the logo is
+    // worth on a card this size.
+    if (body.byteLength > 1_500_000) return undefined;
+    return `data:${type};base64,${body.toString("base64")}`;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * The site's social share card, drawn rather than photographed.
@@ -25,6 +61,7 @@ export async function GET() {
   const settings = await getPublicSettings();
   const name = settings?.brand?.name || "Joe Kuntani";
   const tagline = settings?.brand?.tagline || "Comedy and guitar, live.";
+  const logo = await brandLogo(settings?.brand?.logo_asset_id ?? "");
 
   return new ImageResponse(
     (
@@ -42,15 +79,26 @@ export async function GET() {
           fontFamily: "sans-serif",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
-          <div
-            style={{
-              width: "18px",
-              height: "18px",
-              borderRadius: "999px",
-              backgroundColor: "#f5d400",
-            }}
-          />
+        <div style={{ display: "flex", alignItems: "center", gap: "22px" }}>
+          {logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logo}
+              alt=""
+              width={96}
+              height={96}
+              style={{ borderRadius: "20px", objectFit: "cover" }}
+            />
+          ) : (
+            <div
+              style={{
+                width: "18px",
+                height: "18px",
+                borderRadius: "999px",
+                backgroundColor: "#f5d400",
+              }}
+            />
+          )}
           <div
             style={{
               fontSize: "24px",
@@ -116,6 +164,15 @@ export async function GET() {
         </div>
       </div>
     ),
-    size,
+    {
+      ...size,
+      // The settings lookup is `no-store`, so the route is dynamic and
+      // `revalidate` cannot apply — the cache has to be stated in the response.
+      // Without it every scrape re-renders the card and re-fetches the logo.
+      headers: {
+        "Cache-Control":
+          "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+      },
+    },
   );
 }

@@ -178,7 +178,16 @@ export function jsonLd(value: object) {
   return JSON.stringify(value).replace(/</g, "\\u003c");
 }
 
-async function publicImage(assetID: string): Promise<string | undefined> {
+/**
+ * The public URL of a ready image asset, or undefined.
+ *
+ * Exported so the generated share card resolves the brand logo through the
+ * same checks the metadata uses — a second resolver would be a second place
+ * for the https-and-no-credentials rule to be forgotten.
+ */
+export async function publicImage(
+  assetID: string,
+): Promise<string | undefined> {
   const base = process.env.API_BASE_URL;
   if (!base || !assetID) return undefined;
   try {
