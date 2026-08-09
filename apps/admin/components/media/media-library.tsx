@@ -81,11 +81,12 @@ export function MediaLibrary({
   onRetry,
   onRefresh,
 }: MediaLibraryProps) {
-  const [assets, setAssets] = useState(initialAssets);
+  const [assets, setAssets] = useState(() => uniqueAssets(initialAssets));
   const [selectedID, setSelectedID] = useState("");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deletingID, setDeletingID] = useState("");
   const [retryFile, setRetryFile] = useState<File | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   // Deletion removes the file from the provider as well as the record, so it
@@ -154,7 +155,7 @@ export function MediaLibrary({
     setBusy(true);
     try {
       const latest = await onRefresh();
-      if (latest) setAssets(latest);
+      if (latest) setAssets(uniqueAssets(latest));
     } finally {
       setBusy(false);
     }
@@ -194,7 +195,7 @@ export function MediaLibrary({
         altText,
         tags: splitList(String(data.get("tags") ?? "")),
       });
-      setAssets((current) => [asset, ...current]);
+      setAssets((current) => upsertAsset(current, asset));
       setSelectedID(asset.id);
       setNotice(
         asset.status === "ready"
@@ -251,6 +252,7 @@ export function MediaLibrary({
       return;
     }
     setBusy(true);
+    setDeletingID(asset.id);
     try {
       await onDelete(asset.id);
       const remaining = assets.filter((item) => item.id !== asset.id);
@@ -264,6 +266,7 @@ export function MediaLibrary({
       // Dismissed either way: the outcome is reported in the page notice, which
       // sits behind this dialog.
       setPendingDelete(null);
+      setDeletingID("");
       setBusy(false);
     }
   }
@@ -725,7 +728,9 @@ export function MediaLibrary({
           <AdminDialog
             title="Delete this asset?"
             description="The file is removed from the media provider as well as this library. This cannot be undone."
-            onClose={() => setPendingDelete(null)}
+            onClose={() => {
+              if (!deletingID) setPendingDelete(null);
+            }}
           >
             <div className={styles.confirm}>
               <p className={styles.confirmName}>{pendingDelete.filename}</p>
@@ -739,17 +744,29 @@ export function MediaLibrary({
                 <p>Nothing currently references this asset.</p>
               )}
               <div className={styles.confirmActions}>
-                <button type="button" onClick={() => setPendingDelete(null)}>
+                <button
+                  type="button"
+                  disabled={Boolean(deletingID)}
+                  onClick={() => setPendingDelete(null)}
+                >
                   Keep it
                 </button>
                 <button
                   className={styles.danger}
                   type="button"
-                  disabled={busy || pendingDelete.referenceCount > 0}
+                  disabled={
+                    Boolean(deletingID) || pendingDelete.referenceCount > 0
+                  }
                   onClick={() => void remove(pendingDelete)}
                 >
-                  <Trash size={17} aria-hidden="true" />
-                  Delete permanently
+                  {deletingID === pendingDelete.id ? (
+                    <ButtonPending label="Deleting asset" />
+                  ) : (
+                    <>
+                      <Trash size={17} aria-hidden="true" />
+                      Delete permanently
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -758,6 +775,19 @@ export function MediaLibrary({
       </div>
     </section>
   );
+}
+
+function uniqueAssets(assets: MediaAsset[]): MediaAsset[] {
+  const seen = new Set<string>();
+  return assets.filter((asset) => {
+    if (!asset.id || seen.has(asset.id)) return false;
+    seen.add(asset.id);
+    return true;
+  });
+}
+
+function upsertAsset(assets: MediaAsset[], next: MediaAsset): MediaAsset[] {
+  return [next, ...assets.filter((asset) => asset.id !== next.id)];
 }
 
 function splitList(value: string) {

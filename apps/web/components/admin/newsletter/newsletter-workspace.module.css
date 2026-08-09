@@ -1,8 +1,0 @@
-.workspace {
-  display: grid;
-  gap: 1rem;
-}
-
-.panel {
-  overflow: auto;
-}

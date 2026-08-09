@@ -24,8 +24,9 @@ export async function generateMetadata() {
     (await getPublicContentBySlug("page", "about")) ||
     (demoContentEnabled() ? demoAbout : null);
   return contentMetadata(page, {
-    title: "About",
-    description: "Approved biography and profile.",
+    title: "Joe Kuntani | Ghanaian Guitar Comedian",
+    description:
+      "Meet Joe Kuntani, the Ghanaian comedian and musician who blends live guitar, original songs and storytelling across stage, film and digital performance.",
     path: "/about",
   });
 }
@@ -92,7 +93,7 @@ export default async function AboutPage() {
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={portrait}
-                    alt={`${page.title} portrait`}
+                    alt="Joe Kuntani holding an acoustic guitar in a black cowboy hat and bandana."
                     width={1200}
                     height={800}
                   />
@@ -137,27 +138,77 @@ export default async function AboutPage() {
               </div>
             </section>
 
-            <section className={`${styles.story} shell-container`}>
-              <aside className={styles.storyLabel}>
-                <span>02</span>
-                <p>The story so far</p>
+            <section className={styles.storyIntro}>
+              <div className={`${styles.storyIntroInner} shell-container`}>
+                <div className={styles.storyLabel}>
+                  <span>02</span>
+                  <p>The story so far</p>
+                </div>
+                <div className={styles.statement}>
+                  <p className={styles.statementLead}>
+                    One voice. Six strings.
+                  </p>
+                  <h2>
+                    The joke arrives
+                    <span> on a melody.</span>
+                  </h2>
+                  <p className={styles.statementCopy}>
+                    Not a comic with background music. Not a musician waiting
+                    for the punchline. Joe turns the guitar into the setup, the
+                    character and the final word.
+                  </p>
+                </div>
+                <dl className={styles.storyFacts}>
+                  <div>
+                    <dt>Based</dt>
+                    <dd>Kumasi, Ghana</dd>
+                  </div>
+                  <div>
+                    <dt>Known for</dt>
+                    <dd>Guitar comedy</dd>
+                  </div>
+                  <div>
+                    <dt>Working across</dt>
+                    <dd>Stage · film · digital</dd>
+                  </div>
+                </dl>
+              </div>
+            </section>
+
+            <section className={`${styles.narrative} shell-container`}>
+              <aside className={styles.narrativeRail}>
+                <p className={styles.railEyebrow}>Robert Sarpong</p>
+                <p className={styles.railTitle}>Behind the name Joe Kuntani.</p>
+                <span className={styles.railLine} aria-hidden="true" />
+                <p className={styles.railNote}>
+                  Comedy
+                  <br />
+                  Music
+                  <br />
+                  Storytelling
+                </p>
               </aside>
               <article className={styles.storyBody}>
-                <span className={styles.storyMark} aria-hidden="true">
-                  “
-                </span>
-                <p className={styles.pullQuote}>
-                  Not a comic with background music. Not a musician waiting for
-                  the punchline.
-                </p>
-                {page.body ? (
+                {page.body || page.sections?.length ? (
                   <ContentSections
                     sections={page.sections}
                     body={page.body}
                     resolveImage={(assetID) => sectionImages[assetID]}
+                    variant="about"
                   />
                 ) : null}
               </article>
+            </section>
+
+            <section className={styles.manifesto}>
+              <div className="shell-container">
+                <p aria-hidden="true">Laugh · Listen · Remember ·</p>
+                <blockquote>
+                  “The guitar can do more than make music. It can make people
+                  laugh.”
+                </blockquote>
+                <span>Joe Kuntani · The guitar comedian</span>
+              </div>
             </section>
 
             <section className={`${styles.closing} shell-container`}>

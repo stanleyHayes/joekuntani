@@ -1,4 +1,4 @@
-import { Markdown } from "../content/markdown";
+import { Markdown } from "@joe-kuntani/shared/ui/markdown";
 import type { PublicSettings } from "../../lib/settings";
 import type { ContentItem } from "../content/types";
 import type { LegalPublication } from "./data";

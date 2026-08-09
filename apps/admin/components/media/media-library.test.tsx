@@ -261,6 +261,38 @@ describe("MediaLibrary", () => {
     expect(screen.getAllByText("performance.jpg")).toHaveLength(2);
   });
 
+  it("disables the delete actions and announces progress while deleting", async () => {
+    let completeDelete: (() => void) | undefined;
+    const remove = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          completeDelete = resolve;
+        }),
+    );
+    render(
+      <MediaLibrary
+        initialAssets={[{ ...asset, referenceCount: 0 }]}
+        onDelete={remove}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Delete performance.jpg" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Delete permanently" }));
+
+    expect(screen.getByRole("button", { name: "Deleting asset" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Keep it" })).toBeDisabled();
+    expect(remove).toHaveBeenCalledTimes(1);
+
+    completeDelete?.();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Delete this asset?" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
   it("selects another asset and renders non-image previews", () => {
     const pdf = {
       ...asset,

@@ -1,0 +1,169 @@
+.field {
+  display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+  margin: 0;
+  padding: 1.1rem 1.2rem 1.3rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--surface) 92%, var(--ink) 8%);
+}
+
+.legend {
+  display: grid;
+  gap: 0.2rem;
+  padding-inline: 0.45rem;
+  margin-left: -0.45rem;
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.legend span,
+.empty,
+.body small {
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+  font-size: 0.76rem;
+  font-weight: 400;
+}
+
+.empty {
+  margin: 0;
+  font-style: italic;
+}
+
+.list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: 0.7rem;
+  background: var(--surface);
+}
+
+.itemHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.disclosure {
+  display: flex;
+  flex: 1 1 12rem;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.25rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.badge {
+  flex: none;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.summary {
+  overflow: hidden;
+  font-size: 0.85rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tools {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.tools button,
+.statRow button,
+.add {
+  min-height: 2rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border-radius: 0.45rem;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.tools button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.body {
+  display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+  padding: 0.9rem 0.75rem 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.body > label,
+.statRow label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.body textarea {
+  resize: vertical;
+}
+
+.body .flip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.flip input {
+  width: auto;
+}
+
+.stats {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.statRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.5rem;
+}
+
+.add {
+  justify-self: start;
+  min-height: 2.4rem;
+  padding-inline: 0.95rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+@media (max-width: 34rem) {
+  .statRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

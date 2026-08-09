@@ -69,6 +69,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.65rem;
+  min-width: 0;
 }
 
 .thumb {
@@ -106,6 +107,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem;
+  min-width: 0;
 }
 
 /* The file input is the control; the label is its visible surface. Scoped
@@ -129,6 +131,11 @@
   transition:
     border-color 160ms ease,
     background 160ms ease;
+}
+
+.actions .upload {
+  position: relative;
+  max-width: 100%;
 }
 
 .actions .upload:hover,
@@ -163,10 +170,15 @@
 .upload input[type="file"],
 .addTile input[type="file"] {
   position: absolute;
+  inset: 0 auto auto 0;
   width: 1px;
+  max-width: 1px;
   height: 1px;
+  padding: 0;
+  border: 0;
   overflow: hidden;
   clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   white-space: nowrap;
 }
 
@@ -272,6 +284,7 @@
    spilled out under the dashed border. It now matches the tile grid and gives
    the caption a line to sit on. */
 .addTile {
+  position: relative;
   display: grid;
   place-content: center;
   justify-items: center;

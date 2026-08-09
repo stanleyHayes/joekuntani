@@ -77,6 +77,7 @@ export function blank(kind: ContentKind): ContentDraft {
     featured: false,
     gallery_asset_ids: [],
     results: [],
+    sections: [],
     external_url: "",
     embed_url: "",
     outlet: "",
@@ -105,6 +106,7 @@ export function draftOf(item: ContentItem): ContentDraft {
     featured: item.featured,
     gallery_asset_ids: item.gallery_asset_ids,
     results: item.results,
+    sections: item.sections ?? [],
     external_url: item.external_url,
     embed_url: item.embed_url,
     outlet: item.outlet,
@@ -146,7 +148,8 @@ export function completeness(draft: ContentDraft) {
   const missing: string[] = [];
   if (!draft.title.trim()) missing.push("title");
   if (!draft.summary?.trim()) missing.push("summary");
-  if (!draft.body?.trim() && draft.kind !== "video") missing.push("body");
+  if (!draft.body?.trim() && !draft.sections?.length && draft.kind !== "video")
+    missing.push("body or page sections");
   if (draft.kind === "portfolio" && !draft.category?.trim())
     missing.push("category");
   if (draft.kind === "video" && !draft.embed_url?.trim())

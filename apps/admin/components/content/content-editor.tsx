@@ -22,6 +22,8 @@ import { Select } from "@joe-kuntani/shared/ui/select";
 import { AdminDialog } from "../admin-dialog";
 import { AdminErrorState, AdminSkeleton } from "../admin-feedback";
 import { AssetUploadField, AssetUploadList } from "../media/asset-picker";
+import { MarkdownField } from "./markdown-field";
+import { SectionsField } from "./sections-field";
 import {
   blank,
   completeness,
@@ -395,12 +397,12 @@ export function ContentEditor({
               onChange={(summary) => setDraft({ ...draft, summary })}
               multiline
             />
-            <Field
+            <MarkdownField
               assist="body"
               label="Body"
+              hint="Markdown. Use the toolbar or write it directly, then switch to Preview to see exactly what publishes."
               value={draft.body ?? ""}
               onChange={(body) => setDraft({ ...draft, body })}
-              multiline
             />
           </div>
         </fieldset>
@@ -519,6 +521,10 @@ export function ContentEditor({
           </div>
         </fieldset>
 
+        <SectionsField
+          value={draft.sections ?? []}
+          onChange={(sections) => setDraft({ ...draft, sections })}
+        />
         <ResultsField value={results} onChange={setResults} />
 
         <fieldset className={styles.group}>

@@ -5,6 +5,7 @@ import {
   dimensionsFor,
   mapAsset,
   MediaAdmin,
+  normalizeAssets,
   requestUpload,
   retryUpload,
   saveMetadata,
@@ -80,6 +81,19 @@ describe("MediaAdmin", () => {
       await dimensionsFor(new File(["img"], "x.jpg", { type: "image/jpeg" })),
     ).toEqual({ width: 40, height: 20 });
     expect(close).toHaveBeenCalled();
+  });
+  it("collapses repeated API rows with the same stable asset id", () => {
+    const mapped = mapAsset(safe);
+    expect(
+      normalizeAssets([
+        mapped,
+        { ...mapped, filename: "duplicate-card.jpg" },
+        { ...mapped, id: "b", filename: "different-asset.jpg" },
+      ]).map((asset) => [asset.id, asset.filename]),
+    ).toEqual([
+      ["a", "a.jpg"],
+      ["b", "different-asset.jpg"],
+    ]);
   });
   it("handles signed upload, provider failure and preserved draft", async () => {
     vi.stubGlobal(

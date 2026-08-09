@@ -1,5 +1,5 @@
 import type { ContentSection } from "./types";
-import { Markdown } from "./markdown";
+import { Markdown } from "@joe-kuntani/shared/ui/markdown";
 import styles from "./sections.module.css";
 
 /**
@@ -17,17 +17,21 @@ export function ContentSections({
   sections,
   body,
   resolveImage,
+  variant = "default",
 }: {
   sections?: ContentSection[];
   /** Rendered when the record has no blocks yet. */
   body?: string;
   /** Turns a stored asset id into a URL. Blocks without one render text-only. */
   resolveImage?: (assetID: string) => string | undefined;
+  /** Gives a composed page its own art direction without changing CMS data. */
+  variant?: "default" | "about";
 }) {
-  if (!sections?.length) return <Markdown className={styles.fallback}>{body}</Markdown>;
+  if (!sections?.length)
+    return <Markdown className={styles.fallback}>{body}</Markdown>;
 
   return (
-    <div className={styles.sections}>
+    <div className={styles.sections} data-variant={variant}>
       {sections.map((section, index) => (
         <Section
           key={`${section.type}-${index}`}
@@ -92,7 +96,10 @@ function Section({
       return (
         <section className={styles.galleryBlock}>
           {Heading}
-          <ul className={styles.gallery} data-count={Math.min(images.length, 4)}>
+          <ul
+            className={styles.gallery}
+            data-count={Math.min(images.length, 4)}
+          >
             {images.map((image) => (
               <li key={image.id}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}

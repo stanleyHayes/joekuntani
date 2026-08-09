@@ -350,7 +350,7 @@ it("names the stage and the one thing blocking the next step", async () => {
   );
   expect(await screen.findByText("Draft")).toBeVisible();
   expect(
-    screen.getByText("Add summary and body before it can be approved."),
+    screen.getByText("Add summary and body or page sections before it can be approved."),
   ).toBeVisible();
   expect(screen.getByText("No schedule set")).toBeVisible();
   expect(screen.getByRole("button", { name: "Approve" })).toBeDisabled();

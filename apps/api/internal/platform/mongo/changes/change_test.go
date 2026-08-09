@@ -128,13 +128,13 @@ func TestRegistryHasStableChecksum(t *testing.T) {
 	t.Parallel()
 
 	registry := Registry()
-	if len(registry) != 34 {
-		t.Fatalf("Registry() length = %d, want 34", len(registry))
+	if len(registry) != 35 {
+		t.Fatalf("Registry() length = %d, want 35", len(registry))
 	}
 	// The newest change must stay last: Apply runs the registry in order, and a
 	// change that evolves a collection has to follow the one that created it.
 	last := registry[len(registry)-1]
-	if last.Name != contentSectionsChangeName || len(last.Checksum) != 64 {
+	if last.Name != aboutPageSectionsChangeName || len(last.Checksum) != 64 {
 		t.Fatalf("unexpected final registry entry: %#v", last)
 	}
 	if registry[0].Name != bootstrapChangeName || len(registry[0].Checksum) != 64 {

@@ -41,7 +41,7 @@ export function MediaAdmin() {
       .then(async (response) => {
         if (!response.ok) throw new Error();
         const body = (await response.json()) as { assets: SafeAsset[] };
-        setAssets(body.assets.map(mapAsset));
+        setAssets(normalizeAssets(body.assets.map(mapAsset)));
       })
       .catch(() => setError("Media assets could not be loaded. Try again."));
   }, []);
@@ -127,7 +127,7 @@ export async function listAssets(): Promise<MediaAsset[] | null> {
     });
     if (!response.ok) return null;
     const body = (await response.json()) as { assets: SafeAsset[] };
-    return body.assets.map(mapAsset);
+    return normalizeAssets(body.assets.map(mapAsset));
   } catch {
     return null;
   }
@@ -241,6 +241,22 @@ export function mapAsset(asset: SafeAsset): MediaAsset {
     bytes: asset.bytes,
     referenceCount: asset.reference_count,
   };
+}
+
+/**
+ * The media grid is keyed and deleted by stable public ID. If a repeated API
+ * row reaches the client, React shows several cards that are actually the same
+ * record; deleting one then removes every visual copy because they share that
+ * ID. Collapse at the transport boundary so one database asset always means
+ * one card, while preserving the API's newest-first ordering.
+ */
+export function normalizeAssets(assets: MediaAsset[]): MediaAsset[] {
+  const seen = new Set<string>();
+  return assets.filter((asset) => {
+    if (!asset.id || seen.has(asset.id)) return false;
+    seen.add(asset.id);
+    return true;
+  });
 }
 function csrfCookie() {
   const prefix = "jk_admin_csrf=";

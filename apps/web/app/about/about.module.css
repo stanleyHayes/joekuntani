@@ -289,11 +289,36 @@
   color: var(--accent-contrast);
 }
 
-.story {
+.storyIntro {
   position: relative;
-  display: grid;
-  gap: clamp(3rem, 8vw, 8rem);
+  isolation: isolate;
+  overflow: hidden;
   padding-block: clamp(6rem, 13vw, 11rem);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.storyIntro::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0 49.9%,
+      color-mix(in srgb, var(--ink) 5%, transparent) 50% 50.1%,
+      transparent 50.2%
+    ),
+    radial-gradient(
+      circle at 78% 42%,
+      color-mix(in srgb, var(--brand-k) 10%, transparent),
+      transparent 27rem
+    );
+  content: "";
+}
+
+.storyIntroInner {
+  display: grid;
+  gap: clamp(3rem, 7vw, 7rem);
 }
 
 .storyLabel {
@@ -312,59 +337,182 @@
   text-transform: uppercase;
 }
 
-.storyBody {
-  position: relative;
+.statement {
   min-width: 0;
 }
 
-.storyMark {
-  position: absolute;
-  top: -0.28em;
-  right: 0;
-  color: color-mix(in srgb, var(--accent) 15%, transparent);
-  font-family: Georgia, serif;
-  font-size: clamp(12rem, 25vw, 24rem);
-  line-height: 0.7;
-  pointer-events: none;
+.statementLead,
+.railEyebrow {
+  margin: 0 0 1rem;
+  color: var(--accent);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.pullQuote {
-  position: relative;
-  z-index: 1;
-  max-width: 22ch;
+.statement h2 {
+  max-width: 10ch;
   margin: 0;
-  font-size: clamp(2.2rem, 6vw, 5rem);
-  font-weight: 700;
-  letter-spacing: -0.055em;
-  line-height: 0.98;
+  font-size: clamp(3.75rem, 9vw, 8.5rem);
+  font-weight: 800;
+  letter-spacing: -0.075em;
+  line-height: 0.82;
   text-wrap: balance;
 }
 
-.body {
-  position: relative;
-  z-index: 1;
-  max-width: 46rem;
-  margin-top: clamp(3rem, 7vw, 6rem);
-  /* Starts at the column's left edge. `margin-left: auto` pushed the measure to
-     the far right of a column that is already the right-hand half of the story
-     grid, so on a wide screen the prose sat against the viewport edge with the
-     whole left side empty. */
-  margin-left: 0;
-  color: var(--ink-soft);
-  font-size: clamp(1.05rem, 1.7vw, 1.28rem);
-  line-height: 1.75;
+.statement h2 span {
+  display: block;
+  color: transparent;
+  font-weight: 650;
+  -webkit-text-stroke: 1px var(--ink);
 }
 
-/* The drop cap targets the first rendered element. Markdown wraps the opening
-   sentence in its own <p>, so the selector has to reach through it — without
-   this the cap silently stopped applying once bodies were parsed. */
-.body > :first-child::first-letter {
-  float: left;
-  margin: 0.08em 0.12em 0 0;
-  color: var(--accent);
-  font-size: 4.5em;
+.statementCopy {
+  max-width: 37rem;
+  margin: clamp(2.25rem, 5vw, 4rem) 0 0 auto;
+  padding-left: clamp(1rem, 2vw, 1.5rem);
+  border-left: 0.25rem solid var(--accent);
+  color: var(--ink-soft);
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+  line-height: 1.58;
+  text-wrap: pretty;
+}
+
+.storyFacts {
+  display: grid;
+  align-self: end;
+  gap: 0;
+  margin: 0;
+  border-top: 1px solid var(--ink);
+}
+
+.storyFacts > div {
+  display: grid;
+  grid-template-columns: minmax(6rem, 0.75fr) minmax(0, 1.25fr);
+  gap: 1rem;
+  padding-block: 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+.storyFacts dt {
+  color: var(--ink-soft);
+  font-size: 0.67rem;
   font-weight: 700;
-  line-height: 0.76;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.storyFacts dd {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.narrative {
+  display: grid;
+  gap: clamp(3rem, 8vw, 8rem);
+  padding-block: clamp(7rem, 15vw, 13rem);
+}
+
+.narrativeRail {
+  align-self: start;
+  padding-top: 0.35rem;
+}
+
+.railTitle {
+  max-width: 12ch;
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(1.8rem, 3vw, 2.7rem);
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.railLine {
+  display: block;
+  width: 1px;
+  height: clamp(4rem, 10vw, 8rem);
+  margin: 1.75rem 0;
+  background: color-mix(in srgb, var(--ink) 30%, transparent);
+}
+
+.railNote {
+  margin: 0;
+  color: var(--ink-soft);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.8;
+  text-transform: uppercase;
+}
+
+.storyBody {
+  min-width: 0;
+}
+
+.manifesto {
+  position: relative;
+  overflow: hidden;
+  padding-block: clamp(7rem, 15vw, 13rem);
+  background: #080a0e;
+  color: #f4f1e9;
+}
+
+.manifesto::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 200%;
+  color: color-mix(in srgb, var(--brand-k) 13%, transparent);
+  content: "JK  /  NUMERO UNO  /  JK  /  NUMERO UNO  /";
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(8rem, 22vw, 20rem);
+  font-weight: 850;
+  letter-spacing: -0.07em;
+  line-height: 0.7;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.manifesto > div {
+  position: relative;
+  z-index: 1;
+}
+
+.manifesto p {
+  margin: 0 0 clamp(3rem, 7vw, 6rem);
+  color: var(--brand-k);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.manifesto blockquote {
+  max-width: 14ch;
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans);
+  font-size: clamp(3rem, 8vw, 7.5rem);
+  font-weight: 750;
+  letter-spacing: -0.065em;
+  line-height: 0.9;
+  text-wrap: balance;
+}
+
+.manifesto span {
+  display: block;
+  margin-top: clamp(2.5rem, 6vw, 5rem);
+  color: rgba(244, 241, 233, 0.62);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .closing {
@@ -416,8 +564,20 @@
     margin-top: 5rem;
   }
 
-  .story {
-    grid-template-columns: minmax(10rem, 0.35fr) minmax(0, 1fr);
+  .storyIntroInner {
+    grid-template-columns: minmax(8rem, 0.6fr) minmax(0, 2fr) minmax(
+        12rem,
+        0.85fr
+      );
+  }
+
+  .narrative {
+    grid-template-columns: minmax(12rem, 0.55fr) minmax(0, 1.45fr);
+  }
+
+  .narrativeRail {
+    position: sticky;
+    top: calc(var(--header-height) + 3rem);
   }
 }
 
@@ -452,6 +612,41 @@
     flex-wrap: wrap;
     justify-content: flex-start;
     padding-block: 1.5rem;
+  }
+
+  .storyIntro::before {
+    background: radial-gradient(
+      circle at 80% 30%,
+      color-mix(in srgb, var(--brand-k) 10%, transparent),
+      transparent 22rem
+    );
+  }
+
+  .statementCopy {
+    margin-left: 0;
+  }
+
+  .narrativeRail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.75rem 1.5rem;
+  }
+
+  .railEyebrow,
+  .railTitle {
+    grid-column: 1;
+  }
+
+  .railLine {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    width: 1px;
+    height: 100%;
+    margin: 0;
+  }
+
+  .railNote {
+    grid-column: 1;
   }
 
   .closing > div {

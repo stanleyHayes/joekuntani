@@ -24,6 +24,7 @@ import { ThemeToggle } from "@joe-kuntani/shared/theme/theme-toggle";
 import { ContentIncompleteWarning } from "@joe-kuntani/shared/ui/content-incomplete-warning";
 import { AdminTour, shouldAutoStartTour } from "../admin-tour";
 import { AdminUserMenu } from "../admin-user-menu";
+import { AdminPageGuide } from "../page-guide";
 import { AdminSplash } from "../admin-splash";
 import {
   AdminNotificationsProvider,
@@ -344,6 +345,10 @@ export function AdminShell({
               {(missingContentCount ?? 0) > 0 ? (
                 <ContentIncompleteWarning missingCount={missingContentCount} />
               ) : null}
+              {/* Above the workspace rather than inside it: the guide describes
+                  the whole page, and every route would otherwise have to
+                  remember to render it. */}
+              <AdminPageGuide title={title} />
               <div key={pathname} className="admin-stage" data-route-stage="">
                 {children}
               </div>

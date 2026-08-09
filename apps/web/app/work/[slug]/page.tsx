@@ -1,4 +1,4 @@
-import { Markdown } from "../../../components/content/markdown";
+import { Markdown } from "@joe-kuntani/shared/ui/markdown";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getPublicContentBySlug } from "../../../components/content/data";

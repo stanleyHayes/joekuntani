@@ -163,3 +163,157 @@
   color: color-mix(in srgb, var(--ink) 60%, transparent);
   font-size: 0.85rem;
 }
+
+/* ---- About editorial composition ----
+   The About banner owns the introduction. Beneath it, the same CMS blocks
+   become a paced editorial feature instead of a stack of interchangeable
+   content cards. */
+
+.sections[data-variant="about"] {
+  counter-reset: about-section;
+  gap: clamp(4.75rem, 11vw, 10rem);
+}
+
+.sections[data-variant="about"] > * {
+  counter-increment: about-section;
+  position: relative;
+}
+
+.sections[data-variant="about"] > *::before {
+  content: "0" counter(about-section);
+  position: absolute;
+  top: 0.2rem;
+  left: clamp(-5rem, -7vw, -3.25rem);
+  color: var(--accent);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.sections[data-variant="about"] .heading {
+  max-width: 11ch;
+  margin-bottom: clamp(1.4rem, 3vw, 2.2rem);
+  font-size: clamp(2rem, 5vw, 4.6rem);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 0.95;
+  text-transform: none;
+}
+
+.sections[data-variant="about"] .prose {
+  max-width: 40rem;
+}
+
+.sections[data-variant="about"] .prose:nth-child(even) {
+  margin-left: auto;
+}
+
+.sections[data-variant="about"] .prose,
+.sections[data-variant="about"] .proseImageCopy {
+  color: var(--ink-soft);
+  font-size: clamp(1.05rem, 1.5vw, 1.22rem);
+  line-height: 1.78;
+}
+
+.sections[data-variant="about"] .prose p:first-of-type,
+.sections[data-variant="about"] .proseImageCopy p:first-of-type {
+  color: var(--ink);
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
+  line-height: 1.55;
+}
+
+.sections[data-variant="about"] .proseImage {
+  gap: clamp(2.5rem, 7vw, 6rem);
+  align-items: end;
+}
+
+.sections[data-variant="about"] .proseImageMedia {
+  position: relative;
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
+}
+
+.sections[data-variant="about"] .proseImageMedia::after {
+  position: absolute;
+  z-index: -1;
+  inset: 1.25rem -1.25rem -1.25rem 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 26%, transparent);
+  content: "";
+}
+
+.sections[data-variant="about"] .proseImageMedia img {
+  aspect-ratio: 1;
+  filter: saturate(0.88) contrast(1.04);
+}
+
+.sections[data-variant="about"] .quote {
+  max-width: 48rem;
+  margin-block: clamp(1rem, 5vw, 4rem);
+  padding: clamp(2rem, 5vw, 4rem) 0 clamp(2rem, 5vw, 4rem)
+    clamp(1.5rem, 5vw, 4rem);
+  border-left-width: 0.35rem;
+}
+
+.sections[data-variant="about"] .quote::after {
+  content: "\201C";
+  position: absolute;
+  z-index: -1;
+  top: -0.22em;
+  right: 0;
+  color: color-mix(in srgb, var(--accent) 13%, transparent);
+  font-family: Georgia, serif;
+  font-size: clamp(12rem, 28vw, 24rem);
+  line-height: 1;
+}
+
+.sections[data-variant="about"] .quoteBody {
+  font-size: clamp(2.25rem, 6.2vw, 5.4rem);
+  letter-spacing: -0.06em;
+  line-height: 0.96;
+}
+
+.sections[data-variant="about"] .stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-inline: 0;
+  background: var(--ink);
+}
+
+.sections[data-variant="about"] .stat {
+  min-height: 9rem;
+  align-content: space-between;
+  background: var(--surface);
+}
+
+@media (min-width: 52rem) {
+  .sections[data-variant="about"] .proseImage {
+    grid-template-columns: minmax(0, 0.9fr) minmax(20rem, 1.1fr);
+  }
+
+  .sections[data-variant="about"] .stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 68rem) {
+  .sections[data-variant="about"] > *::before {
+    position: static;
+    display: block;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 35rem) {
+  .sections[data-variant="about"] {
+    gap: 4.5rem;
+  }
+
+  .sections[data-variant="about"] .proseImageMedia::after {
+    inset: 0.75rem -0.75rem -0.75rem 0.75rem;
+  }
+
+  .sections[data-variant="about"] .stats {
+    grid-template-columns: 1fr;
+  }
+}
