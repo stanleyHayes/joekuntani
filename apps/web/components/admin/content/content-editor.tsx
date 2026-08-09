@@ -17,6 +17,8 @@ import type {
   ContentKind,
 } from "../../content/types";
 import { AiAssist, type AiAssistField } from "../../ui/ai-assist";
+import { Markdown } from "../../content/markdown";
+import { MarkdownField } from "./markdown-field";
 import { DateField } from "../../ui/date-field";
 import { Select } from "../../ui/select";
 import { AdminDialog } from "../admin-dialog";
@@ -395,12 +397,12 @@ export function ContentEditor({
               onChange={(summary) => setDraft({ ...draft, summary })}
               multiline
             />
-            <Field
+            <MarkdownField
               assist="body"
               label="Body"
+              hint="Markdown. Use the toolbar or write it directly, then switch to Preview to see exactly what publishes."
               value={draft.body ?? ""}
               onChange={(body) => setDraft({ ...draft, body })}
-              multiline
             />
           </div>
         </fieldset>
@@ -728,7 +730,7 @@ export function ContentEditor({
           <article className={styles.preview} aria-label="Draft preview">
             <h3>{preview.title}</h3>
             <p>{preview.summary}</p>
-            <div>{preview.body}</div>
+            <Markdown>{preview.body}</Markdown>
           </article>
         </AdminDialog>
       ) : null}

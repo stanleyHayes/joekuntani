@@ -1,3 +1,4 @@
+import { Markdown } from "../content/markdown";
 import type { PublicSettings } from "../../lib/settings";
 import type { ContentItem } from "../content/types";
 import type { LegalPublication } from "./data";
@@ -79,7 +80,7 @@ export function LegalPage({
                   Ask a question <span aria-hidden="true">↗</span>
                 </a>
               </aside>
-              <div className={styles.body}>{page.body}</div>
+              <Markdown className={styles.body}>{page.body}</Markdown>
             </article>
           ) : stagingPlaceholder ? (
             <div className={styles.notice} role="status">

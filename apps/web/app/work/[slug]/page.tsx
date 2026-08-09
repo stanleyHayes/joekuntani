@@ -1,3 +1,4 @@
+import { Markdown } from "../../../components/content/markdown";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getPublicContentBySlug } from "../../../components/content/data";
@@ -115,7 +116,7 @@ export default async function WorkDetailPage({ params }: Props) {
             <span>01</span>
             <h2>The work</h2>
           </div>
-          <div className={styles.detailBody}>{item.body}</div>
+          <Markdown className={styles.detailBody}>{item.body}</Markdown>
         </section>
         {item.results.length ? (
           <section

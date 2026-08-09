@@ -1,0 +1,133 @@
+.field {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.hint {
+  margin: 0;
+  color: color-mix(in srgb, var(--ink) 58%, transparent);
+  font-size: 0.78rem;
+}
+
+.tabs {
+  display: inline-flex;
+  padding: 0.15rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border-radius: 999px;
+}
+
+.tab {
+  min-height: 1.9rem;
+  padding: 0.2rem 0.8rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tab[aria-selected="true"] {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.tool {
+  min-width: 2.1rem;
+  min-height: 2.1rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--surface) 92%, var(--ink) 8%);
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tool[data-key="bold"] {
+  font-weight: 850;
+}
+
+.tool[data-key="italic"] {
+  font-style: italic;
+}
+
+.tool:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+.tool:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.area {
+  width: 100%;
+  min-height: 18rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  color: inherit;
+  /* Monospace while writing: Markdown is source, and alignment of list markers
+     and table pipes is only legible in a fixed pitch. */
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.88rem;
+  line-height: 1.65;
+  resize: vertical;
+}
+
+.area:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+/* Matches the reading measure of the published page so line lengths in the
+   preview are representative rather than merely correct. */
+.preview {
+  min-height: 18rem;
+  max-width: 46rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--surface) 96%, var(--ink) 4%);
+  color: color-mix(in srgb, var(--ink) 82%, transparent);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.empty {
+  margin: 0;
+  color: color-mix(in srgb, var(--ink) 50%, transparent);
+  font-style: italic;
+}

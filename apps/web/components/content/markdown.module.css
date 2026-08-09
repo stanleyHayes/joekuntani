@@ -1,0 +1,137 @@
+/* Typography for parsed CMS bodies. Deliberately inherits colour and size from
+   the surface it sits on, so the same markup reads correctly in the public
+   story column and in the admin preview pane. */
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose > :last-child {
+  margin-bottom: 0;
+}
+
+.prose p {
+  margin: 0 0 1.25em;
+}
+
+.prose h2,
+.prose h3,
+.prose h4 {
+  margin: 2em 0 0.6em;
+  color: var(--ink);
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.prose h2 {
+  font-size: 1.35em;
+}
+
+.prose h3 {
+  font-size: 1.15em;
+}
+
+.prose h4 {
+  font-size: 1em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.prose ul,
+.prose ol {
+  margin: 0 0 1.25em;
+  padding-left: 1.4em;
+}
+
+.prose li {
+  margin-bottom: 0.4em;
+}
+
+.prose li::marker {
+  color: var(--accent);
+}
+
+.prose strong {
+  color: var(--ink);
+  font-weight: 750;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.prose a:hover {
+  text-decoration-color: var(--accent);
+}
+
+.prose blockquote {
+  margin: 1.5em 0;
+  padding-left: 1.1em;
+  border-left: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--ink);
+  font-style: italic;
+}
+
+.prose code {
+  padding: 0.15em 0.35em;
+  border-radius: 0.3em;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  font-size: 0.9em;
+}
+
+.prose pre {
+  overflow-x: auto;
+  margin: 0 0 1.25em;
+  padding: 1em;
+  border-radius: 0.6em;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.prose pre code {
+  padding: 0;
+  background: none;
+}
+
+.prose hr {
+  margin: 2.5em 0;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+/* A table wider than its column scrolls inside itself rather than widening the
+   page — the same class of bug that broke the booking stepper on mobile. */
+.prose table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  margin: 0 0 1.25em;
+  border-collapse: collapse;
+  font-size: 0.94em;
+}
+
+.prose th,
+.prose td {
+  padding: 0.5em 0.75em;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  text-align: left;
+}
+
+.prose th {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5em;
+}

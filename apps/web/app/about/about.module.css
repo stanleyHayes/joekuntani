@@ -345,14 +345,20 @@
   z-index: 1;
   max-width: 46rem;
   margin-top: clamp(3rem, 7vw, 6rem);
-  margin-left: auto;
+  /* Starts at the column's left edge. `margin-left: auto` pushed the measure to
+     the far right of a column that is already the right-hand half of the story
+     grid, so on a wide screen the prose sat against the viewport edge with the
+     whole left side empty. */
+  margin-left: 0;
   color: var(--ink-soft);
   font-size: clamp(1.05rem, 1.7vw, 1.28rem);
   line-height: 1.75;
-  white-space: pre-wrap;
 }
 
-.body::first-letter {
+/* The drop cap targets the first rendered element. Markdown wraps the opening
+   sentence in its own <p>, so the selector has to reach through it — without
+   this the cap silently stopped applying once bodies were parsed. */
+.body > :first-child::first-letter {
   float: left;
   margin: 0.08em 0.12em 0 0;
   color: var(--accent);

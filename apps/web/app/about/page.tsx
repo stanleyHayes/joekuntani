@@ -1,3 +1,4 @@
+import { Markdown } from "../../components/content/markdown";
 import Link from "next/link";
 import { getPublicSettings } from "../../lib/settings";
 
@@ -143,7 +144,7 @@ export default async function AboutPage() {
                   the punchline.
                 </p>
                 {page.body ? (
-                  <div className={styles.body}>{page.body}</div>
+                  <Markdown className={styles.body}>{page.body}</Markdown>
                 ) : null}
               </article>
             </section>

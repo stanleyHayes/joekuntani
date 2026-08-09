@@ -302,9 +302,20 @@
     max-width: 12ch;
     margin-bottom: 2rem;
   }
+  /* Wraps rather than scrolls. Five columns at a 6.5rem floor is a 32.5rem
+     (520px) minimum, which no phone can show — and the `overflow-x: auto` that
+     was meant to rescue it never engaged, because a grid item defaults to
+     `min-width: auto` and simply widened the shell instead. The page's
+     `overflow: clip` then hid the damage rather than fixing it. */
   .steps {
-    grid-template-columns: repeat(5, minmax(6.5rem, 1fr));
-    overflow-x: auto;
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+    column-gap: 0.75rem;
+  }
+  .steps li {
+    min-width: 0;
+    /* The number and label share a row; the label wraps inside its own cell
+       instead of pushing the row wider than the column. */
+    overflow-wrap: anywhere;
   }
   .railNote {
     display: none;
