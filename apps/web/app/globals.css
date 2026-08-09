@@ -674,6 +674,19 @@ h2 {
   background: var(--surface);
 }
 
+/* Clearance for the floating mobile bar, which is `position: fixed` and so
+   takes no space in the flow. Without this its full height of footer sat
+   permanently underneath it — unreachable, because scrolling to the end of the
+   page still left it covered. Bound to the same breakpoint the bar hides at, so
+   the two cannot drift apart. */
+@media (max-width: 72rem) {
+  .site-footer {
+    padding-bottom: calc(
+      4.5rem + max(0.65rem, env(safe-area-inset-bottom, 0px))
+    );
+  }
+}
+
 .site-footer::before {
   position: absolute;
   top: clamp(2rem, 6vw, 5rem);

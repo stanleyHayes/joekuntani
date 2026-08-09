@@ -294,7 +294,10 @@
     position: relative;
     top: auto;
     min-height: auto;
-    padding: 2rem 0;
+    /* Same inline gutter as the form below it. Stacked, the rail and the form
+       read as one column, so a rail flush to the edge above an inset form looks
+       like a mistake rather than a hierarchy. */
+    padding: 2rem 1.25rem;
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }
@@ -330,8 +333,12 @@
   .choice {
     grid-column: 1;
   }
+  /* Not zero. Dropping the inline padding left the fields, cards and their
+     borders pressed against the page's own 16px gutter, which reads as no
+     padding at all — the shell's rules run edge to edge and the content has
+     nowhere to breathe. Narrower than the desktop clamp, but present. */
   .formHeader,
   .shell form {
-    padding-inline: 0;
+    padding-inline: 1.25rem;
   }
 }
