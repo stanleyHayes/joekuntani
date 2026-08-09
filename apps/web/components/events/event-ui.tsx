@@ -2,13 +2,28 @@ import Link from "next/link";
 import type { PublicEvent, PublicTicketType } from "./types";
 import styles from "./events.module.css";
 
-export function ScheduledEventBanner({ event }: { event: PublicEvent }) {
+export function ScheduledEventBanner({
+  event,
+  artwork,
+}: {
+  event: PublicEvent;
+  /** The event's promo poster. The banner reads without one. */
+  artwork?: string;
+}) {
   return (
     <section
       className={`${styles.section} shell-container`}
       aria-labelledby="scheduled-event"
     >
-      <div className={styles.banner}>
+      <div className={styles.banner} data-has-art={artwork ? "true" : "false"}>
+        {artwork ? (
+          <figure className={styles.bannerArt}>
+            {/* Decorative: the title, date and venue are all in the copy beside
+                it, so announcing the poster would just repeat them. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={artwork} alt="" width={900} height={1200} />
+          </figure>
+        ) : null}
         <div className={styles.bannerLead}>
           <p className="eyebrow">Next on stage</p>
           <span aria-hidden="true">01 / LIVE</span>

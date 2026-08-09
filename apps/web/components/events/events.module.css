@@ -893,3 +893,49 @@
     filter: none;
   }
 }
+
+/* ---- Promo artwork on the scheduled-event banner ---- */
+
+/* The admin has always been able to schedule a promo with artwork, but the
+   banner rendered only the text — so an uploaded poster never appeared
+   anywhere. Its own column, and only when there is an image to put in it. */
+.banner[data-has-art="true"] {
+  grid-template-columns: minmax(7rem, 0.2fr) minmax(0, 1fr);
+}
+
+@media (min-width: 52rem) {
+  .banner[data-has-art="true"] {
+    grid-template-columns: minmax(8rem, 0.18fr) minmax(0, 1fr) minmax(
+        10rem,
+        0.26fr
+      );
+  }
+  .banner[data-has-art="true"] .bannerArt {
+    grid-row: 1 / -1;
+    grid-column: 3;
+  }
+}
+
+.bannerArt {
+  margin: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.bannerArt img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Posters are portrait; cropping from the top keeps the title and face,
+     which is where the information is. */
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: top center;
+}
+
+@media (max-width: 51.99rem) {
+  .bannerArt img {
+    aspect-ratio: 16 / 9;
+    object-position: center 30%;
+  }
+}

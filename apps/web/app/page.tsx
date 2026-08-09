@@ -70,6 +70,11 @@ export default async function HomePage() {
   const featuredEvent =
     activeFeaturedEvent(events.data) ||
     (demo ? activeFeaturedEvent(demoEvents) : undefined);
+  // The scheduled promo's own artwork. Editors have been able to upload one
+  // since banners shipped, but nothing resolved it, so it never appeared.
+  const featuredArtwork = await publicImageURL(
+    featuredEvent?.banner_asset_id ?? "",
+  );
   return (
     <PublicShell
       settings={shellSettings}
@@ -139,7 +144,7 @@ export default async function HomePage() {
           <i>✦</i>
           <span>Stagecraft</span>
         </div>
-        {featuredEvent ? <ScheduledEventBanner event={featuredEvent} /> : null}
+        {featuredEvent ? <ScheduledEventBanner event={featuredEvent} artwork={featuredArtwork} /> : null}
         <section
           className={`${styles.intro} shell-container`}
           id="planned-content"
