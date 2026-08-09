@@ -5,6 +5,8 @@
  * `app/admin/layout.tsx` so it survives navigation, and a layout cannot read a
  * child page's props — so the mapping lives here instead.
  */
+import { matchAdminRoute } from "./admin-route-match";
+
 export type AdminPageMeta = {
   title: string;
   description?: string;
@@ -73,17 +75,5 @@ const ADMIN_PAGE_META: Record<string, AdminPageMeta> = {
  * inherits its section's title instead of rendering blank.
  */
 export function adminPageMeta(pathname: string): AdminPageMeta {
-  const exact = ADMIN_PAGE_META[pathname];
-  if (exact) return exact;
-
-  let best: AdminPageMeta | undefined;
-  let bestLength = -1;
-  for (const [route, meta] of Object.entries(ADMIN_PAGE_META)) {
-    if (route === "/admin") continue;
-    if (pathname.startsWith(`${route}/`) && route.length > bestLength) {
-      best = meta;
-      bestLength = route.length;
-    }
-  }
-  return best ?? ADMIN_PAGE_META["/admin"];
+  return matchAdminRoute(ADMIN_PAGE_META, pathname);
 }
