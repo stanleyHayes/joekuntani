@@ -62,6 +62,7 @@ type Item struct {
 	Featured        bool       `json:"featured" bson:"featured"`
 	GalleryAssetIDs []string   `json:"gallery_asset_ids" bson:"gallery_asset_ids"`
 	Results         []Result   `json:"results" bson:"results"`
+	Sections        []Section  `json:"sections" bson:"sections"`
 	ExternalURL     string     `json:"external_url,omitempty" bson:"external_url,omitempty"`
 	EmbedURL        string     `json:"embed_url,omitempty" bson:"embed_url,omitempty"`
 	Outlet          string     `json:"outlet,omitempty" bson:"outlet,omitempty"`
@@ -85,6 +86,7 @@ type Input struct {
 	PersonName, PersonTitle, Organization                               string
 	Tags, GalleryAssetIDs                                               []string
 	Results                                                             []Result
+	Sections                                                            []Section
 	Featured                                                            bool
 	SEO                                                                 SEO
 }
@@ -96,6 +98,7 @@ func (input *Input) Normalize() {
 	}
 	input.Tags = cleanUnique(input.Tags)
 	input.GalleryAssetIDs = cleanUnique(input.GalleryAssetIDs)
+	input.Sections = NormalizeSections(input.Sections)
 	for index := range input.Results {
 		input.Results[index].Label = strings.TrimSpace(input.Results[index].Label)
 		input.Results[index].Value = strings.TrimSpace(input.Results[index].Value)
@@ -115,6 +118,9 @@ func (input Input) Validate(create bool) error {
 	}
 	if input.Kind == Portfolio && !within(input.Category, 80, true) || input.Kind == Video && (!within(input.ExternalURL, 2048, true) || !within(input.EmbedURL, 2048, true) || !httpsURL(input.ExternalURL) || !httpsURL(input.EmbedURL)) || input.Kind == Press && (!within(input.Outlet, 120, true) || !within(input.ExternalURL, 2048, true) || !httpsURL(input.ExternalURL)) || input.Kind == Testimonial && !within(input.PersonName, 120, true) {
 		return ErrInvalid
+	}
+	if err := ValidateSections(input.Sections); err != nil {
+		return err
 	}
 	for _, value := range input.Tags {
 		if !within(value, 120, true) {

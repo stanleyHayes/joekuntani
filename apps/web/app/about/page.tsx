@@ -1,4 +1,4 @@
-import { Markdown } from "../../components/content/markdown";
+import { ContentSections } from "../../components/content/sections";
 import Link from "next/link";
 import { getPublicSettings } from "../../lib/settings";
 
@@ -14,7 +14,7 @@ import {
   demoContentEnabled,
   demoImages,
 } from "../../lib/demo/content";
-import { publicImageURL } from "../../lib/media";
+import { coverURLs, publicImageURL } from "../../lib/media";
 import { contentMetadata } from "../../lib/seo";
 import styles from "./about.module.css";
 
@@ -41,6 +41,13 @@ export default async function AboutPage() {
   // hardcoded to a demo file or the brand logo, so there was no way to publish
   // a real photograph from the dashboard at all.
   const portrait = await publicImageURL(page?.gallery_asset_ids?.[0] ?? "");
+  // Blocks reference images by id; resolve every one the page uses in a single
+  // pass so a section renderer can stay synchronous.
+  const sectionImages = await coverURLs(
+    (page?.sections ?? []).flatMap((section) =>
+      (section.asset_ids ?? []).map((assetID) => ({ key: assetID, assetID })),
+    ),
+  );
   return (
     <PublicShell
       settings={shellSettings}
@@ -144,7 +151,11 @@ export default async function AboutPage() {
                   the punchline.
                 </p>
                 {page.body ? (
-                  <Markdown className={styles.body}>{page.body}</Markdown>
+                  <ContentSections
+                    sections={page.sections}
+                    body={page.body}
+                    resolveImage={(assetID) => sectionImages[assetID]}
+                  />
                 ) : null}
               </article>
             </section>

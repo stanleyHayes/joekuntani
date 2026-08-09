@@ -129,27 +129,28 @@ func (handler *HTTPHandler) preview(response http.ResponseWriter, request *http.
 }
 
 type contentRequest struct {
-	Revision        int64    `json:"revision"`
-	Slug            string   `json:"slug"`
-	Title           string   `json:"title"`
-	Summary         string   `json:"summary"`
-	Body            string   `json:"body"`
-	Category        string   `json:"category"`
-	Tags            []string `json:"tags"`
-	Featured        bool     `json:"featured"`
-	GalleryAssetIDs []string `json:"gallery_asset_ids"`
-	Results         []Result `json:"results"`
-	ExternalURL     string   `json:"external_url"`
-	EmbedURL        string   `json:"embed_url"`
-	Outlet          string   `json:"outlet"`
-	PersonName      string   `json:"person_name"`
-	PersonTitle     string   `json:"person_title"`
-	Organization    string   `json:"organization"`
-	SEO             SEO      `json:"seo"`
+	Revision        int64     `json:"revision"`
+	Slug            string    `json:"slug"`
+	Title           string    `json:"title"`
+	Summary         string    `json:"summary"`
+	Body            string    `json:"body"`
+	Category        string    `json:"category"`
+	Tags            []string  `json:"tags"`
+	Featured        bool      `json:"featured"`
+	GalleryAssetIDs []string  `json:"gallery_asset_ids"`
+	Results         []Result  `json:"results"`
+	Sections        []Section `json:"sections"`
+	ExternalURL     string    `json:"external_url"`
+	EmbedURL        string    `json:"embed_url"`
+	Outlet          string    `json:"outlet"`
+	PersonName      string    `json:"person_name"`
+	PersonTitle     string    `json:"person_title"`
+	Organization    string    `json:"organization"`
+	SEO             SEO       `json:"seo"`
 }
 
 func (input contentRequest) domainInput(kind Kind) Input {
-	return Input{Kind: kind, Slug: input.Slug, Title: input.Title, Summary: input.Summary, Body: input.Body, Category: input.Category, Tags: input.Tags, Featured: input.Featured, GalleryAssetIDs: input.GalleryAssetIDs, Results: input.Results, ExternalURL: input.ExternalURL, EmbedURL: input.EmbedURL, Outlet: input.Outlet, PersonName: input.PersonName, PersonTitle: input.PersonTitle, Organization: input.Organization, SEO: input.SEO}
+	return Input{Kind: kind, Slug: input.Slug, Title: input.Title, Summary: input.Summary, Body: input.Body, Category: input.Category, Tags: input.Tags, Featured: input.Featured, GalleryAssetIDs: input.GalleryAssetIDs, Results: input.Results, Sections: input.Sections, ExternalURL: input.ExternalURL, EmbedURL: input.EmbedURL, Outlet: input.Outlet, PersonName: input.PersonName, PersonTitle: input.PersonTitle, Organization: input.Organization, SEO: input.SEO}
 }
 func (handler *HTTPHandler) create(response http.ResponseWriter, request *http.Request) {
 	actor, ok := handler.resolve(request)

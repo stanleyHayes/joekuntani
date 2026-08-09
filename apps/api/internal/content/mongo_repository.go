@@ -30,6 +30,7 @@ type document struct {
 	Featured        bool           `bson:"featured"`
 	GalleryAssetIDs []string       `bson:"gallery_asset_ids"`
 	Results         []Result       `bson:"results"`
+	Sections        []Section      `bson:"sections"`
 	ExternalURL     string         `bson:"external_url,omitempty"`
 	EmbedURL        string         `bson:"embed_url,omitempty"`
 	Outlet          string         `bson:"outlet,omitempty"`
@@ -48,7 +49,7 @@ type document struct {
 }
 
 func fromDocument(kind Kind, d document) Item {
-	return Item{ID: d.ID.Hex(), PublicID: d.PublicID, Kind: kind, Slug: d.Slug, Title: d.Title, Summary: d.Summary, Body: d.Body, Category: d.Category, Tags: emptyIfNil(d.Tags), Featured: d.Featured, GalleryAssetIDs: emptyIfNil(d.GalleryAssetIDs), Results: emptyIfNil(d.Results), ExternalURL: d.ExternalURL, EmbedURL: d.EmbedURL, Outlet: d.Outlet, PersonName: d.PersonName, PersonTitle: d.PersonTitle, Organization: d.Organization, SEO: d.SEO, Status: d.Status, Approved: d.Approved, Revision: d.Revision, PublishAt: fromDate(d.PublishAt), UnpublishAt: fromDate(d.UnpublishAt), PublishedAt: fromDate(d.PublishedAt), CreatedAt: d.CreatedAt.Time(), UpdatedAt: d.UpdatedAt.Time()}
+	return Item{ID: d.ID.Hex(), PublicID: d.PublicID, Kind: kind, Slug: d.Slug, Title: d.Title, Summary: d.Summary, Body: d.Body, Category: d.Category, Tags: emptyIfNil(d.Tags), Featured: d.Featured, GalleryAssetIDs: emptyIfNil(d.GalleryAssetIDs), Results: emptyIfNil(d.Results), Sections: emptyIfNil(d.Sections), ExternalURL: d.ExternalURL, EmbedURL: d.EmbedURL, Outlet: d.Outlet, PersonName: d.PersonName, PersonTitle: d.PersonTitle, Organization: d.Organization, SEO: d.SEO, Status: d.Status, Approved: d.Approved, Revision: d.Revision, PublishAt: fromDate(d.PublishAt), UnpublishAt: fromDate(d.UnpublishAt), PublishedAt: fromDate(d.PublishedAt), CreatedAt: d.CreatedAt.Time(), UpdatedAt: d.UpdatedAt.Time()}
 }
 
 // emptyIfNil keeps absent collections serialising as [] rather than null.
@@ -189,6 +190,9 @@ func (repository *MongoRepository) audit(ctx context.Context, kind Kind, event A
 }
 func toBSON(item Item, identity bool) bson.M {
 	d := bson.M{"title": item.Title, "summary": item.Summary, "tags": item.Tags, "featured": item.Featured, "gallery_asset_ids": item.GalleryAssetIDs, "seo": item.SEO, "status": item.Status, "approved": item.Approved, "revision": item.Revision, "publish_at": item.PublishAt, "unpublish_at": item.UnpublishAt, "published_at": item.PublishedAt, "updated_at": item.UpdatedAt}
+	// Every kind, not one: blocks are a property of an editorial record, and
+	// nesting this in a single case silently dropped them on every other kind.
+	d["sections"] = emptyIfNil(item.Sections)
 	switch item.Kind {
 	case Page:
 		d["body"] = item.Body

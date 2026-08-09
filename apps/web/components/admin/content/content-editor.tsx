@@ -19,6 +19,7 @@ import type {
 import { AiAssist, type AiAssistField } from "../../ui/ai-assist";
 import { Markdown } from "../../content/markdown";
 import { MarkdownField } from "./markdown-field";
+import { SectionsField } from "./sections-field";
 import { DateField } from "../../ui/date-field";
 import { Select } from "../../ui/select";
 import { AdminDialog } from "../admin-dialog";
@@ -521,6 +522,10 @@ export function ContentEditor({
           </div>
         </fieldset>
 
+        <SectionsField
+          value={draft.sections ?? []}
+          onChange={(sections) => setDraft({ ...draft, sections })}
+        />
         <ResultsField value={results} onChange={setResults} />
 
         <fieldset className={styles.group}>
