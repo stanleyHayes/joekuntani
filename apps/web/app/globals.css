@@ -729,6 +729,36 @@ h2 {
   padding-block: clamp(1.5rem, 4vw, 2.25rem);
 }
 
+/* The signup band. Laid out like footer-support beside it, so the footer
+   reads as one stack of bands rather than a form bolted on. */
+.footer-newsletter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem 2rem;
+  border-top: 1px solid var(--line);
+  padding-block: clamp(1.5rem, 4vw, 2.25rem);
+}
+
+.footer-newsletter__eyebrow {
+  margin: 0;
+  color: var(--eyebrow-color);
+  font-family: var(--eyebrow-family);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+
+.footer-newsletter__copy {
+  margin: 0.35rem 0 0;
+  max-width: 28ch;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
 /* Approved social profiles, published from site settings. Typographic rather
    than brand icons: the platform list is free text from the CMS, so any value
    has to render correctly without a matching glyph. */

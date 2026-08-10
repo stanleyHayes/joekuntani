@@ -1,5 +1,9 @@
 import Link from "next/link";
 
+import {
+  NewsletterForm,
+  type NewsletterConsent,
+} from "../newsletter/newsletter-form";
 import { SupportButton } from "../support/support-button";
 import { ButtonLink } from "../ui/button-link";
 import { BrandMark } from "./brand-mark";
@@ -17,6 +21,8 @@ type PublicFooterProps = {
   links?: readonly { href: string; label: string }[];
   social?: readonly { platform: string; url: string }[];
   statusText?: string;
+  /** Consent copy from site settings; without it the signup does not render. */
+  newsletterConsent?: NewsletterConsent;
 };
 
 const fallbackLinks = [
@@ -32,6 +38,7 @@ export function PublicFooter({
   links = fallbackLinks,
   social = [],
   statusText,
+  newsletterConsent,
 }: PublicFooterProps) {
   // Only approved profiles with a usable address are shown; the API already
   // rejects anything that is not absolute HTTPS.
@@ -58,6 +65,22 @@ export function PublicFooter({
         </div>
         <SupportButton variant="ghost" />
       </section>
+      {newsletterConsent ? (
+        <section
+          className="footer-newsletter shell-container"
+          aria-labelledby="footer-newsletter"
+        >
+          <div>
+            <p className="footer-newsletter__eyebrow" id="footer-newsletter">
+              Newsletter
+            </p>
+            <p className="footer-newsletter__copy">
+              Dates, releases and the occasional story from the road.
+            </p>
+          </div>
+          <NewsletterForm consent={newsletterConsent} source="footer" />
+        </section>
+      ) : null}
       {profiles.length ? (
         <section
           className="footer-social shell-container"

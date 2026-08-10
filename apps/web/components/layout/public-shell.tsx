@@ -49,6 +49,17 @@ export function PublicShell({
           social={resolved?.social}
           brandName={resolved?.brand?.name}
           statusText={resolved?.brand?.tagline}
+          // Consent copy is published from settings, so the signup carries the
+          // wording that was actually on screen when someone agreed.
+          newsletterConsent={
+            resolved?.consent?.version
+              ? {
+                  version: resolved.consent.version,
+                  marketingLabel: resolved.consent.marketing_label,
+                  privacyURL: resolved.consent.privacy_url,
+                }
+              : undefined
+          }
         />
         <MobileBottomNav
           currentPath={currentPath}
