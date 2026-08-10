@@ -706,3 +706,51 @@ it("converts legacy page copy and rewrites a section through the assistant", asy
     field: "body",
   });
 });
+
+// A rejected save used to say the same sentence whether a field was too long,
+// the record had moved on, or the page was running old code. The advice for
+// each is different, so the message has to be too.
+it.each([
+  [
+    422,
+    "Content data is invalid",
+    /A field was rejected \(Content data is invalid\)/,
+  ],
+  [400, "Invalid request", /request was malformed \(Invalid request\)/],
+  [413, "", /too large to save/],
+])("explains a %s rejection", async (status, title, expected) => {
+  stubFetch({
+    items: [page],
+    responses: [json(title ? { title } : {}, status)],
+  });
+  render(
+    <ContentEditor
+      kind="page"
+      contentID={page.id}
+      requestCacheInvalidation={noCacheInvalidation}
+    />,
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Save draft" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(expected);
+});
+
+// The API's own wording is carried through, but nothing else from the body is.
+it("carries the API's reason without leaking anything else", async () => {
+  stubFetch({
+    items: [page],
+    responses: [
+      json({ title: "Content data is invalid", detail: "mongo secret" }, 422),
+    ],
+  });
+  render(
+    <ContentEditor
+      kind="page"
+      contentID={page.id}
+      requestCacheInvalidation={noCacheInvalidation}
+    />,
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Save draft" }));
+  const alert = await screen.findByRole("alert");
+  expect(alert).toHaveTextContent("Content data is invalid");
+  expect(screen.queryByText(/secret|stack|mongo/i)).toBeNull();
+});

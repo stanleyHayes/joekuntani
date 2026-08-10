@@ -172,19 +172,14 @@ export function ContentEditor({
         headers: mutationHeaders(),
         body: JSON.stringify(body),
       });
-      if (!response.ok) throw new MutationError(response.status);
+      if (!response.ok)
+        throw new MutationError(response.status, await reason(response));
       const saved = (await response.json()) as ContentItem;
       adopt(saved);
       setMessage(success);
       return saved;
     } catch (cause) {
-      setError(
-        cause instanceof MutationError && cause.status === 409
-          ? "This item changed in another session. Reload the content type before editing again."
-          : cause instanceof MutationError && cause.status === 403
-            ? "Your role cannot perform this action. Ask an administrator for approval or publication."
-            : "The content change was not accepted. Check the fields and approval state.",
-      );
+      setError(explain(cause));
       return null;
     } finally {
       setPending(false);
@@ -1031,8 +1026,51 @@ function Field({
   );
 }
 
+/** The API answers with problem+json; the title says what it objected to. */
+async function reason(response: Response) {
+  try {
+    const body = (await response.json()) as { title?: string };
+    return typeof body?.title === "string" ? body.title : "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Turns a rejected save into something an editor can act on.
+ *
+ * These used to collapse into one sentence — "check the fields and approval
+ * state" — which is the same advice whether a field was too long, the record
+ * changed underneath you, or the request never reached the API. The status
+ * already distinguishes them and the API sends its own title; both are used.
+ */
+function explain(cause: unknown) {
+  if (!(cause instanceof MutationError))
+    return "The content change could not be sent. Check your connection and try again.";
+  const detail = cause.detail ? ` (${cause.detail})` : "";
+  switch (cause.status) {
+    case 409:
+      return "This item changed in another session. Reload the content type before editing again.";
+    case 403:
+      return "Your role cannot perform this action. Ask an administrator for approval or publication.";
+    case 422:
+      // The one an editor can actually fix, so it names the usual suspects.
+      return `A field was rejected${detail}. Check the required fields for this type, and that every link is a full https address.`;
+    case 400:
+      return `The request was malformed${detail}. This usually means the page is running an older version — reload it before trying again.`;
+    case 413:
+      return "The content is too large to save. Shorten the body or move images into the media library.";
+    default:
+      return `The content change was not accepted (${cause.status})${detail}.`;
+  }
+}
+
 class MutationError extends Error {
-  constructor(readonly status: number) {
+  constructor(
+    readonly status: number,
+    /** The API's own problem title, when it sent one. */
+    readonly detail = "",
+  ) {
     super(`Content mutation failed with status ${status}`);
   }
 }
