@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { AdminPageGuide } from "./page-guide";
@@ -175,4 +175,48 @@ it("renders nothing for a route with no guide", () => {
   pathname = "/unmapped-experiment";
   const { container } = render(<AdminPageGuide title="Whatever" />);
   expect(container).toBeEmptyDOMElement();
+});
+
+// Private browsing throws on any storage access. The guide is help text — it
+// must still render, just without remembering the disclosure.
+it("still renders when local storage cannot be read", async () => {
+  const denied = () => {
+    throw new Error("access denied");
+  };
+  // Restored in a finally: the shared beforeEach clears storage, so a throwing
+  // stub left in place fails whichever test happens to run next.
+  const original = Object.getOwnPropertyDescriptor(window, "localStorage");
+  Object.defineProperty(window, "localStorage", {
+    configurable: true,
+    value: {
+      getItem: denied,
+      setItem: denied,
+      removeItem: denied,
+      clear: denied,
+    },
+  });
+  try {
+    render(<AdminPageGuide title="Media" />);
+    expect(await screen.findByText(/asset library/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /how to use this page/i }),
+    ).toHaveAttribute("aria-expanded", "false");
+  } finally {
+    if (original) Object.defineProperty(window, "localStorage", original);
+  }
+});
+
+// The speech queue reports interruptions per utterance; the last one also
+// reports a clean finish. Both have to return the button to idle.
+it("returns to idle when the reading finishes on its own", async () => {
+  render(<AdminPageGuide title="Media" />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: /read this aloud/i }),
+  );
+  act(() => {
+    spoken[spoken.length - 1].onend?.();
+  });
+  expect(
+    screen.getByRole("button", { name: /read this aloud/i }),
+  ).toHaveAttribute("aria-pressed", "false");
 });

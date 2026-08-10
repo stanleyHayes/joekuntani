@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { CheckoutForm, checkoutURL } from "./checkout-form";
 
 const eventId = "11111111-1111-4111-8111-111111111111";
@@ -226,17 +232,17 @@ it("locks the submit button and warns while the order is being created", async (
     name: "Reserving tickets…",
   });
   expect(button).toBeDisabled();
-  expect(screen.getByRole("status")).toHaveTextContent("Do not close this page");
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "Do not close this page",
+  );
 });
 
 it("reports an unusable order payload instead of starting a payment", async () => {
-  const fetchMock = vi
-    .fn()
-    .mockResolvedValue(
-      new Response(JSON.stringify({ reference: "not-a-reference" }), {
-        status: 201,
-      }),
-    );
+  const fetchMock = vi.fn().mockResolvedValue(
+    new Response(JSON.stringify({ reference: "not-a-reference" }), {
+      status: 201,
+    }),
+  );
   vi.stubGlobal("fetch", fetchMock);
   render(<CheckoutForm eventId={eventId} ticketTypeId={ticketTypeId} />);
   completeForm();
@@ -293,33 +299,49 @@ it("keeps the order reference visible when the payment step fails", async () => 
 
 // Guards the hold timer: a reservation that lapses mid-payment must stop
 // pretending it is still valid.
+// The only test that reaches expiry through the component's own timer rather
+// than an already-past hold, so the clock is the thing under test.
+//
+// It used to give the hold 400ms of real time, which the assertions raced: on
+// a loaded machine the reservation lapsed before the "Opening…" state
+// rendered, the component jumped straight to expired, and the first assertion
+// failed. Fake timers remove the race — the hold is long, and expiry happens
+// because the test advances the clock, not because the machine was slow.
 it("expires the hold if it lapses while the payment session is opening", async () => {
-  const holdEnds = new Date(Date.now() + 400).toISOString();
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async (input: RequestInfo | URL) =>
-      String(input).endsWith("/checkout")
-        ? new Promise<Response>(() => {})
-        : new Response(
-            JSON.stringify({ ...receipt, hold_expires_at: holdEnds }),
-            { status: 201 },
-          ),
-    ),
-  );
-  render(<CheckoutForm eventId={eventId} ticketTypeId={ticketTypeId} />);
-  completeForm();
+  // `shouldAdvanceTime` keeps Testing Library's polling running; without it
+  // the `findBy*` helpers wait on timers that never move.
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  try {
+    const holdEnds = new Date(Date.now() + 60_000).toISOString();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) =>
+        String(input).endsWith("/checkout")
+          ? new Promise<Response>(() => {})
+          : new Response(
+              JSON.stringify({ ...receipt, hold_expires_at: holdEnds }),
+              { status: 201 },
+            ),
+      ),
+    );
+    render(<CheckoutForm eventId={eventId} ticketTypeId={ticketTypeId} />);
+    completeForm();
 
-  expect(
-    await screen.findByRole("button", { name: "Opening secure payment…" }),
-  ).toBeDisabled();
-  expect(
-    await screen.findByText("Your ticket hold has ended", undefined, {
-      timeout: 3000,
-    }),
-  ).toBeInTheDocument();
-  expect(
-    screen.queryByRole("button", { name: /secure payment/i }),
-  ).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Opening secure payment…" }),
+    ).toBeDisabled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_001);
+    });
+
+    expect(screen.getByText("Your ticket hold has ended")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /secure payment/i }),
+    ).not.toBeInTheDocument();
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it("redirects the window itself when no navigate override is supplied", async () => {

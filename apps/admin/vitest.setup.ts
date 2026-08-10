@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom/vitest";
+import { configure } from "@testing-library/react";
 import { vi } from "vitest";
 
 Object.defineProperty(window, "matchMedia", {
@@ -63,3 +64,10 @@ vi.mock("next/navigation", () => ({
   }),
   useSearchParams: () => new URLSearchParams(),
 }));
+
+// Testing Library declares failure after 1s of waiting by default. That is
+// plenty on an idle machine and not enough on a loaded one: every intermittent
+// failure in this suite has been a `findBy*` giving up on a render that was
+// merely slow, never one that was wrong. Waiting longer costs nothing when the
+// element does appear — the timeout is only reached on a genuine failure.
+configure({ asyncUtilTimeout: 5000 });

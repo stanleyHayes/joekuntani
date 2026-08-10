@@ -1,9 +1,4 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { AdminShell } from "./admin-shell";
@@ -147,5 +142,99 @@ describe("AdminShell", () => {
       "aria-expanded",
       "true",
     );
+  });
+
+  // The drawer is modal on a phone: the page behind it must not scroll away
+  // under the operator's thumb, and the scrollbar's width must be replaced so
+  // the layout does not jump when it is locked.
+  it("locks the page behind the mobile drawer and restores it", () => {
+    render(
+      <AdminShell currentPath="/" title="Overview">
+        <p>Overview body</p>
+      </AdminShell>,
+    );
+    expect(document.body.style.overflow).toBe("");
+
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+    expect(document.body.style.overflow).toBe("hidden");
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(document.body.style.overflow).toBe("");
+  });
+
+  // Tab must not walk out of a modal drawer into the page behind it, and
+  // closing has to hand focus back to the control that opened it.
+  it("traps Tab inside the drawer and returns focus on close", () => {
+    render(
+      <AdminShell currentPath="/" title="Overview">
+        <p>Overview body</p>
+      </AdminShell>,
+    );
+    const menu = screen.getByRole("button", { name: "Menu" });
+    fireEvent.click(menu);
+
+    const drawer = document.querySelector("[data-mobile-nav] [tabindex]");
+    const focusable = Array.from(
+      (drawer ?? document).querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+    const last = focusable[focusable.length - 1];
+    last?.focus();
+    fireEvent.keyDown(window, { key: "Tab" });
+    expect(document.activeElement).not.toBe(last);
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(document.activeElement).toBe(menu);
+  });
+
+  it("navigating from the drawer closes it", () => {
+    const { container } = render(
+      <AdminShell currentPath="/" title="Overview">
+        <p>Overview body</p>
+      </AdminShell>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+    const frame = container.querySelector("[data-admin-frame]");
+    expect(frame).toHaveAttribute("data-mobile-nav", "open");
+
+    fireEvent.click(screen.getAllByRole("link", { name: "Media" })[0]);
+    expect(frame).toHaveAttribute("data-mobile-nav", "closed");
+  });
+
+  // The longest matching route wins, so /content/pages does not light up both
+  // Content and the section root.
+  it("marks only the deepest matching nav item as current", () => {
+    render(
+      <AdminShell currentPath="/account/security" title="Security">
+        <p>Body</p>
+      </AdminShell>,
+    );
+    const current = screen
+      .getAllByRole("link")
+      .filter((link) => link.getAttribute("aria-current") === "page");
+    expect(current).toHaveLength(1);
+    expect(current[0]).toHaveAttribute("href", "/account/security");
+  });
+
+  // The tour auto-starts once and then never again, so replaying it from the
+  // account menu is the only way back to it.
+  it("replays the guided tour from the account menu", async () => {
+    localStorage.setItem("jk.admin.tour.done", "1");
+    render(
+      <AdminShell currentPath="/" title="Overview">
+        <p>Body</p>
+      </AdminShell>,
+    );
+    expect(screen.queryByRole("dialog", { name: "Admin tour" })).toBeNull();
+
+    fireEvent.click(
+      document.querySelector('[data-tour="user-menu"]') as HTMLElement,
+    );
+    fireEvent.click(screen.getByRole("menuitem", { name: /Replay tour/ }));
+
+    expect(
+      await screen.findByRole("dialog", { name: "Admin tour" }),
+    ).toBeVisible();
   });
 });
