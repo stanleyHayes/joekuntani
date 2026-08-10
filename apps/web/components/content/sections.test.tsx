@@ -40,6 +40,17 @@ it("starts block headings at h2", () => {
   expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
 });
 
+it("renders section tags as block-level topics", () => {
+  render(
+    <ContentSections
+      sections={[block({ heading: "A unique style", tags: ["comedy", "guitar"] })]}
+    />,
+  );
+  const topics = screen.getByRole("list", { name: "A unique style topics" });
+  expect(topics).toHaveTextContent("comedy");
+  expect(topics).toHaveTextContent("guitar");
+});
+
 it("renders a quote as a blockquote rather than prose", () => {
   const { container } = render(
     <ContentSections
@@ -48,6 +59,9 @@ it("renders a quote as a blockquote rather than prose", () => {
   );
   expect(container.querySelector("blockquote")).toHaveTextContent(
     "he plays it.",
+  );
+  expect(container.querySelector("blockquote")).toHaveClass(
+    "scroll-reveal-target",
   );
 });
 

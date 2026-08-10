@@ -42,6 +42,7 @@ type Section struct {
 	Type     SectionType `json:"type" bson:"type"`
 	Heading  string      `json:"heading,omitempty" bson:"heading,omitempty"`
 	Body     string      `json:"body,omitempty" bson:"body,omitempty"`
+	Tags     []string    `json:"tags,omitempty" bson:"tags,omitempty"`
 	AssetIDs []string    `json:"asset_ids" bson:"asset_ids"`
 	Items    []Result    `json:"items" bson:"items"`
 	// Flip mirrors a prose_image block so consecutive ones alternate sides
@@ -55,6 +56,7 @@ const (
 	maxSectionBody    = 20000
 	maxSectionAssets  = 12
 	maxSectionItems   = 12
+	maxSectionTags    = 12
 )
 
 // NormalizeSections trims each block and drops the empty ones.
@@ -68,6 +70,7 @@ func NormalizeSections(sections []Section) []Section {
 	for _, section := range sections {
 		section.Heading = strings.TrimSpace(section.Heading)
 		section.Body = strings.TrimSpace(section.Body)
+		section.Tags = cleanStrings(section.Tags)
 		section.AssetIDs = cleanStrings(section.AssetIDs)
 		section.Items = cleanItems(section.Items)
 		if section.Type == "" {
@@ -96,8 +99,13 @@ func ValidateSections(sections []Section) error {
 			!within(section.Body, maxSectionBody, false) {
 			return ErrInvalid
 		}
-		if len(section.AssetIDs) > maxSectionAssets || len(section.Items) > maxSectionItems {
+		if len(section.AssetIDs) > maxSectionAssets || len(section.Items) > maxSectionItems || len(section.Tags) > maxSectionTags {
 			return ErrInvalid
+		}
+		for _, tag := range section.Tags {
+			if !within(tag, 60, true) {
+				return ErrInvalid
+			}
 		}
 		for _, id := range section.AssetIDs {
 			if !within(id, 64, true) {

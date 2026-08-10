@@ -45,9 +45,21 @@ it("inserts a placeholder when nothing is selected", () => {
 
 it("offers the formatting an editor actually reaches for", () => {
   setup();
-  for (const name of ["Bold", "Italic", "Heading", "Link", "Bulleted list", "Block quote"]) {
+  for (const name of [
+    "Bold",
+    "Italic",
+    "Link",
+    "Bulleted list",
+    "Numbered list",
+    "Block quote",
+    "Inline code",
+    "Horizontal divider",
+  ]) {
     expect(screen.getByRole("button", { name })).toBeInTheDocument();
   }
+  expect(
+    screen.getByRole("combobox", { name: "Text style" }),
+  ).toBeInTheDocument();
 });
 
 it("says so when there is nothing to preview", () => {
@@ -65,4 +77,14 @@ it("opens on the writing view", () => {
     "true",
   );
   expect(screen.getByRole("textbox")).toHaveValue("body");
+});
+
+it("applies a heading from the text-style control", () => {
+  const { onChange } = setup("Section title");
+  const area = screen.getByRole("textbox") as HTMLTextAreaElement;
+  area.setSelectionRange(0, area.value.length);
+  fireEvent.change(screen.getByRole("combobox", { name: "Text style" }), {
+    target: { value: "2" },
+  });
+  expect(onChange).toHaveBeenCalledWith("## Section title");
 });

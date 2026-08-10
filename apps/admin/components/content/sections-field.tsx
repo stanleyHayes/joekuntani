@@ -6,6 +6,7 @@ import type {
   SectionType,
 } from "@joe-kuntani/shared/types/content";
 import { AssetUploadList } from "../media/asset-picker";
+import { MarkdownField } from "./markdown-field";
 import styles from "./sections-field.module.css";
 
 const TYPES: { value: SectionType; label: string; hint: string }[] = [
@@ -36,6 +37,7 @@ const blankSection = (): ContentSection => ({
   type: "prose",
   heading: "",
   body: "",
+  tags: [],
   asset_ids: [],
   items: [],
   flip: false,
@@ -94,6 +96,9 @@ export function SectionsField({
                     onClick={() => setOpen(expanded ? null : index)}
                   >
                     <span className={styles.badge}>{type?.label}</span>
+                    <span className={styles.order} aria-hidden="true">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
                     <span className={styles.summary}>{summary}</span>
                   </button>
                   <div className={styles.tools}>
@@ -163,20 +168,32 @@ export function SectionsField({
                     ) : null}
 
                     {section.type !== "stats" ? (
-                      <label>
-                        <span>
-                          {section.type === "quote" ? "Quote" : "Body"}
-                        </span>
-                        <textarea
-                          value={section.body ?? ""}
-                          rows={section.type === "quote" ? 4 : 10}
-                          onChange={(event) =>
-                            update(index, { body: event.target.value })
-                          }
-                        />
-                        <small>Markdown is supported.</small>
-                      </label>
+                      <MarkdownField
+                        label={section.type === "quote" ? "Quote" : "Description"}
+                        // Every Markdown field offers the assistant. These
+                        // blocks carry the bulk of a page's prose now, so
+                        // leaving them out meant the writing help disappeared
+                        // exactly where most of the writing happens.
+                        assist={section.type === "quote" ? "summary" : "body"}
+                        hint="Markdown is supported. Preview this section before saving the page."
+                        rows={section.type === "quote" ? 4 : 10}
+                        value={section.body ?? ""}
+                        onChange={(body) => update(index, { body })}
+                      />
                     ) : null}
+
+                    <label>
+                      <span>Section tags</span>
+                      <input
+                        aria-label="Section tags"
+                        value={(section.tags ?? []).join(", ")}
+                        placeholder="comedy, guitar, Ghana"
+                        onChange={(event) =>
+                          update(index, { tags: splitTags(event.target.value) })
+                        }
+                      />
+                      <small>Comma separated. These describe this section only.</small>
+                    </label>
 
                     {section.type === "prose_image" ||
                     section.type === "gallery" ? (
@@ -232,6 +249,17 @@ export function SectionsField({
       </button>
     </fieldset>
   );
+}
+
+function splitTags(value: string) {
+  return Array.from(
+    new Set(
+      value
+        .split(",")
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  ).slice(0, 12);
 }
 
 function StatRows({

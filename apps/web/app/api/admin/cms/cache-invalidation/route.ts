@@ -1,5 +1,20 @@
+import { timingSafeEqual } from "node:crypto";
 import { revalidatePath, revalidateTag } from "next/cache";
 
+/**
+ * Invalidates this app's caches when the console publishes something.
+ *
+ * `revalidatePath` and `revalidateTag` only reach the caches of the app they
+ * run in, so this has to live in the public site — it cannot move to the
+ * console alongside the rest of the admin. But the console is on its own
+ * origin now, so the operator's session cookie never arrives here and the
+ * origin and CSRF pair that used to guard this route cannot apply.
+ *
+ * The console authenticates the operator on its own side, where the session
+ * lives, and calls this server-to-server with a shared secret — the pattern
+ * Next documents for external callers that need immediate expiry. The secret
+ * never reaches a browser.
+ */
 const kinds = new Set(["page", "portfolio", "video", "press", "testimonial"]);
 const actions = new Set(["publish", "schedule", "unpublish"]);
 const uuid =
@@ -16,16 +31,10 @@ type Input = {
   tags: string[];
 };
 
+export const SECRET_HEADER = "x-cache-invalidation-secret";
+
 export async function POST(request: Request) {
-  if (!sameOrigin(request)) return problem(403, "Request origin rejected");
-  const csrf = request.headers.get("x-csrf-token") ?? "";
-  if (
-    !csrf ||
-    csrf !== cookie(request.headers.get("cookie") ?? "", "jk_admin_csrf")
-  )
-    return problem(403, "CSRF validation failed");
-  const actor = await administrator(request.headers.get("cookie") ?? "");
-  if (!actor) return problem(403, "Access denied");
+  if (!authorized(request)) return problem(403, "Access denied");
   let input: Input;
   try {
     input = (await request.json()) as Input;
@@ -42,22 +51,24 @@ export async function POST(request: Request) {
   }
 }
 
-async function administrator(sessionCookie: string) {
-  const apiBase = process.env.API_BASE_URL;
-  if (!apiBase) return false;
-  try {
-    const response = await fetch(`${apiBase}/api/admin/auth/me`, {
-      headers: { cookie: sessionCookie },
-      cache: "no-store",
-      signal: AbortSignal.timeout(2000),
-    });
-    if (!response.ok) return false;
-    return (
-      ((await response.json()) as { role?: string }).role === "administrator"
-    );
-  } catch {
-    return false;
-  }
+/**
+ * Fails closed. An unset or short secret authorises nothing, so a deployment
+ * that forgets the variable stops invalidating caches rather than accepting
+ * anyone who finds the URL.
+ */
+function authorized(request: Request) {
+  const expected = process.env.CACHE_INVALIDATION_SECRET ?? "";
+  if (expected.length < 32) return false;
+  return matches(request.headers.get(SECRET_HEADER) ?? "", expected);
+}
+
+function matches(presented: string, expected: string) {
+  const a = Buffer.from(presented);
+  const b = Buffer.from(expected);
+  // timingSafeEqual throws on a length mismatch, and comparing lengths first
+  // leaks only the length — which the caller chose anyway.
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
 }
 
 function valid(input: Input) {
@@ -123,40 +134,7 @@ function exact(actual: unknown, expected: string[]) {
   );
 }
 
-function sameOrigin(request: Request) {
-  try {
-    const configured = new URL(process.env.PUBLIC_WEB_URL ?? "");
-    if (
-      (configured.protocol !== "http:" && configured.protocol !== "https:") ||
-      configured.username ||
-      configured.password ||
-      configured.pathname !== "/" ||
-      configured.search ||
-      configured.hash ||
-      (process.env.NODE_ENV === "production" &&
-        configured.protocol !== "https:")
-    )
-      return false;
-    return request.headers.get("origin") === configured.origin;
-  } catch {
-    return false;
-  }
-}
 
-function cookie(header: string, name: string) {
-  const prefix = `${name}=`;
-  const value =
-    header
-      .split(";")
-      .map((part) => part.trim())
-      .find((part) => part.startsWith(prefix))
-      ?.slice(prefix.length) ?? "";
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return "";
-  }
-}
 
 function problem(status: number, title: string) {
   return Response.json(

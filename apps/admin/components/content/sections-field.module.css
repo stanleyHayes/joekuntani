@@ -80,6 +80,14 @@
   text-transform: uppercase;
 }
 
+.order {
+  flex: none;
+  color: color-mix(in srgb, var(--ink) 42%, transparent);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .summary {
   overflow: hidden;
   font-size: 0.85rem;

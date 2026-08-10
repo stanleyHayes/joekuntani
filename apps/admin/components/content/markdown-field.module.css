@@ -6,7 +6,6 @@
 
 .head {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
@@ -21,107 +20,168 @@
   margin: 0;
   color: color-mix(in srgb, var(--ink) 58%, transparent);
   font-size: 0.78rem;
+  line-height: 1.45;
 }
 
-.tabs {
-  display: inline-flex;
-  padding: 0.15rem;
-  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
-  border-radius: 999px;
+/* One composed surface, like Jira's editor: formatting, mode switching and
+   content belong to the same control instead of floating as separate rows. */
+.editor {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 0.65rem;
+  background: var(--surface);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
-.tab {
-  min-height: 1.9rem;
-  padding: 0.2rem 0.8rem;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 0.76rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.tab[aria-selected="true"] {
-  background: var(--accent);
-  color: var(--accent-contrast);
-}
-
-.tab:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
+.editor:focus-within {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
 }
 
 .toolbar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.38rem 0.45rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 13%, transparent);
+  background: color-mix(in srgb, var(--surface) 94%, var(--ink) 6%);
 }
 
-.tool {
-  min-width: 2.1rem;
-  min-height: 2.1rem;
-  padding: 0.25rem 0.55rem;
-  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
-  border-radius: 0.45rem;
-  background: color-mix(in srgb, var(--surface) 92%, var(--ink) 8%);
+.formatting,
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.formatting[aria-hidden="true"] {
+  opacity: 0.48;
+}
+
+.styleSelect select {
+  width: auto;
+  min-height: 2rem;
+  padding: 0.25rem 1.85rem 0.25rem 0.55rem;
+  border: 0;
+  border-radius: 0.35rem;
+  background-color: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.76rem;
+  font-weight: 650;
   cursor: pointer;
 }
 
-.tool[data-key="bold"] {
-  font-weight: 850;
+.styleSelect select:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
-.tool[data-key="italic"] {
-  font-style: italic;
+.divider {
+  width: 1px;
+  height: 1.35rem;
+  margin: 0 0.25rem;
+  background: color-mix(in srgb, var(--ink) 16%, transparent);
 }
 
-.tool:hover {
-  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+.tool,
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.3rem;
+  border: 0;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--ink) 76%, transparent);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    color 140ms ease,
+    background 140ms ease,
+    transform 100ms ease;
 }
 
-.tool:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
+.tool:hover:not(:disabled),
+.tab:hover {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  color: var(--ink);
 }
 
-.area {
-  width: 100%;
-  min-height: 18rem;
-  padding: 0.85rem 0.95rem;
-  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
-  border-radius: 0.6rem;
-  background: var(--surface);
-  color: inherit;
-  /* Monospace while writing: Markdown is source, and alignment of list markers
-     and table pipes is only legible in a fixed pitch. */
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 0.88rem;
-  line-height: 1.65;
-  resize: vertical;
+.tool:active:not(:disabled),
+.tab:active {
+  transform: translateY(1px);
 }
 
-.area:focus-visible {
+.tool:disabled {
+  cursor: default;
+}
+
+.tool:focus-visible,
+.tab:focus-visible,
+.styleSelect select:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
 
-/* Matches the reading measure of the published page so line lengths in the
-   preview are representative rather than merely correct. */
+.tabs {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(5.35rem, 1fr));
+  gap: 0.3rem;
+  padding: 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--surface) 88%, var(--ink) 12%);
+}
+
+.toolbar .tab {
+  gap: 0.3rem;
+  width: 100%;
+  min-height: 2.15rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.48rem;
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+
+.toolbar .tab[aria-selected="true"] {
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  color: var(--ink);
+}
+
+.area {
+  display: block;
+  width: 100%;
+  min-height: 20rem;
+  padding: 1rem 1.05rem 1.2rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+  color: inherit;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.area:focus-visible {
+  outline: 0;
+}
+
 .preview {
-  min-height: 18rem;
-  max-width: 46rem;
-  padding: 1.1rem 1.25rem;
-  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
-  border-radius: 0.6rem;
-  background: color-mix(in srgb, var(--surface) 96%, var(--ink) 4%);
-  color: color-mix(in srgb, var(--ink) 82%, transparent);
+  min-height: 20rem;
+  max-width: none;
+  padding: 1.1rem 1.25rem 1.35rem;
+  background: var(--surface);
+  color: color-mix(in srgb, var(--ink) 84%, transparent);
   font-size: 0.95rem;
   line-height: 1.7;
 }
@@ -130,4 +190,41 @@
   margin: 0;
   color: color-mix(in srgb, var(--ink) 50%, transparent);
   font-style: italic;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 48rem) {
+  .toolbar {
+    align-items: flex-start;
+    flex-direction: column-reverse;
+  }
+
+  .formatting {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+  }
+
+  .tabs {
+    align-self: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editor,
+  .tool,
+  .tab {
+    transition: none;
+  }
 }

@@ -513,9 +513,12 @@ it("prepares deterministic cache invalidation after publication and reports queu
       }),
     ),
   );
-  expect(await screen.findByRole("alert")).toHaveTextContent(
-    "cache refresh request could not be queued",
-  );
+  const alert = await screen.findByRole("alert");
+  // Says what is actually wrong with the site, and carries the reason through:
+  // an unconfigured deployment needs an administrator, a rejected payload needs
+  // a retry, and a generic message cannot tell them apart.
+  expect(alert).toHaveTextContent("still serving the old version");
+  expect(alert).toHaveTextContent("queue unavailable");
 });
 
 it("rewrites body copy through the assistant without renaming the field", async () => {
@@ -546,10 +549,13 @@ it("rewrites body copy through the assistant without renaming the field", async 
 
   const body = await screen.findByLabelText("Body");
   fireEvent.change(body, { target: { value: "some rough body copy" } });
+  // Scoped by the assist bar's own group rather than the textarea's parent:
+  // the Markdown editor nests the textarea a level deeper than a plain field,
+  // and every assisted field on the page offers an identical Expand button.
   fireEvent.click(
-    within(body.closest("div") as HTMLElement).getByRole("button", {
-      name: /Expand/,
-    }),
+    within(
+      screen.getByRole("group", { name: "AI writing help for Body" }),
+    ).getByRole("button", { name: /Expand/ }),
   );
   fireEvent.click(await screen.findByRole("button", { name: /Use this/ }));
 

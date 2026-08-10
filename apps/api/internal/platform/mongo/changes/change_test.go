@@ -48,6 +48,37 @@ func TestBootstrapSpecsAreValidAndComplete(t *testing.T) {
 	assertIndex(t, found["issued_tickets"], "uq_ticket_qr_hash")
 }
 
+func TestAboutBiographyIsFullyDistributedAcrossSections(t *testing.T) {
+	sections := aboutPageSections()
+	if len(sections) != 12 {
+		t.Fatalf("About section count = %d, want 12", len(sections))
+	}
+	wantHeadings := map[string]bool{
+		"The guitar comedian": false, "The man behind the guitar": false,
+		"A unique comedy style": false, "Music and guitar": false,
+		"Beyond comedy": false, "His connection with France": false,
+		"Bridging Ghana and the world": false, "Digital content creator": false,
+		"A creative entrepreneur": false, "His vision": false,
+		"Joe Kuntani — Numero Uno": false,
+	}
+	for _, raw := range sections {
+		section := raw.(bson.M)
+		if heading, ok := section["heading"].(string); ok {
+			if _, expected := wantHeadings[heading]; expected {
+				wantHeadings[heading] = true
+			}
+		}
+		if section["body"] == "" {
+			t.Fatal("About migration contains an empty section body")
+		}
+	}
+	for heading, found := range wantHeadings {
+		if !found {
+			t.Errorf("About section %q is missing", heading)
+		}
+	}
+}
+
 func TestExternalAndInternalIdentifiersAreConstrained(t *testing.T) {
 	t.Parallel()
 

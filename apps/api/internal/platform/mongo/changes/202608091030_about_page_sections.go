@@ -22,7 +22,7 @@ const aboutFullPortraitID = "209a53d5-a8bf-4bcf-bf84-cf57572ceafa"
 func aboutPageSectionsChange() Change {
 	return Change{
 		Name:     aboutPageSectionsChangeName,
-		Checksum: Checksum(aboutPageSectionsChangeName + "|v3|seo-and-media-names|" + productionAboutPageID),
+		Checksum: Checksum(aboutPageSectionsChangeName + "|v5|complete-sectioned-biography|" + productionAboutPageID),
 		Apply: func(ctx context.Context, database *mongo.Database) error {
 			return migrateProductionAboutPage(ctx, database)
 		},
@@ -167,72 +167,140 @@ func aboutPageSections() bson.A {
 	emptyAssets := bson.A{}
 	return bson.A{
 		bson.M{
+			"type": "prose", "heading": "The guitar comedian",
+			"tags": bson.A{"biography", "Ghana", "guitar comedian"},
+			"body": `Joe Kuntani, born Robert Sarpong, is a Ghanaian comedian, musician, actor, filmmaker, creative director and entertainer whose unique ability to combine live guitar music with comedy has created a distinctive identity in Ghana's entertainment industry.
+
+Known for his guitar, sharp sense of humour, storytelling and ability to turn ordinary situations into memorable comedy, Joe Kuntani has developed a style that is difficult to imitate. He is widely recognized for presenting comedy through music, using the guitar not only as a musical instrument but also as a powerful tool for storytelling, satire, social commentary and entertainment.`,
+			"asset_ids": emptyAssets, "items": emptyItems, "flip": false,
+		},
+		bson.M{
 			"type": "prose", "heading": "The man behind the guitar",
-			"body": `Joe Kuntani, born Robert Sarpong, is a Ghanaian comedian, musician, actor, filmmaker, creative director and entertainer. His ability to combine live guitar music with comedy has created a distinctive identity in Ghana's entertainment industry.
+			"tags": bson.A{"Robert Sarpong", "Kumasi", "creative career"},
+			"body": `Joe Kuntani's real name is Robert Sarpong, a creative from Kumasi, Ghana. His artistic journey brings together several disciplines: comedy, music, acting, filmmaking, motion graphics and digital content creation.
 
-Known for his guitar, sharp sense of humour and storytelling, Joe turns ordinary situations into memorable comedy. He uses the guitar not only as a musical instrument, but as a tool for satire, social commentary and entertainment.
+His versatility has allowed him to move beyond conventional stand-up comedy. Rather than simply standing on stage and telling jokes, Joe Kuntani often lets the guitar become part of the joke.
 
-His artistic journey brings together comedy, music, acting, filmmaking, motion graphics and digital content creation. Rather than simply standing on stage and telling jokes, he lets the guitar become part of the joke.`,
+This combination has helped establish his identity as a guitar comedian and a performer who can entertain audiences through both music and humour.
+
+Public creative-industry profiles identify Robert Sarpong professionally as Joe Kuntani and describe him as a music comedian, with Ghana and France listed among his countries of activity.`,
 			"asset_ids": emptyAssets, "items": emptyItems, "flip": false,
 		},
 		bson.M{
 			"type": "prose", "heading": "A unique comedy style",
-			"body": `What makes Joe different is his ability to transform everyday Ghanaian experiences into comedy. Relationships, marriage, family life, social expectations, money, work, friendship, culture and ordinary human behaviour can all become material for his performances.
+			"tags": bson.A{"comedy", "storytelling", "Ghanaian culture"},
+			"body": `What makes Joe Kuntani different is his ability to transform everyday Ghanaian experiences into comedy.
 
-His guitar becomes a storytelling partner: a simple chord progression can introduce a joke, a familiar Ghanaian melody can become a punchline, and a serious-looking song can suddenly turn into comedy.`,
+Relationships, marriage, family life, social expectations, money, work, friendship, culture and ordinary human behaviour can all become material for his performances.
+
+His guitar becomes a storytelling partner.
+
+- A simple chord progression can introduce a joke.
+- A familiar Ghanaian melody can become a punchline.
+- A serious-looking song can suddenly turn into comedy.`,
 			"asset_ids": emptyAssets, "items": emptyItems, "flip": false,
 		},
 		bson.M{
-			"type":      "quote",
-			"body":      "He doesn't just tell comedy — he plays it.",
+			"type": "quote", "tags": bson.A{"performance", "guitar comedy"},
+			"body":      "This is one of the qualities that makes Joe Kuntani's performances memorable: **he doesn't just tell comedy — he plays it.**",
 			"asset_ids": emptyAssets, "items": emptyItems, "flip": false,
 		},
 		bson.M{
 			"type": "prose", "heading": "Music and guitar",
-			"body": `Joe's musical identity is strongly connected to the Ghanaian guitar tradition, particularly the spirit of highlife and palm-wine guitar music. He combines guitar playing, singing and comedy to create performances that connect with audiences in a uniquely Ghanaian way while remaining accessible internationally.
+			"tags": bson.A{"music", "highlife", "palm-wine guitar"},
+			"body": `Joe Kuntani's musical identity is strongly connected to the Ghanaian guitar tradition, particularly the spirit of highlife and palm-wine guitar music.
 
-His music is available on digital platforms under the name Joe Kuntani. His catalogue includes works such as “Ene Wo Ne”, “Don Jazzy”, “8888” and “Wa No Asem”.`,
+He combines guitar playing, singing and comedy to create performances that connect with audiences in a uniquely Ghanaian way while remaining accessible to international audiences.
+
+His musical work is also available through digital music platforms, where he is credited as Joe Kuntani. His catalogue includes works such as **“Ene Wo Ne”, “Don Jazzy”, “8888” and “Wa No Asem”.**`,
 			"asset_ids": emptyAssets, "items": emptyItems, "flip": false,
 		},
 		bson.M{
 			"type": "prose", "heading": "Beyond comedy",
-			"body": `Joe is not limited to performing comedy. He has also worked as an actor, motion graphic designer, film director and editor, reflecting his wider involvement in Ghana's creative and digital media industry.
+			"tags": bson.A{"film", "acting", "creative direction"},
+			"body": `Joe Kuntani is not limited to performing comedy.
 
-That combination of skills lets him understand entertainment from several perspectives — from performance and storytelling to visual production and digital content.`,
+He has also been identified professionally as a comedian, actor, motion graphic designer, film director and editor, demonstrating his wider involvement in Ghana's creative and digital media industry.
+
+This combination of skills gives him the ability to understand entertainment from several perspectives — from performance and storytelling to visual production and digital content.`,
 			"asset_ids": emptyAssets, "items": emptyItems, "flip": false,
 		},
 		bson.M{
-			"type": "prose", "heading": "Ghana, France and the world",
-			"body": `One significant part of Joe's creative journey is his connection with France and the Francophone cultural space. His professional creative profile lists France alongside Ghana among his countries of activity.
+			"type": "prose", "heading": "His connection with France",
+			"tags": bson.A{"France", "Alliance Française Kumasi", "cultural exchange"},
+			"body": `One of the significant aspects of Joe Kuntani's creative journey is his connection with France and the Francophone cultural space.
 
-That connection is reflected in his association with Alliance Française Kumasi, an institution dedicated to French language, Francophone culture and cultural exchange. In 2024, he was announced as a comedian performing at Fête de la Musique, a celebration of live music and cultural exchange in Kumasi.
+He has travelled to France and has developed an artistic relationship with the French cultural environment. His professional creative profile lists France alongside Ghana as countries of activity, demonstrating an international dimension to his work.
 
-Joe takes something deeply Ghanaian — guitar, highlife, humour and everyday life — and carries it to a wider audience. His material can be specific in language and situation while still speaking to universal experiences of love, family, ambition, disappointment and human behaviour.`,
+His connection with French culture is also reflected in his association with Alliance Française Kumasi, an institution dedicated to promoting French language, Francophone culture and cultural exchange between Ghana and the French-speaking world.
+
+Joe Kuntani has participated in activities connected to Alliance Française Kumasi. In 2024, he was announced as a comedian performing at the Fête de la Musique, an event celebrating live music and cultural exchange in Kumasi.
+
+This connection has helped strengthen his exposure to audiences and creative communities beyond Ghana.`,
 			"asset_ids": emptyAssets, "items": emptyItems, "flip": false,
 		},
 		bson.M{
-			"type": "prose", "heading": "A digital creative entrepreneur",
-			"body": `Social media is an important part of Joe's artistic career. Through short-form comedy, music, skits and creative storytelling, he continues to find new ways to connect with audiences online.
+			"type": "prose", "heading": "Bridging Ghana and the world",
+			"tags": bson.A{"Ghana", "international audience", "culture"},
+			"body": `Joe Kuntani represents an interesting side of modern Ghanaian entertainment: an artist who can take something deeply Ghanaian — the guitar, highlife, humour and everyday Ghanaian life — and package it for a wider international audience.
 
-His work shows an understanding of modern entertainment: how to make people laugh, tell a story and leave an impression in a short space of time. His experience across performance, film production, editing, motion graphics and digital content gives him the foundation to move between stage, screen, music and visual concepts.`,
+His relationship with French-speaking cultural institutions and his experience in France demonstrate his interest in using entertainment as a bridge between cultures.
+
+His comedy can be Ghanaian in its language, situations and humour while still communicating universal experiences such as love, relationships, family, ambition, disappointment and human behaviour.`,
 			"asset_ids": emptyAssets, "items": emptyItems, "flip": false,
 		},
 		bson.M{
-			"type": "quote", "heading": "His vision",
-			"body":      "Comedy can be musical, creative, intelligent and culturally meaningful. In Joe's hands, the guitar becomes a character, a storyteller and sometimes the voice of an entire situation.",
+			"type": "prose", "heading": "Digital content creator",
+			"tags": bson.A{"digital content", "social media", "creative storytelling"},
+			"body": `Joe Kuntani has embraced social media as an important part of his artistic career.
+
+Through short-form comedy, music, skits and creative storytelling, he continues to explore new ways of connecting with audiences online.
+
+His content demonstrates an understanding of modern entertainment: the ability to create something quickly, make people laugh, tell a story and leave an impression within a short period of time.
+
+He has also developed creative concepts around guitar-based comedy, including using music to deliver messages and create humorous situations.`,
 			"asset_ids": emptyAssets, "items": emptyItems, "flip": false,
 		},
 		bson.M{
-			"type": "prose", "heading": "Numero Uno",
-			"body": `With his guitar, comedy and unmistakable personality, Joe continues to build a brand around originality. He refuses to be placed into one box:
+			"type": "prose", "heading": "A creative entrepreneur",
+			"tags": bson.A{"entrepreneurship", "film production", "multidisciplinary"},
+			"body": `Beyond being a performer, Joe Kuntani represents the growing generation of Ghanaian creative entrepreneurs who are building careers around multiple creative skills.
+
+His experience in comedy, music, acting, film production, editing, motion graphics and digital content gives him a broad creative foundation.
+
+This versatility means Joe Kuntani can perform on stage, create digital content, participate in film and television production, develop visual concepts and create music.`,
+			"asset_ids": emptyAssets, "items": emptyItems, "flip": false,
+		},
+		bson.M{
+			"type": "prose", "heading": "His vision",
+			"tags": bson.A{"vision", "Ghanaian humour", "international collaboration"},
+			"body": `Joe Kuntani's vision goes beyond simply making people laugh.
+
+He seeks to demonstrate that comedy can be musical, creative, intelligent and culturally meaningful.
+
+He wants the guitar to become more than an instrument for music. In his hands, it can become a character, a storyteller, a comedian and sometimes even the voice of an entire situation.
+
+His work celebrates Ghanaian humour while opening the door to international collaboration.`,
+			"asset_ids": emptyAssets, "items": emptyItems, "flip": false,
+		},
+		bson.M{
+			"type": "prose", "heading": "Joe Kuntani — Numero Uno",
+			"tags": bson.A{"Numero Uno", "brand", "the guitar comedian"},
+			"body": `With his guitar, comedy and unmistakable personality, Joe Kuntani continues to build a brand around originality.
+
+He is an entertainer who refuses to be placed into only one box.
 
 **Comedian. Guitarist. Musician. Actor. Filmmaker. Creative director. Digital creator. Storyteller.**
 
-Above all, he is building a name around something uniquely his own: **the guitar comedian**.
+But above all, Joe Kuntani is building a name around something uniquely his own:
+
+## The guitar comedian
 
 From Kumasi to the international creative space, Robert Sarpong — popularly known as Joe Kuntani — continues to prove that a guitar can do more than make music. It can make people laugh.
 
-*Ghana · France · Africa · The world*`,
+**And that is the sound of Joe Kuntani.**
+
+*Ghana | France | Africa | The World*`,
 			"asset_ids": emptyAssets, "items": emptyItems, "flip": false,
 		},
 	}

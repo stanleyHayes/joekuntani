@@ -9,7 +9,7 @@ import (
 // then changes their mind. Storing those would render as gaps on the page.
 func TestNormalizeSectionsDropsEmptyBlocks(t *testing.T) {
 	got := NormalizeSections([]Section{
-		{Type: SectionProse, Heading: "  Kept  ", Body: "  body  "},
+		{Type: SectionProse, Heading: "  Kept  ", Body: "  body  ", Tags: []string{" comedy ", "  "}},
 		{Type: SectionProse},
 		{Type: SectionProse, Heading: "   ", Body: "  "},
 		{Type: SectionStats, Items: []Result{{Label: " Shows ", Value: " 40 "}, {}}},
@@ -20,6 +20,9 @@ func TestNormalizeSectionsDropsEmptyBlocks(t *testing.T) {
 	}
 	if got[0].Heading != "Kept" || got[0].Body != "body" {
 		t.Fatalf("not trimmed: %#v", got[0])
+	}
+	if len(got[0].Tags) != 1 || got[0].Tags[0] != "comedy" {
+		t.Fatalf("tags not cleaned: %#v", got[0].Tags)
 	}
 	if len(got[1].Items) != 1 || got[1].Items[0].Label != "Shows" {
 		t.Fatalf("items not cleaned: %#v", got[1].Items)
@@ -59,6 +62,7 @@ func TestValidateSectionsEnforcesTheSchemaBounds(t *testing.T) {
 		"body too long":    {{Type: SectionProse, Body: strings.Repeat("x", maxSectionBody+1)}},
 		"too many assets":  {{Type: SectionGallery, AssetIDs: make([]string, maxSectionAssets+1)}},
 		"too many items":   {{Type: SectionStats, Items: make([]Result, maxSectionItems+1)}},
+		"too many tags":    {{Type: SectionProse, Heading: "x", Tags: make([]string, maxSectionTags+1)}},
 		"empty block":      {{Type: SectionProse}},
 	}
 	for name, sections := range cases {

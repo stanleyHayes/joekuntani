@@ -14,6 +14,7 @@ const section = (over: Partial<ContentSection> = {}): ContentSection => ({
   type: "prose",
   heading: "",
   body: "",
+  tags: [],
   asset_ids: [],
   items: [],
   flip: false,
@@ -116,7 +117,7 @@ it("edits the heading and body of the open block", () => {
     "Early years",
   );
 
-  fireEvent.change(screen.getByLabelText(/^Body/), {
+  fireEvent.change(screen.getByRole("textbox", { name: "Description" }), {
     target: { value: "He started in Kumasi." },
   });
   expect((onChange.mock.calls[1][0] as ContentSection[])[0].body).toBe(
@@ -132,13 +133,13 @@ it("shows only the controls the chosen type uses", () => {
   );
   // A quote is the statement itself, so it has no separate heading.
   expect(screen.queryByLabelText(/^Heading/)).toBeNull();
-  expect(screen.getByLabelText(/^Quote/)).toBeVisible();
+  expect(screen.getByRole("textbox", { name: "Quote" })).toBeVisible();
 
   rerender(
     <SectionsField value={[section({ type: "stats" })]} onChange={vi.fn()} />,
   );
   // Figures are label/value pairs, so there is no prose body to write.
-  expect(screen.queryByLabelText(/^Body/)).toBeNull();
+  expect(screen.queryByRole("textbox", { name: "Description" })).toBeNull();
 
   rerender(
     <SectionsField value={[section({ type: "gallery" })]} onChange={vi.fn()} />,
@@ -150,6 +151,32 @@ it("shows only the controls the chosen type uses", () => {
   );
   expect(screen.getByText("Image picker")).toBeVisible();
   expect(screen.getByLabelText("Put the image first")).toBeVisible();
+});
+
+// The blocks carry most of a page's prose, so the writing help has to be
+// there and not only on the legacy single body field.
+it.each([
+  ["prose", "Description"],
+  ["prose_image", "Description"],
+  ["gallery", "Description"],
+  ["quote", "Quote"],
+] as const)("offers the assistant on a %s block", (type, label) => {
+  render(<SectionsField value={[section({ type })]} onChange={vi.fn()} />);
+  expect(
+    screen.getByRole("group", { name: `AI writing help for ${label}` }),
+  ).toBeVisible();
+});
+
+it("stores normalized tags on the individual section", () => {
+  const onChange = vi.fn();
+  render(<SectionsField value={[section()]} onChange={onChange} />);
+  fireEvent.change(screen.getByLabelText("Section tags"), {
+    target: { value: "Comedy, Guitar, comedy" },
+  });
+  expect((onChange.mock.calls[0][0] as ContentSection[])[0].tags).toEqual([
+    "comedy",
+    "guitar",
+  ]);
 });
 
 it("changes a block's type without discarding what is written", () => {

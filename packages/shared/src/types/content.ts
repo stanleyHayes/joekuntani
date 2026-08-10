@@ -18,6 +18,7 @@ export interface ContentSection {
   type: SectionType;
   heading?: string;
   body?: string;
+  tags?: string[];
   asset_ids: string[];
   items: { label: string; value: string }[];
   flip?: boolean;

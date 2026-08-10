@@ -76,6 +76,7 @@ func exactContentSectionCollections() []schema.Collection {
 			"type":      bson.M{"bsonType": "string", "enum": bson.A{"prose", "prose_image", "quote", "stats", "gallery"}},
 			"heading":   bson.M{"bsonType": "string", "maxLength": 160},
 			"body":      bson.M{"bsonType": "string", "maxLength": 20000},
+			"tags":      bson.M{"bsonType": "array", "maxItems": 12, "items": bson.M{"bsonType": "string", "minLength": 1, "maxLength": 60}},
 			"asset_ids": bson.M{"bsonType": "array", "maxItems": 12, "items": schema.PublicIDField()},
 			"items":     bson.M{"bsonType": "array", "maxItems": 12, "items": sectionItem},
 			"flip":      schema.Field("bool"),

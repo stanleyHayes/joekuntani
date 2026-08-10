@@ -260,9 +260,12 @@ export function ContentEditor({
       try {
         await requestCacheInvalidation(invalidationFor(saved, action));
         setMessage((current) => `${current} Public cache refresh requested.`);
-      } catch {
+      } catch (cause) {
+        const reason = cause instanceof Error ? cause.message : "";
         setError(
-          "Content changed, but the cache refresh request could not be queued. Retry the publication action or contact an administrator.",
+          `Content changed, but the public site is still serving the old version. ${
+            reason || "The cache refresh request could not be queued."
+          } Retry the publication action or contact an administrator.`,
         );
       }
     }

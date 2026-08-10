@@ -22,6 +22,25 @@
   text-wrap: balance;
 }
 
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.tags li {
+  padding: 0.22rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: 0.35rem;
+  color: color-mix(in srgb, var(--ink) 58%, transparent);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 /* ---- prose ---- */
 
 .prose {
@@ -89,6 +108,14 @@
   letter-spacing: -0.035em;
   line-height: 1.12;
   text-wrap: balance;
+}
+
+.quoteBody > :first-child {
+  margin-top: 0;
+}
+
+.quoteBody > :last-child {
+  margin-bottom: 0;
 }
 
 /* ---- stats ---- */

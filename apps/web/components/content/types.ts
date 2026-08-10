@@ -24,6 +24,8 @@ export interface ContentSection {
   type: SectionType;
   heading?: string;
   body?: string;
+  /** Editorial topics attached to this individual block. */
+  tags?: string[];
   asset_ids: string[];
   items: { label: string; value: string }[];
   /** Mirrors a prose_image block so consecutive ones alternate sides. */

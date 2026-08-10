@@ -230,5 +230,13 @@ export async function refreshPublishedContent(
       tags: request.tags,
     }),
   });
-  if (!response.ok) throw new Error("Public content refresh failed");
+  if (response.ok) return;
+  // The reasons differ in what the operator should do — an unconfigured
+  // deployment needs an administrator, a rejected payload needs a retry — so
+  // the server's own wording is carried through rather than flattened.
+  const detail = await response
+    .json()
+    .then((body: { title?: string }) => body?.title ?? "")
+    .catch(() => "");
+  throw new Error(detail || "Public content refresh failed");
 }

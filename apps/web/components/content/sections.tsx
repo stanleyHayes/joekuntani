@@ -58,13 +58,21 @@ function Section({
   const Heading = heading ? (
     <h2 className={styles.heading}>{heading}</h2>
   ) : null;
+  const Tags = section.tags?.length ? (
+    <ul className={styles.tags} aria-label={`${heading || "Section"} topics`}>
+      {section.tags.map((tag) => (
+        <li key={tag}>{tag}</li>
+      ))}
+    </ul>
+  ) : null;
 
   switch (section.type) {
     case "quote":
       return (
-        <blockquote className={styles.quote}>
+        <blockquote className={`${styles.quote} scroll-reveal-target`}>
+          {Tags}
           {Heading}
-          <p className={styles.quoteBody}>{section.body}</p>
+          <Markdown className={styles.quoteBody}>{section.body}</Markdown>
         </blockquote>
       );
 
@@ -73,6 +81,7 @@ function Section({
       if (!items?.length) return null;
       return (
         <section className={styles.statsBlock}>
+          {Tags}
           {Heading}
           <dl className={styles.stats}>
             {items.map((item) => (
@@ -95,6 +104,7 @@ function Section({
       if (!images.length) return null;
       return (
         <section className={styles.galleryBlock}>
+          {Tags}
           {Heading}
           <ul
             className={styles.gallery}
@@ -121,6 +131,7 @@ function Section({
       if (!src) {
         return (
           <section className={styles.prose}>
+            {Tags}
             {Heading}
             <Markdown>{section.body}</Markdown>
           </section>
@@ -133,6 +144,7 @@ function Section({
           data-flip={section.flip || index % 2 === 1 ? "true" : "false"}
         >
           <div className={styles.proseImageCopy}>
+            {Tags}
             {Heading}
             <Markdown>{section.body}</Markdown>
           </div>
@@ -147,6 +159,7 @@ function Section({
     default:
       return (
         <section className={styles.prose}>
+          {Tags}
           {Heading}
           <Markdown>{section.body}</Markdown>
         </section>
