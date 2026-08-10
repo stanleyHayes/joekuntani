@@ -16,6 +16,7 @@ import {
   House,
   IdentificationCard,
   ImageSquare,
+  VideoCamera,
   LockKey,
   MagnifyingGlass,
   Megaphone,
@@ -53,6 +54,7 @@ export const ADMIN_NAV_GROUPS: readonly AdminNavGroup[] = [
     items: [
       { href: "/content", label: "Content", icon: Newspaper },
       { href: "/media", label: "Media", icon: ImageSquare },
+      { href: "/videos", label: "Videos", icon: VideoCamera },
       { href: "/merch", label: "Merchandise", icon: Storefront },
       { href: "/services", label: "Services", icon: CirclesThreePlus },
       { href: "/settings", label: "Site settings", icon: GearSix },

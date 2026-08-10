@@ -91,7 +91,7 @@ func (domain *Domain) Create(ctx context.Context, actor Actor, input Input) (Ite
 		return Item{}, ErrInvalid
 	}
 	now := domain.now().UTC()
-	item := Item{PublicID: publicID, Kind: input.Kind, Slug: input.Slug, Title: input.Title, Summary: input.Summary, Body: input.Body, Category: input.Category, Tags: input.Tags, Featured: input.Featured, GalleryAssetIDs: input.GalleryAssetIDs, Results: input.Results, Sections: input.Sections, ExternalURL: input.ExternalURL, EmbedURL: input.EmbedURL, Outlet: input.Outlet, PersonName: input.PersonName, PersonTitle: input.PersonTitle, Organization: input.Organization, SEO: input.SEO, Status: Draft, Revision: 1, CreatedAt: now, UpdatedAt: now}
+	item := Item{PublicID: publicID, Kind: input.Kind, Slug: input.Slug, Title: input.Title, Summary: input.Summary, Body: input.Body, Category: input.Category, Tags: input.Tags, Featured: input.Featured, GalleryAssetIDs: input.GalleryAssetIDs, Results: input.Results, Sections: input.Sections, ExternalURL: input.ExternalURL, EmbedURL: input.EmbedURL, VideoAssetID: input.VideoAssetID, Outlet: input.Outlet, PersonName: input.PersonName, PersonTitle: input.PersonTitle, Organization: input.Organization, SEO: input.SEO, Status: Draft, Revision: 1, CreatedAt: now, UpdatedAt: now}
 	if err := domain.store.Create(ctx, item, domain.audit(actor, "content.create", publicID)); err != nil {
 		return Item{}, err
 	}
@@ -122,7 +122,7 @@ func (domain *Domain) Update(ctx context.Context, actor Actor, id string, revisi
 	// Blocks are replaced wholesale on save: the editor sends the page's
 	// full running order, so merging would resurrect deleted blocks.
 	current.Sections = input.Sections
-	current.ExternalURL, current.EmbedURL, current.Outlet = input.ExternalURL, input.EmbedURL, input.Outlet
+	current.ExternalURL, current.EmbedURL, current.VideoAssetID, current.Outlet = input.ExternalURL, input.EmbedURL, input.VideoAssetID, input.Outlet
 	current.PersonName, current.PersonTitle, current.Organization = input.PersonName, input.PersonTitle, input.Organization
 	current.SEO = input.SEO
 	current.UpdatedAt = domain.now().UTC()

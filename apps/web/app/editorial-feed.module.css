@@ -291,11 +291,18 @@
   background: #080a0e;
 }
 .pressMedia img,
+.pressMedia button,
+.pressMedia iframe,
+.pressMedia > div,
 .pressMedia .mediaFallback {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 0;
+}
+.pressMedia > div {
+  aspect-ratio: auto;
 }
 .pressMedia .mediaFallback {
   font-size: 4rem;

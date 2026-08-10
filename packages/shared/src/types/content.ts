@@ -40,6 +40,7 @@ export interface ContentItem {
   sections?: ContentSection[];
   external_url?: string;
   embed_url?: string;
+  video_asset_id?: string;
   outlet?: string;
   person_name?: string;
   person_title?: string;

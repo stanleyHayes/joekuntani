@@ -67,6 +67,14 @@ type Options struct {
 	AdminContentDelete       http.Handler
 	AdminContentApproval     http.Handler
 	AdminContentPublish      http.Handler
+	AdminVideosList          http.Handler
+	AdminVideosCreateUpload  http.Handler
+	AdminVideosItem          http.Handler
+	AdminVideosPublish       http.Handler
+	AdminVideosSync          http.Handler
+	VideoWebhook             http.Handler
+	PublicVideosList         http.Handler
+	PublicVideoDetail        http.Handler
 	AdminEventsRead          http.Handler
 	AdminEventsWrite         http.Handler
 	AdminCRM                 http.Handler
@@ -218,6 +226,31 @@ func NewHandler(options ...Options) http.Handler {
 	}
 	if configuration.AdminContentPublish != nil {
 		router.Method(http.MethodPatch, "/api/admin/content/{kind}/{contentID}/publication", configuration.AdminContentPublish)
+	}
+	if configuration.AdminVideosList != nil {
+		router.Method(http.MethodGet, "/api/admin/videos", configuration.AdminVideosList)
+	}
+	if configuration.AdminVideosCreateUpload != nil {
+		router.Method(http.MethodPost, "/api/admin/videos/uploads", configuration.AdminVideosCreateUpload)
+	}
+	if configuration.AdminVideosItem != nil {
+		router.Method(http.MethodPatch, "/api/admin/videos/{videoID}", configuration.AdminVideosItem)
+		router.Method(http.MethodDelete, "/api/admin/videos/{videoID}", configuration.AdminVideosItem)
+	}
+	if configuration.AdminVideosPublish != nil {
+		router.Method(http.MethodPatch, "/api/admin/videos/{videoID}/publication", configuration.AdminVideosPublish)
+	}
+	if configuration.AdminVideosSync != nil {
+		router.Method(http.MethodPost, "/api/admin/videos/{videoID}/sync", configuration.AdminVideosSync)
+	}
+	if configuration.VideoWebhook != nil {
+		router.Method(http.MethodPost, "/api/webhooks/videos/bunny", configuration.VideoWebhook)
+	}
+	if configuration.PublicVideosList != nil {
+		router.Method(http.MethodGet, "/api/public/videos", configuration.PublicVideosList)
+	}
+	if configuration.PublicVideoDetail != nil {
+		router.Method(http.MethodGet, "/api/public/videos/{videoID}", configuration.PublicVideoDetail)
 	}
 	if configuration.AdminEventsRead != nil {
 		router.Method(http.MethodGet, "/api/admin/events", configuration.AdminEventsRead)

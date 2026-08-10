@@ -73,6 +73,23 @@ services:
         value: "10485760"
       - key: MEDIA_MAX_DIMENSION
         value: "6000"
+      # Bunny Stream is optional until VIDEO_PROVIDER=bunny. Secrets are set
+      # only in the Render dashboard; the browser receives short-lived TUS
+      # authorization, never the API or webhook key.
+      - key: VIDEO_PROVIDER
+        value: bunny
+      - key: BUNNY_STREAM_LIBRARY_ID
+        sync: false
+      - key: BUNNY_STREAM_API_KEY
+        sync: false
+      - key: BUNNY_STREAM_WEBHOOK_SECRET
+        sync: false
+      - key: BUNNY_STREAM_CDN_HOSTNAME
+        sync: false
+      - key: VIDEO_MAX_BYTES
+        value: "2147483648"
+      - key: VIDEO_UPLOAD_AUTH_TTL
+        value: 1h
       - key: PAYMENT_PROVIDER
         sync: false
       - key: PAYMENT_PROVIDER_SECRET

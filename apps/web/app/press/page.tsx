@@ -13,6 +13,9 @@ import {
 } from "../../lib/demo/content";
 import { contentCovers } from "../../lib/media";
 import { pageMetadata, unavailableMetadata } from "../../lib/seo";
+import { videosForContent } from "../../components/video/video-data";
+import { VideoPlayer } from "../../components/video/video-player";
+import { VideoStructuredData } from "../../components/video/video-structured-data";
 import styles from "../editorial-feed.module.css";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +40,7 @@ export default async function PressPage() {
   // Published records carry their own imagery; the demo map is only a
   // fallback for the fixture path.
   const covers = await contentCovers(items);
+  const streams = await videosForContent(items);
   return (
     <PublicShell
       settings={shellSettings}
@@ -44,6 +48,10 @@ export default async function PressPage() {
       footerCta={contentFooterCta}
     >
       {usingDemo ? <DemoBanner /> : null}
+      <VideoStructuredData
+        canonicalPath="/media/press"
+        videos={Object.values(streams)}
+      />
       <main id="main-content" className={styles.page}>
         <header
           className={`${styles.hero} ${styles.pressHero} shell-container`}
@@ -81,13 +89,16 @@ export default async function PressPage() {
                 const cover =
                   covers[item.id] ??
                   (usingDemo && item.slug ? demoCovers[item.slug] : undefined);
+                const stream = streams[item.id];
                 return (
                   <li className={styles.pressRow} key={item.id}>
                     <span className={styles.pressIndex}>
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     <div className={styles.pressMedia}>
-                      {cover ? (
+                      {stream ? (
+                        <VideoPlayer video={stream} />
+                      ) : cover ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={cover} alt="" width={1200} height={800} />
                       ) : (

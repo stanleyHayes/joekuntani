@@ -159,13 +159,13 @@ func TestRegistryHasStableChecksum(t *testing.T) {
 	t.Parallel()
 
 	registry := Registry()
-	if len(registry) != 35 {
-		t.Fatalf("Registry() length = %d, want 35", len(registry))
+	if len(registry) != 36 {
+		t.Fatalf("Registry() length = %d, want 36", len(registry))
 	}
 	// The newest change must stay last: Apply runs the registry in order, and a
 	// change that evolves a collection has to follow the one that created it.
 	last := registry[len(registry)-1]
-	if last.Name != aboutPageSectionsChangeName || len(last.Checksum) != 64 {
+	if last.Name != videoInfrastructureChangeName || len(last.Checksum) != 64 || !reflect.DeepEqual(last.Supersedes, []string{contentSectionsChangeName}) || !reflect.DeepEqual(last.EvolvesCollections, []string{"pages", "portfolio_items", "videos", "press_items", "testimonials", "video_assets", "video_webhooks"}) {
 		t.Fatalf("unexpected final registry entry: %#v", last)
 	}
 	if registry[0].Name != bootstrapChangeName || len(registry[0].Checksum) != 64 {

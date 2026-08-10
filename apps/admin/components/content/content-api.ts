@@ -80,6 +80,7 @@ export function blank(kind: ContentKind): ContentDraft {
     sections: [],
     external_url: "",
     embed_url: "",
+    video_asset_id: "",
     outlet: "",
     person_name: "",
     person_title: "",
@@ -109,6 +110,7 @@ export function draftOf(item: ContentItem): ContentDraft {
     sections: item.sections ?? [],
     external_url: item.external_url,
     embed_url: item.embed_url,
+    video_asset_id: item.video_asset_id,
     outlet: item.outlet,
     person_name: item.person_name,
     person_title: item.person_title,
@@ -152,8 +154,12 @@ export function completeness(draft: ContentDraft) {
     missing.push("body or page sections");
   if (draft.kind === "portfolio" && !draft.category?.trim())
     missing.push("category");
-  if (draft.kind === "video" && !draft.embed_url?.trim())
-    missing.push("embed URL");
+  if (
+    draft.kind === "video" &&
+    !draft.video_asset_id?.trim() &&
+    !draft.embed_url?.trim()
+  )
+    missing.push("Bunny video or legacy embed URL");
   if (draft.kind === "press" && !draft.outlet?.trim()) missing.push("outlet");
   if (draft.kind === "testimonial" && !draft.person_name?.trim())
     missing.push("person name");

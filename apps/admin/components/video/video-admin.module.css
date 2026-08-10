@@ -1,0 +1,284 @@
+.workspace {
+  display: grid;
+  gap: 1.5rem;
+  min-width: 0;
+  max-width: 76rem;
+}
+.header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.header h2,
+.header p,
+.uploadHeading h3,
+.uploadHeading p,
+.libraryHeading h3,
+.meta,
+.failure,
+.message,
+.empty {
+  margin: 0;
+}
+.header h2 {
+  font-size: clamp(1.65rem, 4vw, 2.5rem);
+  letter-spacing: -0.045em;
+}
+.header > div > p:last-child {
+  max-width: 44rem;
+  margin-top: 0.45rem;
+  color: var(--ink-soft);
+}
+.eyebrow {
+  color: var(--brand-j);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.summary {
+  flex: 0 0 auto;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 13%, transparent);
+  border-radius: var(--radius-control, 0.55rem);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+.message {
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.75rem;
+  background: color-mix(
+    in srgb,
+    var(--feedback-success, #4ade80) 12%,
+    transparent
+  );
+  color: var(--feedback-success, #4ade80);
+}
+.uploadPanel {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 13%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface) 94%, var(--ink) 6%);
+}
+.uploadHeading {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.uploadHeading p {
+  margin-top: 0.2rem;
+  color: var(--ink-soft);
+  font-size: 0.83rem;
+}
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  min-width: 0;
+}
+.formGrid label {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+.formGrid input,
+.formGrid textarea,
+.formGrid select,
+.cardBody input,
+.cardBody textarea,
+.cardBody select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+  border-radius: var(--radius-control, 0.55rem);
+  background: var(--surface-canvas);
+  color: inherit;
+  font: inherit;
+}
+.formGrid input,
+.formGrid select,
+.cardBody input,
+.cardBody select {
+  min-height: 2.65rem;
+  padding: 0.62rem 0.75rem;
+}
+.formGrid textarea,
+.cardBody textarea {
+  min-height: 6.5rem;
+  padding: 0.7rem 0.75rem;
+  resize: vertical;
+}
+.description,
+.file {
+  grid-column: 1 / -1;
+}
+.progress {
+  height: 0.45rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.progress span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: left;
+  background: var(--brand-j);
+  transition: transform 0.2s ease;
+}
+.primary,
+.libraryHeading button,
+.actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+  border-radius: var(--radius-control, 0.55rem);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.primary {
+  width: fit-content;
+  border-color: var(--brand-j);
+  background: var(--brand-j);
+  color: var(--brand-contrast, #171717);
+}
+.primary:disabled,
+.actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.libraryHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: 1rem;
+}
+.card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 13%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface) 96%, var(--ink) 4%);
+}
+.poster {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 8%, var(--surface));
+  color: var(--ink-soft);
+}
+.poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.poster > span {
+  position: absolute;
+  top: 0.7rem;
+  left: 0.7rem;
+  padding: 0.32rem 0.55rem;
+  border-radius: var(--radius-control, 0.55rem);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(10px);
+  font-size: 0.65rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.poster > span[data-state="ready"] {
+  color: var(--feedback-success, #4ade80);
+}
+.poster > span[data-state="failed"] {
+  color: var(--feedback-danger, #f87171);
+}
+.cardBody {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.95rem;
+}
+.cardBody > input:first-child {
+  font-size: 1rem;
+  font-weight: 800;
+}
+.inlineFields {
+  display: grid;
+  grid-template-columns: 1fr 0.75fr;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.meta {
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+}
+.failure {
+  color: var(--feedback-danger, #f87171);
+  font-size: 0.78rem;
+}
+.preview {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding-top: 0.2rem;
+}
+.actions .danger {
+  color: var(--feedback-danger, #f87171);
+}
+.empty {
+  padding: 2rem;
+  border: 1px dashed color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 1rem;
+  color: var(--ink-soft);
+  text-align: center;
+}
+@media (max-width: 42rem) {
+  .header {
+    align-items: start;
+    flex-direction: column;
+  }
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+  .description,
+  .file {
+    grid-column: auto;
+  }
+  .inlineFields {
+    grid-template-columns: 1fr;
+  }
+  .actions button {
+    flex: 1 1 45%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress span {
+    transition: none;
+  }
+}

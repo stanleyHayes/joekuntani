@@ -43,6 +43,7 @@ import (
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/ticketanalytics"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/ticketing"
 	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/ticketops"
+	"github.com/neurodyne-corp/joe-kuntani-platform/apps/api/internal/video"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -147,6 +148,36 @@ func main() {
 		}
 		return content.Actor{InternalID: principal.InternalUserID, PublicID: principal.UserID, CanEdit: principal.Role.Allows(auth.PermissionContentEdit), CanApprove: principal.Role == auth.RoleAdministrator}, true
 	})
+	videoConfig, err := video.LoadConfig(appEnvironment, os.Getenv)
+	if err != nil {
+		logger.Error("video configuration failed", "error", err)
+		os.Exit(1)
+	}
+	var videoProvider video.Provider = video.UnavailableProvider{}
+	if videoConfig.Enabled {
+		videoProvider, err = video.NewBunnyProvider(videoConfig, &http.Client{Timeout: 12 * time.Second})
+		if err != nil {
+			logger.Error("video provider initialization failed", "error", err)
+			os.Exit(1)
+		}
+		logger.Info("video provider configured", "provider", videoProvider.Name())
+	}
+	videoService, err := video.NewService(video.NewMongoRepository(mongoClient.Database()), videoProvider, videoConfig, nil)
+	if err != nil {
+		logger.Error("video service initialization failed", "error", err)
+		os.Exit(1)
+	}
+	videoHandler, err := video.NewHTTPHandler(videoService, func(request *http.Request) (video.Actor, error) {
+		principal, ok := auth.PrincipalFromContext(request.Context())
+		if !ok {
+			return video.Actor{}, auth.ErrUnauthorized
+		}
+		return video.Actor{ID: principal.InternalUserID, CanManage: principal.Role == auth.RoleAdministrator}, nil
+	}, videoConfig.WebhookSecret)
+	if err != nil {
+		logger.Error("video HTTP initialization failed", "error", err)
+		os.Exit(1)
+	}
 	eventsStore := events.NewMongoStore(mongoClient.Database())
 	eventsHandler := events.NewHandler(events.NewService(eventsStore, nil, nil), func(request *http.Request) (events.Actor, error) {
 		principal, ok := auth.PrincipalFromContext(request.Context())
@@ -560,6 +591,14 @@ func main() {
 			AdminContentDelete:       authHandler.Protect(auth.PermissionContentEdit, true, contentHandler.AdminDeleteHandler()),
 			AdminContentApproval:     authHandler.Protect(auth.PermissionContentEdit, true, contentHandler.AdminApprovalHandler()),
 			AdminContentPublish:      authHandler.Protect(auth.PermissionContentEdit, true, contentHandler.AdminPublicationHandler()),
+			AdminVideosList:          authHandler.Protect(auth.PermissionContentEdit, false, videoHandler.AdminList()),
+			AdminVideosCreateUpload:  authHandler.Protect(auth.PermissionContentEdit, true, videoHandler.AdminCreateUpload()),
+			AdminVideosItem:          authHandler.Protect(auth.PermissionContentEdit, true, videoHandler.AdminItem()),
+			AdminVideosPublish:       authHandler.Protect(auth.PermissionContentEdit, true, videoHandler.AdminPublish()),
+			AdminVideosSync:          authHandler.Protect(auth.PermissionContentEdit, true, videoHandler.AdminSync()),
+			VideoWebhook:             videoHandler.Webhook(),
+			PublicVideosList:         videoHandler.PublicList(),
+			PublicVideoDetail:        videoHandler.PublicItem(),
 			AdminEventsRead:          authHandler.Protect(auth.PermissionBookingsManage, false, eventsHandler),
 			AdminEventsWrite:         authHandler.Protect(auth.PermissionBookingsManage, true, eventsHandler),
 			AdminCRM:                 crmRoutes,

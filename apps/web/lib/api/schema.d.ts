@@ -4,6 +4,145 @@
  */
 
 export interface paths {
+    "/api/admin/videos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List provider-backed video assets */
+        get: operations["listAdminVideos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/videos/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a video record and short-lived direct TUS upload authorization */
+        post: operations["createVideoUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/videos/{videoID}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                videoID: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete the provider asset and tombstone its application record */
+        delete: operations["deleteVideo"];
+        options?: never;
+        head?: never;
+        /** Update video metadata with revision protection */
+        patch: operations["updateVideoMetadata"];
+        trace?: never;
+    };
+    "/api/admin/videos/{videoID}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Synchronize application state from the video provider */
+        post: operations["synchronizeVideo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/videos/{videoID}/publication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Publish a READY video or remove it from public playback */
+        patch: operations["setVideoPublication"];
+        trace?: never;
+    };
+    "/api/webhooks/videos/bunny": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply a signed idempotent Bunny Stream processing callback */
+        post: operations["receiveBunnyVideoWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/videos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List published READY public videos */
+        get: operations["listPublicVideos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/public/videos/{videoID}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one published READY video and safe playback URLs */
+        get: operations["getPublicVideo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/crm/organizations": {
         parameters: {
             query?: never;
@@ -2634,6 +2773,133 @@ export interface components {
             event: components["schemas"]["Event"];
             tickets: components["schemas"]["TicketType"][];
         };
+        /** @enum {string} */
+        VideoVisibility: "public" | "private" | "unlisted";
+        /** @enum {string} */
+        VideoStatus: "uploading" | "processing" | "ready" | "failed" | "archived";
+        VideoPlayback: {
+            /** Format: uri */
+            embed_url: string;
+            /** Format: uri */
+            hls_url: string;
+            /** Format: uri */
+            thumbnail_url: string;
+        };
+        VideoAsset: {
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            title: string;
+            description: string;
+            category: string;
+            tags: string[];
+            /** @enum {string} */
+            provider: "bunny" | "cloudinary" | "external";
+            thumbnail_url: string;
+            duration_seconds: number;
+            status: components["schemas"]["VideoStatus"];
+            visibility: components["schemas"]["VideoVisibility"];
+            is_published: boolean;
+            /** Format: date-time */
+            published_at?: string;
+            sort_order: number;
+            filename: string;
+            /** @enum {string} */
+            mime_type: "video/mp4" | "video/webm" | "video/quicktime" | "video/x-matroska";
+            /** Format: int64 */
+            bytes: number;
+            failure_reason?: string;
+            /** Format: int64 */
+            revision: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            playback?: components["schemas"]["VideoPlayback"];
+        };
+        VideoAssetList: {
+            items: components["schemas"]["VideoAsset"][];
+        };
+        VideoUploadInput: {
+            title: string;
+            slug: string;
+            description: string;
+            category: string;
+            tags: string[];
+            visibility: components["schemas"]["VideoVisibility"];
+            sort_order: number;
+            filename: string;
+            /** @enum {string} */
+            mime_type: "video/mp4" | "video/webm" | "video/quicktime" | "video/x-matroska";
+            /** Format: int64 */
+            bytes: number;
+        };
+        VideoUpdateInput: {
+            title: string;
+            description: string;
+            category: string;
+            tags: string[];
+            visibility: components["schemas"]["VideoVisibility"];
+            sort_order: number;
+            /** Format: int64 */
+            revision: number;
+        };
+        VideoPublicationInput: {
+            published: boolean;
+            /** Format: int64 */
+            revision: number;
+        };
+        VideoUploadAuthorization: {
+            /** Format: uri */
+            endpoint: string;
+            signature: string;
+            /** Format: int64 */
+            expiration_time: number;
+            library_id: string;
+            video_id: string;
+            filename: string;
+            mime_type: string;
+        };
+        VideoUploadCreated: {
+            item: components["schemas"]["VideoAsset"];
+            upload: components["schemas"]["VideoUploadAuthorization"];
+        };
+        BunnyVideoWebhook: {
+            /** Format: int64 */
+            VideoLibraryId: number;
+            VideoGuid: string;
+            Status: number;
+        } & {
+            [key: string]: unknown;
+        };
+        PublicVideo: {
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            title: string;
+            description: string;
+            category: string;
+            tags: string[];
+            /** Format: uri */
+            thumbnail_url: string;
+            duration_seconds: number;
+            /** @constant */
+            status: "ready";
+            /** @enum {string} */
+            visibility: "public" | "unlisted";
+            /** @constant */
+            is_published: true;
+            /** Format: date-time */
+            published_at?: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            playback: components["schemas"]["VideoPlayback"];
+        };
+        PublicVideoList: {
+            items: components["schemas"]["PublicVideo"][];
+        };
         ContentSEO: {
             title: string;
             description: string;
@@ -2656,6 +2922,8 @@ export interface components {
             results: components["schemas"]["ContentResult"][];
             external_url?: string;
             embed_url?: string;
+            /** Format: uuid */
+            video_asset_id?: string;
             outlet?: string;
             person_name?: string;
             person_title?: string;
@@ -2676,6 +2944,8 @@ export interface components {
             results: components["schemas"]["ContentResult"][];
             external_url?: string;
             embed_url?: string;
+            /** Format: uuid */
+            video_asset_id?: string;
             outlet?: string;
             person_name?: string;
             person_title?: string;
@@ -2700,6 +2970,8 @@ export interface components {
             results: components["schemas"]["ContentResult"][];
             external_url?: string;
             embed_url?: string;
+            /** Format: uuid */
+            video_asset_id?: string;
             outlet?: string;
             person_name?: string;
             person_title?: string;
@@ -3106,6 +3378,233 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listAdminVideos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Video assets */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoAssetList"];
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    createVideoUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VideoUploadInput"];
+            };
+        };
+        responses: {
+            /** @description Video and resumable upload authorization created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoUploadCreated"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    deleteVideo: {
+        parameters: {
+            query: {
+                revision: number;
+            };
+            header?: never;
+            path: {
+                videoID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Video deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    updateVideoMetadata: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                videoID: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VideoUpdateInput"];
+            };
+        };
+        responses: {
+            /** @description Updated video */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoAsset"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    synchronizeVideo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                videoID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Synchronized video */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoAsset"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    setVideoPublication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                videoID: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VideoPublicationInput"];
+            };
+        };
+        responses: {
+            /** @description Updated publication state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoAsset"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    receiveBunnyVideoWebhook: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-BunnyStream-Signature-Version": "v1";
+                "X-BunnyStream-Signature-Algorithm": "hmac-sha256";
+                "X-BunnyStream-Signature": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BunnyVideoWebhook"];
+            };
+        };
+        responses: {
+            /** @description Callback accepted or already applied */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listPublicVideos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public videos */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicVideoList"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    getPublicVideo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                videoID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public video */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicVideo"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
     createCRMOrganization: {
         parameters: {
             query?: never;

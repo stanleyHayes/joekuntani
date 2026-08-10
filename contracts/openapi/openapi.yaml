@@ -23,6 +23,8 @@ tags:
     description: Audited media drafts, signed provider uploads, metadata and callbacks.
   - name: Content
     description: Approved public content and audited editorial lifecycle controls.
+  - name: Video
+    description: Provider-isolated direct uploads, processing lifecycle, and public adaptive playback.
   - name: Services
     description: Ordered public services and audited content-editor management.
   - name: Events
@@ -48,6 +50,179 @@ tags:
   - name: TicketAnalytics
     description: Privacy-safe ticket sales, inventory, conversion and attendance dashboards.
 paths:
+  /api/admin/videos:
+    get:
+      operationId: listAdminVideos
+      summary: List provider-backed video assets
+      tags: [Video]
+      security: [{ staffSession: [] }]
+      responses:
+        "200":
+          description: Video assets
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VideoAssetList" }
+        "403": { $ref: "#/components/responses/Problem" }
+  /api/admin/videos/uploads:
+    post:
+      operationId: createVideoUpload
+      summary: Create a video record and short-lived direct TUS upload authorization
+      tags: [Video]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VideoUploadInput" }
+      responses:
+        "201":
+          description: Video and resumable upload authorization created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VideoUploadCreated" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/admin/videos/{videoID}:
+    parameters:
+      - name: videoID
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      operationId: updateVideoMetadata
+      summary: Update video metadata with revision protection
+      tags: [Video]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VideoUpdateInput" }
+      responses:
+        "200":
+          description: Updated video
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VideoAsset" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+    delete:
+      operationId: deleteVideo
+      summary: Delete the provider asset and tombstone its application record
+      tags: [Video]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - name: revision
+          in: query
+          required: true
+          schema: { type: integer, format: int64, minimum: 1 }
+      responses:
+        "204": { description: Video deleted }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/admin/videos/{videoID}/sync:
+    post:
+      operationId: synchronizeVideo
+      summary: Synchronize application state from the video provider
+      tags: [Video]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - name: videoID
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Synchronized video
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VideoAsset" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/admin/videos/{videoID}/publication:
+    patch:
+      operationId: setVideoPublication
+      summary: Publish a READY video or remove it from public playback
+      tags: [Video]
+      security: [{ staffSession: [], csrfToken: [] }]
+      parameters:
+        - name: videoID
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VideoPublicationInput" }
+      responses:
+        "200":
+          description: Updated publication state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VideoAsset" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+  /api/webhooks/videos/bunny:
+    post:
+      operationId: receiveBunnyVideoWebhook
+      summary: Apply a signed idempotent Bunny Stream processing callback
+      tags: [Video]
+      parameters:
+        - name: X-BunnyStream-Signature-Version
+          in: header
+          required: true
+          schema: { type: string, const: v1 }
+        - name: X-BunnyStream-Signature-Algorithm
+          in: header
+          required: true
+          schema: { type: string, const: hmac-sha256 }
+        - name: X-BunnyStream-Signature
+          in: header
+          required: true
+          schema: { type: string, pattern: "^[0-9a-f]{64}$" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BunnyVideoWebhook" }
+      responses:
+        "204": { description: Callback accepted or already applied }
+        "401": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/public/videos:
+    get:
+      operationId: listPublicVideos
+      summary: List published READY public videos
+      tags: [Video]
+      responses:
+        "200":
+          description: Public videos
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicVideoList" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /api/public/videos/{videoID}:
+    get:
+      operationId: getPublicVideo
+      summary: Get one published READY video and safe playback URLs
+      tags: [Video]
+      parameters:
+        - name: videoID
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Public video
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicVideo" }
+        "404": { $ref: "#/components/responses/Problem" }
   /api/admin/crm/organizations:
     post:
       operationId: createCRMOrganization
@@ -4353,6 +4528,213 @@ components:
         event: { $ref: "#/components/schemas/Event" }
         tickets:
           { type: array, items: { $ref: "#/components/schemas/TicketType" } }
+    VideoVisibility:
+      type: string
+      enum: [public, private, unlisted]
+    VideoStatus:
+      type: string
+      enum: [uploading, processing, ready, failed, archived]
+    VideoPlayback:
+      type: object
+      additionalProperties: false
+      required: [embed_url, hls_url, thumbnail_url]
+      properties:
+        embed_url: { type: string, format: uri, pattern: "^https://" }
+        hls_url: { type: string, format: uri, pattern: "^https://" }
+        thumbnail_url: { type: string, format: uri, pattern: "^https://" }
+    VideoAsset:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          slug,
+          title,
+          description,
+          category,
+          tags,
+          provider,
+          thumbnail_url,
+          duration_seconds,
+          status,
+          visibility,
+          is_published,
+          sort_order,
+          filename,
+          mime_type,
+          bytes,
+          revision,
+          created_at,
+          updated_at,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+        title: { type: string, minLength: 1, maxLength: 180 }
+        description: { type: string, maxLength: 5000 }
+        category: { type: string, maxLength: 100 }
+        tags:
+          { type: array, maxItems: 20, items: { type: string, maxLength: 60 } }
+        provider: { type: string, enum: [bunny, cloudinary, external] }
+        thumbnail_url: { type: string, maxLength: 2048 }
+        duration_seconds: { type: integer, minimum: 0 }
+        status: { $ref: "#/components/schemas/VideoStatus" }
+        visibility: { $ref: "#/components/schemas/VideoVisibility" }
+        is_published: { type: boolean }
+        published_at: { type: string, format: date-time }
+        sort_order: { type: integer }
+        filename: { type: string }
+        mime_type:
+          {
+            type: string,
+            enum: [video/mp4, video/webm, video/quicktime, video/x-matroska],
+          }
+        bytes: { type: integer, format: int64, minimum: 1 }
+        failure_reason: { type: string }
+        revision: { type: integer, format: int64, minimum: 1 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        playback: { $ref: "#/components/schemas/VideoPlayback" }
+    VideoAssetList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          { type: array, items: { $ref: "#/components/schemas/VideoAsset" } }
+    VideoUploadInput:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          title,
+          slug,
+          description,
+          category,
+          tags,
+          visibility,
+          sort_order,
+          filename,
+          mime_type,
+          bytes,
+        ]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 180 }
+        slug: { type: string, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+        description: { type: string, maxLength: 5000 }
+        category: { type: string, maxLength: 100 }
+        tags:
+          { type: array, maxItems: 20, items: { type: string, maxLength: 60 } }
+        visibility: { $ref: "#/components/schemas/VideoVisibility" }
+        sort_order: { type: integer }
+        filename: { type: string, minLength: 1 }
+        mime_type:
+          {
+            type: string,
+            enum: [video/mp4, video/webm, video/quicktime, video/x-matroska],
+          }
+        bytes: { type: integer, format: int64, minimum: 1, maximum: 2147483648 }
+    VideoUpdateInput:
+      type: object
+      additionalProperties: false
+      required:
+        [title, description, category, tags, visibility, sort_order, revision]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 180 }
+        description: { type: string, maxLength: 5000 }
+        category: { type: string, maxLength: 100 }
+        tags:
+          { type: array, maxItems: 20, items: { type: string, maxLength: 60 } }
+        visibility: { $ref: "#/components/schemas/VideoVisibility" }
+        sort_order: { type: integer }
+        revision: { type: integer, format: int64, minimum: 1 }
+    VideoPublicationInput:
+      type: object
+      additionalProperties: false
+      required: [published, revision]
+      properties:
+        published: { type: boolean }
+        revision: { type: integer, format: int64, minimum: 1 }
+    VideoUploadAuthorization:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          endpoint,
+          signature,
+          expiration_time,
+          library_id,
+          video_id,
+          filename,
+          mime_type,
+        ]
+      properties:
+        endpoint: { type: string, format: uri, pattern: "^https://" }
+        signature: { type: string, pattern: "^[0-9a-f]{64}$" }
+        expiration_time: { type: integer, format: int64 }
+        library_id: { type: string, pattern: "^[0-9]+$" }
+        video_id: { type: string, minLength: 1 }
+        filename: { type: string, minLength: 1 }
+        mime_type: { type: string }
+    VideoUploadCreated:
+      type: object
+      additionalProperties: false
+      required: [item, upload]
+      properties:
+        item: { $ref: "#/components/schemas/VideoAsset" }
+        upload: { $ref: "#/components/schemas/VideoUploadAuthorization" }
+    BunnyVideoWebhook:
+      type: object
+      additionalProperties: true
+      required: [VideoLibraryId, VideoGuid, Status]
+      properties:
+        VideoLibraryId: { type: integer, format: int64 }
+        VideoGuid: { type: string, minLength: 1 }
+        Status: { type: integer, minimum: 0, maximum: 10 }
+    PublicVideo:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          slug,
+          title,
+          description,
+          category,
+          tags,
+          thumbnail_url,
+          duration_seconds,
+          status,
+          visibility,
+          is_published,
+          created_at,
+          updated_at,
+          playback,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+        title: { type: string, minLength: 1, maxLength: 180 }
+        description: { type: string, maxLength: 5000 }
+        category: { type: string, maxLength: 100 }
+        tags:
+          { type: array, maxItems: 20, items: { type: string, maxLength: 60 } }
+        thumbnail_url: { type: string, format: uri, pattern: "^https://" }
+        duration_seconds: { type: integer, minimum: 0 }
+        status: { type: string, const: ready }
+        visibility: { type: string, enum: [public, unlisted] }
+        is_published: { type: boolean, const: true }
+        published_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        playback: { $ref: "#/components/schemas/VideoPlayback" }
+    PublicVideoList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          { type: array, items: { $ref: "#/components/schemas/PublicVideo" } }
     ContentSEO:
       type: object
       additionalProperties: false
@@ -4401,6 +4783,7 @@ components:
           }
         external_url: { type: string, maxLength: 2048, pattern: "^https://" }
         embed_url: { type: string, maxLength: 2048, pattern: "^https://" }
+        video_asset_id: { type: string, format: uuid }
         outlet: { type: string, maxLength: 120 }
         person_name: { type: string, maxLength: 120 }
         person_title: { type: string, maxLength: 120 }
@@ -4435,6 +4818,7 @@ components:
           }
         external_url: { type: string, maxLength: 2048, pattern: "^https://" }
         embed_url: { type: string, maxLength: 2048, pattern: "^https://" }
+        video_asset_id: { type: string, format: uuid }
         outlet: { type: string, maxLength: 120 }
         person_name: { type: string, maxLength: 120 }
         person_title: { type: string, maxLength: 120 }
@@ -4487,6 +4871,7 @@ components:
           }
         external_url: { type: string, maxLength: 2048 }
         embed_url: { type: string, maxLength: 2048 }
+        video_asset_id: { type: string, format: uuid }
         outlet: { type: string, maxLength: 120 }
         person_name: { type: string, maxLength: 120 }
         person_title: { type: string, maxLength: 120 }

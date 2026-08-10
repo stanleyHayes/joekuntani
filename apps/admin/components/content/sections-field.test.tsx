@@ -21,12 +21,40 @@ const section = (over: Partial<ContentSection> = {}): ContentSection => ({
   ...over,
 });
 
-// An editor opening a page with no blocks needs to know the page still renders.
-it("says the single body is still live when there are no sections", () => {
+it("invites the editor to add a section when the page is empty", () => {
   render(<SectionsField value={[]} onChange={vi.fn()} />);
-  expect(
-    screen.getByText("No sections yet. The single body is still live."),
-  ).toBeVisible();
+  expect(screen.getByText("No sections yet. Add the first section below.")).toBeVisible();
+});
+
+it("converts a legacy body into titled sections without rewriting its copy", () => {
+  const onConvertLegacyBody = vi.fn();
+  render(
+    <SectionsField
+      value={[]}
+      legacyBody={
+        "Opening paragraph.\n\nTHE MAN BEHIND THE GUITAR\n\nRobert grew up in Kumasi.\n\n## His vision\n\nComedy can be musical."
+      }
+      onChange={vi.fn()}
+      onConvertLegacyBody={onConvertLegacyBody}
+    />,
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: "Convert body to sections" }),
+  );
+  expect(onConvertLegacyBody).toHaveBeenCalledWith([
+    expect.objectContaining({
+      heading: "Introduction",
+      body: "Opening paragraph.",
+    }),
+    expect.objectContaining({
+      heading: "The Man Behind The Guitar",
+      body: "Robert grew up in Kumasi.",
+    }),
+    expect.objectContaining({
+      heading: "His vision",
+      body: "Comedy can be musical.",
+    }),
+  ]);
 });
 
 it("appends a text block and leaves the existing ones alone", () => {

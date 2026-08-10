@@ -46,9 +46,13 @@ const blankSection = (): ContentSection => ({
 export function SectionsField({
   value,
   onChange,
+  legacyBody = "",
+  onConvertLegacyBody,
 }: {
   value: ContentSection[];
   onChange: (sections: ContentSection[]) => void;
+  legacyBody?: string;
+  onConvertLegacyBody?: (sections: ContentSection[]) => void;
 }) {
   const sections = value ?? [];
   const [open, setOpen] = useState<number | null>(sections.length ? 0 : null);
@@ -232,9 +236,25 @@ export function SectionsField({
           })}
         </ol>
       ) : (
-        <p className={styles.empty}>
-          No sections yet. The single body is still live.
-        </p>
+        <div className={styles.emptyState}>
+          <p className={styles.empty}>
+            {legacyBody.trim()
+              ? "This page still uses one legacy body. Convert it into editable sections."
+              : "No sections yet. Add the first section below."}
+          </p>
+          {legacyBody.trim() && onConvertLegacyBody ? (
+            <button
+              type="button"
+              className={styles.convert}
+              onClick={() => {
+                setOpen(0);
+                onConvertLegacyBody(sectionsFromBody(legacyBody));
+              }}
+            >
+              Convert body to sections
+            </button>
+          ) : null}
+        </div>
       )}
 
       <button
@@ -249,6 +269,51 @@ export function SectionsField({
       </button>
     </fieldset>
   );
+}
+
+/** Splits the legacy biography without rewriting it. Standalone uppercase or
+ * Markdown heading lines become section titles; every other character remains
+ * in the corresponding Markdown description. */
+export function sectionsFromBody(body: string): ContentSection[] {
+  const sections: ContentSection[] = [];
+  let heading = "Introduction";
+  let lines: string[] = [];
+
+  const flush = () => {
+    const description = lines.join("\n").trim();
+    if (!description) return;
+    sections.push({
+      ...blankSection(),
+      heading,
+      body: description,
+      tags: [],
+    });
+    lines = [];
+  };
+
+  for (const line of body.replace(/\r\n/g, "\n").split("\n")) {
+    const title = sectionTitle(line);
+    if (title) {
+      flush();
+      heading = title;
+    } else {
+      lines.push(line);
+    }
+  }
+  flush();
+  return sections;
+}
+
+function sectionTitle(line: string) {
+  const trimmed = line.trim();
+  const markdown = trimmed.match(/^#{1,6}\s+(.+)$/)?.[1]?.trim();
+  if (markdown) return markdown;
+  if (trimmed.length < 4 || trimmed.length > 100) return "";
+  const letters = trimmed.replace(/[^\p{L}]/gu, "");
+  if (!letters || letters !== letters.toUpperCase()) return "";
+  return trimmed
+    .toLocaleLowerCase("en")
+    .replace(/(^|[\s—-])\p{L}/gu, (letter) => letter.toLocaleUpperCase("en"));
 }
 
 function splitTags(value: string) {

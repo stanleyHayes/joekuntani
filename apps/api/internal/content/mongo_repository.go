@@ -33,6 +33,7 @@ type document struct {
 	Sections        []Section      `bson:"sections"`
 	ExternalURL     string         `bson:"external_url,omitempty"`
 	EmbedURL        string         `bson:"embed_url,omitempty"`
+	VideoAssetID    string         `bson:"video_asset_id,omitempty"`
 	Outlet          string         `bson:"outlet,omitempty"`
 	PersonName      string         `bson:"person_name,omitempty"`
 	PersonTitle     string         `bson:"person_title,omitempty"`
@@ -49,7 +50,7 @@ type document struct {
 }
 
 func fromDocument(kind Kind, d document) Item {
-	return Item{ID: d.ID.Hex(), PublicID: d.PublicID, Kind: kind, Slug: d.Slug, Title: d.Title, Summary: d.Summary, Body: d.Body, Category: d.Category, Tags: emptyIfNil(d.Tags), Featured: d.Featured, GalleryAssetIDs: emptyIfNil(d.GalleryAssetIDs), Results: emptyIfNil(d.Results), Sections: emptyIfNil(d.Sections), ExternalURL: d.ExternalURL, EmbedURL: d.EmbedURL, Outlet: d.Outlet, PersonName: d.PersonName, PersonTitle: d.PersonTitle, Organization: d.Organization, SEO: d.SEO, Status: d.Status, Approved: d.Approved, Revision: d.Revision, PublishAt: fromDate(d.PublishAt), UnpublishAt: fromDate(d.UnpublishAt), PublishedAt: fromDate(d.PublishedAt), CreatedAt: d.CreatedAt.Time(), UpdatedAt: d.UpdatedAt.Time()}
+	return Item{ID: d.ID.Hex(), PublicID: d.PublicID, Kind: kind, Slug: d.Slug, Title: d.Title, Summary: d.Summary, Body: d.Body, Category: d.Category, Tags: emptyIfNil(d.Tags), Featured: d.Featured, GalleryAssetIDs: emptyIfNil(d.GalleryAssetIDs), Results: emptyIfNil(d.Results), Sections: emptyIfNil(d.Sections), ExternalURL: d.ExternalURL, EmbedURL: d.EmbedURL, VideoAssetID: d.VideoAssetID, Outlet: d.Outlet, PersonName: d.PersonName, PersonTitle: d.PersonTitle, Organization: d.Organization, SEO: d.SEO, Status: d.Status, Approved: d.Approved, Revision: d.Revision, PublishAt: fromDate(d.PublishAt), UnpublishAt: fromDate(d.UnpublishAt), PublishedAt: fromDate(d.PublishedAt), CreatedAt: d.CreatedAt.Time(), UpdatedAt: d.UpdatedAt.Time()}
 }
 
 // emptyIfNil keeps absent collections serialising as [] rather than null.
@@ -199,9 +200,9 @@ func toBSON(item Item, identity bool) bson.M {
 	case Portfolio:
 		d["body"], d["category"], d["results"] = item.Body, item.Category, item.Results
 	case Video:
-		d["body"], d["category"], d["external_url"], d["embed_url"] = item.Body, item.Category, item.ExternalURL, item.EmbedURL
+		d["body"], d["category"], d["external_url"], d["embed_url"], d["video_asset_id"] = item.Body, item.Category, item.ExternalURL, item.EmbedURL, item.VideoAssetID
 	case Press:
-		d["body"], d["category"], d["external_url"], d["outlet"] = item.Body, item.Category, item.ExternalURL, item.Outlet
+		d["body"], d["category"], d["external_url"], d["video_asset_id"], d["outlet"] = item.Body, item.Category, item.ExternalURL, item.VideoAssetID, item.Outlet
 	case Testimonial:
 		d["body"], d["person_name"], d["person_title"], d["organization"] = item.Body, item.PersonName, item.PersonTitle, item.Organization
 	}

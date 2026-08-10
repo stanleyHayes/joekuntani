@@ -47,6 +47,10 @@ const ADMIN_PAGE_META: Record<string, AdminPageMeta> = {
     title: "Media",
     description: "Library assets for the public brand surfaces.",
   },
+  "/videos": {
+    title: "Video infrastructure",
+    description: "Upload, process, preview, and publish Bunny Stream video.",
+  },
   "/newsletter": {
     title: "Newsletter",
     description: "Consent-backed public signups ready for audience sync.",

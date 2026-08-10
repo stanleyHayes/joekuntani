@@ -65,6 +65,7 @@ type Item struct {
 	Sections        []Section  `json:"sections" bson:"sections"`
 	ExternalURL     string     `json:"external_url,omitempty" bson:"external_url,omitempty"`
 	EmbedURL        string     `json:"embed_url,omitempty" bson:"embed_url,omitempty"`
+	VideoAssetID    string     `json:"video_asset_id,omitempty" bson:"video_asset_id,omitempty"`
 	Outlet          string     `json:"outlet,omitempty" bson:"outlet,omitempty"`
 	PersonName      string     `json:"person_name,omitempty" bson:"person_name,omitempty"`
 	PersonTitle     string     `json:"person_title,omitempty" bson:"person_title,omitempty"`
@@ -81,19 +82,19 @@ type Item struct {
 }
 
 type Input struct {
-	Kind                                                                Kind
-	Slug, Title, Summary, Body, Category, ExternalURL, EmbedURL, Outlet string
-	PersonName, PersonTitle, Organization                               string
-	Tags, GalleryAssetIDs                                               []string
-	Results                                                             []Result
-	Sections                                                            []Section
-	Featured                                                            bool
-	SEO                                                                 SEO
+	Kind                                                                              Kind
+	Slug, Title, Summary, Body, Category, ExternalURL, EmbedURL, VideoAssetID, Outlet string
+	PersonName, PersonTitle, Organization                                             string
+	Tags, GalleryAssetIDs                                                             []string
+	Results                                                                           []Result
+	Sections                                                                          []Section
+	Featured                                                                          bool
+	SEO                                                                               SEO
 }
 
 func (input *Input) Normalize() {
 	input.Slug = Slugify(input.Slug)
-	for _, value := range []*string{&input.Title, &input.Summary, &input.Body, &input.Category, &input.ExternalURL, &input.EmbedURL, &input.Outlet, &input.PersonName, &input.PersonTitle, &input.Organization, &input.SEO.Title, &input.SEO.Description, &input.SEO.CanonicalURL, &input.SEO.SocialAssetID} {
+	for _, value := range []*string{&input.Title, &input.Summary, &input.Body, &input.Category, &input.ExternalURL, &input.EmbedURL, &input.VideoAssetID, &input.Outlet, &input.PersonName, &input.PersonTitle, &input.Organization, &input.SEO.Title, &input.SEO.Description, &input.SEO.CanonicalURL, &input.SEO.SocialAssetID} {
 		*value = strings.TrimSpace(*value)
 	}
 	input.Tags = cleanUnique(input.Tags)
@@ -106,7 +107,7 @@ func (input *Input) Normalize() {
 }
 
 func (input Input) Validate(create bool) error {
-	if !validKind(input.Kind) || !within(input.Title, 160, true) || !within(input.Summary, 500, false) || !within(input.Body, 30000, false) || !within(input.Category, 80, false) || !within(input.ExternalURL, 2048, false) || !within(input.EmbedURL, 2048, false) || !within(input.Outlet, 120, false) || !within(input.PersonName, 120, false) || !within(input.PersonTitle, 120, false) || !within(input.Organization, 160, false) || len(input.Tags) > 20 || len(input.GalleryAssetIDs) > 30 || len(input.Results) > 20 {
+	if !validKind(input.Kind) || !within(input.Title, 160, true) || !within(input.Summary, 500, false) || !within(input.Body, 30000, false) || !within(input.Category, 80, false) || !within(input.ExternalURL, 2048, false) || !within(input.EmbedURL, 2048, false) || !within(input.Outlet, 120, false) || !within(input.PersonName, 120, false) || !within(input.PersonTitle, 120, false) || !within(input.Organization, 160, false) || len(input.Tags) > 20 || len(input.GalleryAssetIDs) > 30 || len(input.Results) > 20 || (input.VideoAssetID != "" && !ValidID(input.VideoAssetID)) {
 		return ErrInvalid
 	}
 	if input.Kind == Page || input.Kind == Portfolio {
@@ -116,7 +117,8 @@ func (input Input) Validate(create bool) error {
 	} else if input.Slug != "" {
 		return ErrInvalid
 	}
-	if input.Kind == Portfolio && !within(input.Category, 80, true) || input.Kind == Video && (!within(input.ExternalURL, 2048, true) || !within(input.EmbedURL, 2048, true) || !httpsURL(input.ExternalURL) || !httpsURL(input.EmbedURL)) || input.Kind == Press && (!within(input.Outlet, 120, true) || !within(input.ExternalURL, 2048, true) || !httpsURL(input.ExternalURL)) || input.Kind == Testimonial && !within(input.PersonName, 120, true) {
+	legacyVideoInvalid := input.Kind == Video && input.VideoAssetID == "" && (!within(input.ExternalURL, 2048, true) || !within(input.EmbedURL, 2048, true) || !httpsURL(input.ExternalURL) || !httpsURL(input.EmbedURL))
+	if input.Kind == Portfolio && !within(input.Category, 80, true) || legacyVideoInvalid || input.Kind == Press && (!within(input.Outlet, 120, true) || !within(input.ExternalURL, 2048, true) || !httpsURL(input.ExternalURL)) || input.Kind == Testimonial && !within(input.PersonName, 120, true) {
 		return ErrInvalid
 	}
 	if err := ValidateSections(input.Sections); err != nil {

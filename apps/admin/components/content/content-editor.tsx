@@ -400,13 +400,24 @@ export function ContentEditor({
               onChange={(summary) => setDraft({ ...draft, summary })}
               multiline
             />
-            <MarkdownField
-              assist="body"
-              label="Body"
-              hint="Markdown. Use the toolbar or write it directly, then switch to Preview to see exactly what publishes."
-              value={draft.body ?? ""}
-              onChange={(body) => setDraft({ ...draft, body })}
-            />
+            {kind === "page" ? (
+              <SectionsField
+                value={draft.sections ?? []}
+                legacyBody={draft.body ?? ""}
+                onChange={(sections) => setDraft({ ...draft, sections })}
+                onConvertLegacyBody={(sections) =>
+                  setDraft({ ...draft, body: "", sections })
+                }
+              />
+            ) : (
+              <MarkdownField
+                assist="body"
+                label="Body"
+                hint="Markdown. Use the toolbar or write it directly, then switch to Preview to see exactly what publishes."
+                value={draft.body ?? ""}
+                onChange={(body) => setDraft({ ...draft, body })}
+              />
+            )}
           </div>
         </fieldset>
 
@@ -417,21 +428,33 @@ export function ContentEditor({
             </legend>
             <div className={styles.stack}>
               {kind === "video" || kind === "press" ? (
+                <VideoAssetField
+                  value={draft.video_asset_id ?? ""}
+                  onChange={(video_asset_id) =>
+                    setDraft({ ...draft, video_asset_id })
+                  }
+                />
+              ) : null}
+              {kind === "video" || kind === "press" ? (
                 <Field
-                  label="Verified external HTTPS URL"
+                  label={
+                    kind === "video"
+                      ? "Legacy external HTTPS URL"
+                      : "Verified external HTTPS URL"
+                  }
                   value={draft.external_url ?? ""}
                   onChange={(external_url) =>
                     setDraft({ ...draft, external_url })
                   }
-                  required
+                  required={kind === "press" || !draft.video_asset_id}
                 />
               ) : null}
               {kind === "video" ? (
                 <Field
-                  label="Approved HTTPS embed URL"
+                  label="Legacy HTTPS embed URL"
                   value={draft.embed_url ?? ""}
                   onChange={(embed_url) => setDraft({ ...draft, embed_url })}
-                  required
+                  required={!draft.video_asset_id}
                 />
               ) : null}
               {kind === "press" ? (
@@ -524,10 +547,12 @@ export function ContentEditor({
           </div>
         </fieldset>
 
-        <SectionsField
-          value={draft.sections ?? []}
-          onChange={(sections) => setDraft({ ...draft, sections })}
-        />
+        {kind !== "page" ? (
+          <SectionsField
+            value={draft.sections ?? []}
+            onChange={(sections) => setDraft({ ...draft, sections })}
+          />
+        ) : null}
         <ResultsField value={results} onChange={setResults} />
 
         <fieldset className={styles.group}>
@@ -573,17 +598,28 @@ export function ContentEditor({
 
         {selected ? (
           <dl className={styles.audit} aria-label="Content audit context">
-            <div>
+            <div className={styles.auditItem}>
               <dt>Revision</dt>
-              <dd>{selected.revision}</dd>
+              <dd className={styles.auditRevision}>{selected.revision}</dd>
             </div>
-            <div>
+            <div className={styles.auditItem}>
               <dt>Last recorded change</dt>
-              <dd>{new Date(selected.updated_at).toLocaleString()}</dd>
+              <dd>
+                <time dateTime={selected.updated_at}>
+                  {new Date(selected.updated_at).toLocaleString()}
+                </time>
+              </dd>
             </div>
-            <div>
+            <div className={styles.auditItem}>
               <dt>Approval</dt>
-              <dd>{selected.approved ? "Approved" : "Required"}</dd>
+              <dd>
+                <span
+                  className={styles.auditStatus}
+                  data-approved={selected.approved}
+                >
+                  {selected.approved ? "Approved" : "Approval required"}
+                </span>
+              </dd>
             </div>
           </dl>
         ) : null}
@@ -895,6 +931,80 @@ function ResultsField({
         Add result
       </button>
     </fieldset>
+  );
+}
+
+function VideoAssetField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [videos, setVideos] = useState<
+    { id: string; title: string; status: string; is_published: boolean }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let current = true;
+    void fetch("/api/admin/videos", {
+      cache: "no-store",
+      credentials: "include",
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error();
+        return (await response.json()) as {
+          items?: {
+            id: string;
+            title: string;
+            status: string;
+            is_published: boolean;
+          }[];
+        };
+      })
+      .then((body) => {
+        if (current) setVideos(body.items ?? []);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (current) setLoading(false);
+      });
+    return () => {
+      current = false;
+    };
+  }, []);
+
+  return (
+    <div className={styles.videoAssetField}>
+      <label className={styles.field}>
+        Bunny Stream video
+        <Select
+          aria-label="Bunny Stream video"
+          disabled={loading}
+          value={value}
+          onChange={onChange}
+          options={[
+            {
+              value: "",
+              label: loading
+                ? "Loading video library..."
+                : "No Bunny video selected",
+            },
+            ...videos
+              .filter((video) => video.status === "ready" || video.id === value)
+              .map((video) => ({
+                value: video.id,
+                label: `${video.title} (${video.status}${video.is_published ? ", published" : ""})`,
+              })),
+          ]}
+        />
+      </label>
+      <p>
+        Select a READY stream for this {kindLabel("video").toLowerCase()} or
+        press appearance. <Link href="/videos">Manage video uploads</Link>
+      </p>
+    </div>
   );
 }
 

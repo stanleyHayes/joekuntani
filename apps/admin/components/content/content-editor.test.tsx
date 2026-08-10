@@ -52,6 +52,13 @@ function stubFetch({
   role = "administrator" as StaffRole,
   items = [] as ContentItem[],
   media = [] as MediaOption[],
+  videos = [] as {
+    id: string;
+    title: string;
+    status: string;
+    is_published: boolean;
+  }[],
+  videosResponse,
   responses = [] as Response[],
   preview,
   assist,
@@ -59,6 +66,13 @@ function stubFetch({
   role?: StaffRole;
   items?: ContentItem[];
   media?: MediaOption[];
+  videos?: {
+    id: string;
+    title: string;
+    status: string;
+    is_published: boolean;
+  }[];
+  videosResponse?: Response;
   /** Consumed in order by each mutating request. */
   responses?: Response[];
   preview?: Response;
@@ -70,6 +84,8 @@ function stubFetch({
       const url = String(input);
       if (url.endsWith("/api/admin/auth/me")) return json({ role });
       if (url === "/api/admin/media") return json({ assets: media });
+      if (url === "/api/admin/videos")
+        return videosResponse ?? json({ items: videos });
       if (url === "/api/admin/ai/assist")
         return assist ?? new Response(null, { status: 503 });
       if (url.endsWith("/preview"))
@@ -246,10 +262,9 @@ it("reveals the correct fields for video, press, and testimonial drafts", async 
       requestCacheInvalidation={noCacheInvalidation}
     />,
   );
-  expect(
-    await screen.findByLabelText("Approved HTTPS embed URL"),
-  ).toBeVisible();
-  expect(screen.getByLabelText("Verified external HTTPS URL")).toBeVisible();
+  expect(await screen.findByLabelText("Bunny Stream video")).toBeVisible();
+  expect(screen.getByLabelText("Legacy HTTPS embed URL")).toBeVisible();
+  expect(screen.getByLabelText("Legacy external HTTPS URL")).toBeVisible();
   unmount();
 
   const press = render(
@@ -260,7 +275,7 @@ it("reveals the correct fields for video, press, and testimonial drafts", async 
     />,
   );
   expect(await screen.findByLabelText("Outlet")).toBeVisible();
-  expect(screen.queryByLabelText("Approved HTTPS embed URL")).toBeNull();
+  expect(screen.queryByLabelText("Legacy HTTPS embed URL")).toBeNull();
   press.unmount();
 
   render(
@@ -272,6 +287,94 @@ it("reveals the correct fields for video, press, and testimonial drafts", async 
   );
   expect(await screen.findByLabelText("Person name")).toBeVisible();
   expect(screen.getByLabelText("Organization")).toBeVisible();
+});
+
+it("lets a ready Bunny stream replace the required legacy video URLs", async () => {
+  stubFetch({
+    videos: [
+      {
+        id: "223e4567-e89b-42d3-a456-426614174000",
+        title: "Accra live set",
+        status: "ready",
+        is_published: false,
+      },
+      {
+        id: "323e4567-e89b-42d3-a456-426614174000",
+        title: "Still processing",
+        status: "processing",
+        is_published: false,
+      },
+    ],
+  });
+  render(
+    <ContentEditor
+      kind="video"
+      contentID="new"
+      requestCacheInvalidation={noCacheInvalidation}
+    />,
+  );
+
+  const streamSelect = await screen.findByLabelText("Bunny Stream video");
+  await waitFor(() => expect(streamSelect).toBeEnabled());
+  fireEvent.click(streamSelect);
+  fireEvent.click(screen.getByRole("option", { name: "Accra live set (ready)" }));
+
+  expect(screen.queryByRole("option", { name: /Still processing/ })).toBeNull();
+  expect(screen.getByLabelText("Legacy HTTPS embed URL")).not.toBeRequired();
+  expect(screen.getByLabelText("Legacy external HTTPS URL")).not.toBeRequired();
+});
+
+it("keeps an already-linked processing stream visible while it recovers", async () => {
+  const linkedID = "323e4567-e89b-42d3-a456-426614174000";
+  stubFetch({
+    items: [
+      {
+        ...page,
+        kind: "video",
+        title: "Linked video",
+        video_asset_id: linkedID,
+        external_url: "",
+        embed_url: "",
+      },
+    ],
+    videos: [
+      {
+        id: linkedID,
+        title: "Still processing",
+        status: "processing",
+        is_published: true,
+      },
+    ],
+  });
+  render(
+    <ContentEditor
+      kind="video"
+      contentID={page.id}
+      requestCacheInvalidation={noCacheInvalidation}
+    />,
+  );
+
+  const streamSelect = await screen.findByLabelText("Bunny Stream video");
+  await waitFor(() => expect(streamSelect).toBeEnabled());
+  expect(streamSelect).toHaveTextContent(
+    "Still processing (processing, published)",
+  );
+});
+
+it("keeps legacy video fields usable when the Bunny library is unavailable", async () => {
+  stubFetch({ videosResponse: new Response(null, { status: 503 }) });
+  render(
+    <ContentEditor
+      kind="video"
+      contentID="new"
+      requestCacheInvalidation={noCacheInvalidation}
+    />,
+  );
+
+  const streamSelect = await screen.findByLabelText("Bunny Stream video");
+  await waitFor(() => expect(streamSelect).toBeEnabled());
+  expect(streamSelect).toHaveTextContent("No Bunny video selected");
+  expect(screen.getByLabelText("Legacy HTTPS embed URL")).toBeRequired();
 });
 
 it("supports approval revocation, scheduled publishing, and unpublishing", async () => {
@@ -521,7 +624,7 @@ it("prepares deterministic cache invalidation after publication and reports queu
   expect(alert).toHaveTextContent("queue unavailable");
 });
 
-it("rewrites body copy through the assistant without renaming the field", async () => {
+it("converts legacy page copy and rewrites a section through the assistant", async () => {
   Object.defineProperty(document, "cookie", {
     configurable: true,
     value: "jk_admin_csrf=content-csrf",
@@ -547,20 +650,23 @@ it("rewrites body copy through the assistant without renaming the field", async 
     />,
   );
 
-  const body = await screen.findByLabelText("Body");
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Convert body to sections" }),
+  );
+  const body = screen.getByRole("textbox", { name: "Description" });
   fireEvent.change(body, { target: { value: "some rough body copy" } });
   // Scoped by the assist bar's own group rather than the textarea's parent:
   // the Markdown editor nests the textarea a level deeper than a plain field,
   // and every assisted field on the page offers an identical Expand button.
   fireEvent.click(
     within(
-      screen.getByRole("group", { name: "AI writing help for Body" }),
+      screen.getByRole("group", { name: "AI writing help for Description" }),
     ).getByRole("button", { name: /Expand/ }),
   );
   fireEvent.click(await screen.findByRole("button", { name: /Use this/ }));
 
   await waitFor(() =>
-    expect(screen.getByLabelText("Body")).toHaveValue(
+    expect(screen.getByRole("textbox", { name: "Description" })).toHaveValue(
       "A sharper opening paragraph.",
     ),
   );

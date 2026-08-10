@@ -14,6 +14,9 @@ import {
 } from "../../lib/demo/content";
 import { contentCovers } from "../../lib/media";
 import { pageMetadata, unavailableMetadata } from "../../lib/seo";
+import { videosForContent } from "../../components/video/video-data";
+import { VideoPlayer } from "../../components/video/video-player";
+import { VideoStructuredData } from "../../components/video/video-structured-data";
 import styles from "../editorial-feed.module.css";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +55,7 @@ export default async function VideosPage({
   // Published records carry their own imagery; the demo map is only a
   // fallback for the fixture path.
   const covers = await contentCovers(items);
+  const streams = await videosForContent(items);
   const categories = [
     ...new Set(
       (allItemsRaw.length ? allItemsRaw : demo ? demoVideos : [])
@@ -66,6 +70,10 @@ export default async function VideosPage({
       footerCta={contentFooterCta}
     >
       {usingDemo ? <DemoBanner /> : null}
+      <VideoStructuredData
+        canonicalPath="/media/videos"
+        videos={Object.values(streams)}
+      />
       <main id="main-content" className={styles.page}>
         <header className={`${styles.hero} shell-container`}>
           <p className={styles.kicker}>
@@ -96,14 +104,14 @@ export default async function VideosPage({
                 aria-label="Filter videos by category"
               >
                 <Link
-                  href="/videos"
+                  href="/media/videos"
                   aria-current={!filters.category ? "page" : undefined}
                 >
                   All
                 </Link>
                 {categories.map((category) => (
                   <Link
-                    href={`/videos?category=${encodeURIComponent(category)}`}
+                    href={`/media/videos?category=${encodeURIComponent(category)}`}
                     aria-current={
                       filters.category === category ? "page" : undefined
                     }
@@ -124,10 +132,13 @@ export default async function VideosPage({
                   covers[item.id] ??
                   (usingDemo && item.slug ? demoCovers[item.slug] : undefined);
                 const href = item.external_url || item.embed_url;
+                const stream = streams[item.id];
                 return (
                   <li className={styles.videoCard} key={item.id}>
                     <div className={styles.videoMedia}>
-                      {cover ? (
+                      {stream ? (
+                        <VideoPlayer video={stream} />
+                      ) : cover ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={cover} alt="" width={1600} height={1000} />
                       ) : (
@@ -138,9 +149,11 @@ export default async function VideosPage({
                           JK
                         </div>
                       )}
-                      <span className={styles.play} aria-hidden="true">
-                        ▶
-                      </span>
+                      {!stream ? (
+                        <span className={styles.play} aria-hidden="true">
+                          ▶
+                        </span>
+                      ) : null}
                       <span className={styles.index}>
                         {String(index + 1).padStart(2, "0")}
                       </span>
@@ -149,7 +162,11 @@ export default async function VideosPage({
                       <p>{item.category || "Video"}</p>
                       <h3>{item.title}</h3>
                       {item.summary ? <span>{item.summary}</span> : null}
-                      {href ? (
+                      {stream ? (
+                        <span className={styles.pendingSource}>
+                          Bunny adaptive stream
+                        </span>
+                      ) : href ? (
                         <a
                           href={href}
                           rel="noopener noreferrer"
