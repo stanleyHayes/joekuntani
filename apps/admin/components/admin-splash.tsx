@@ -26,7 +26,12 @@ export function AdminSplash({ overlay = false }: { overlay?: boolean }) {
           <span className={styles.plateIndex} aria-hidden="true">
             01
           </span>
-          <BrandMark className={styles.mark} />
+          <div className={styles.logoFrame}>
+            <BrandMark className={styles.mark} brandName="" />
+          </div>
+          <span className={styles.plateLabel} aria-hidden="true">
+            Artist operations
+          </span>
           <span className={styles.corner} aria-hidden="true" />
         </div>
 

@@ -150,7 +150,13 @@ func (repository *MongoRepository) Update(ctx context.Context, item Item, audit 
 		if item.Slug != "" {
 			filter["slug"] = item.Slug
 		}
-		result, err := repository.database.Collection(collections[item.Kind]).UpdateOne(tx, filter, bson.M{"$set": toBSON(item, false)})
+		update := bson.M{"$set": toBSON(item, false)}
+		// `$set` can add a field but never remove one, so detaching a video
+		// needs an explicit unset or the old link survives the save.
+		if (item.Kind == Video || item.Kind == Press) && item.VideoAssetID == "" {
+			update["$unset"] = bson.M{"video_asset_id": ""}
+		}
+		result, err := repository.database.Collection(collections[item.Kind]).UpdateOne(tx, filter, update)
 		if err != nil {
 			return mongoError(err)
 		}
@@ -189,6 +195,19 @@ func (repository *MongoRepository) audit(ctx context.Context, kind Kind, event A
 	_, err = repository.database.Collection("audit_logs").InsertOne(ctx, bson.M{"public_id": event.PublicID, "actor_id": actor, "action": event.Action, "entity_type": string(kind), "entity_id": event.EntityID, "metadata": bson.M{}, "created_at": event.CreatedAt})
 	return err
 }
+
+// setVideoAsset writes the link only when there is one.
+//
+// The stored value is validated as a UUID, so "no video" has to be the field's
+// absence — writing an empty string fails the collection validator and the
+// whole save comes back as a 500 with nothing to act on. Every video and press
+// record without a video attached hit this.
+func setVideoAsset(d bson.M, assetID string) {
+	if assetID != "" {
+		d["video_asset_id"] = assetID
+	}
+}
+
 func toBSON(item Item, identity bool) bson.M {
 	d := bson.M{"title": item.Title, "summary": item.Summary, "tags": item.Tags, "featured": item.Featured, "gallery_asset_ids": item.GalleryAssetIDs, "seo": item.SEO, "status": item.Status, "approved": item.Approved, "revision": item.Revision, "publish_at": item.PublishAt, "unpublish_at": item.UnpublishAt, "published_at": item.PublishedAt, "updated_at": item.UpdatedAt}
 	// Every kind, not one: blocks are a property of an editorial record, and
@@ -200,9 +219,11 @@ func toBSON(item Item, identity bool) bson.M {
 	case Portfolio:
 		d["body"], d["category"], d["results"] = item.Body, item.Category, item.Results
 	case Video:
-		d["body"], d["category"], d["external_url"], d["embed_url"], d["video_asset_id"] = item.Body, item.Category, item.ExternalURL, item.EmbedURL, item.VideoAssetID
+		d["body"], d["category"], d["external_url"], d["embed_url"] = item.Body, item.Category, item.ExternalURL, item.EmbedURL
+		setVideoAsset(d, item.VideoAssetID)
 	case Press:
-		d["body"], d["category"], d["external_url"], d["video_asset_id"], d["outlet"] = item.Body, item.Category, item.ExternalURL, item.VideoAssetID, item.Outlet
+		d["body"], d["category"], d["external_url"], d["outlet"] = item.Body, item.Category, item.ExternalURL, item.Outlet
+		setVideoAsset(d, item.VideoAssetID)
 	case Testimonial:
 		d["body"], d["person_name"], d["person_title"], d["organization"] = item.Body, item.PersonName, item.PersonTitle, item.Organization
 	}
