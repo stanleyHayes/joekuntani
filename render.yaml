@@ -15,7 +15,18 @@ services:
     plan: starter
     region: oregon
     rootDir: apps/api
-    buildCommand: go build -o joe-api ./cmd/api
+    # Both binaries: the migration runner has to ship alongside the API or
+    # preDeployCommand has nothing to invoke.
+    buildCommand: go build -o joe-api ./cmd/api && go build -o joe-mongochange ./cmd/mongochange
+    # Schema changes are applied here, before the new build takes traffic.
+    # Without this they were never applied at all: nothing else runs them, and
+    # the API does not apply them at boot. Production silently drifted four
+    # changes behind its code, and because the content validators are closed
+    # (`additionalProperties: false`) every save of a field the database had
+    # not been told about was rejected — the whole CMS write path returned 500.
+    # A failure here aborts the deploy rather than promoting a build the
+    # database cannot serve.
+    preDeployCommand: ./joe-mongochange
     startCommand: ./joe-api
     healthCheckPath: /health/live
     autoDeploy: true
