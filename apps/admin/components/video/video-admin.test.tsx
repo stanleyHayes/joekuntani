@@ -25,10 +25,7 @@ const tusState = vi.hoisted(() => ({
 }));
 vi.mock("tus-js-client", () => ({
   Upload: class {
-    constructor(
-      _file: File,
-      options: NonNullable<typeof tusState.options>,
-    ) {
+    constructor(_file: File, options: NonNullable<typeof tusState.options>) {
       tusState.options = options;
     }
     async findPreviousUploads() {
@@ -151,17 +148,42 @@ it("collapses duplicate provider rows by stable video id", () => {
 it("renders distinct processing states and enables playback only when ready", async () => {
   const items: VideoItem[] = [
     base,
-    { ...base, id: "processing", slug: "processing", title: "Processing", status: "processing", playback: undefined },
-    { ...base, id: "uploading", slug: "uploading", title: "Uploading", status: "uploading", playback: undefined },
-    { ...base, id: "failed", slug: "failed", title: "Failed", status: "failed", failure_reason: "provider processing failed", thumbnail_url: "", bytes: 2 * 1024 * 1024, playback: undefined },
+    {
+      ...base,
+      id: "processing",
+      slug: "processing",
+      title: "Processing",
+      status: "processing",
+      playback: undefined,
+    },
+    {
+      ...base,
+      id: "uploading",
+      slug: "uploading",
+      title: "Uploading",
+      status: "uploading",
+      playback: undefined,
+    },
+    {
+      ...base,
+      id: "failed",
+      slug: "failed",
+      title: "Failed",
+      status: "failed",
+      failure_reason: "provider processing failed",
+      thumbnail_url: "",
+      bytes: 2 * 1024 * 1024,
+      playback: undefined,
+    },
   ];
   vi.stubGlobal(
     "fetch",
-    vi.fn(async () =>
-      new Response(JSON.stringify({ items }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }),
+    vi.fn(
+      async () =>
+        new Response(JSON.stringify({ items }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
     ),
   );
   render(<VideoAdmin />);
@@ -181,38 +203,51 @@ it("renders distinct processing states and enables playback only when ready", as
 });
 
 it("creates a resumable upload, reports progress and synchronizes processing", async () => {
-  const uploading = { ...base, status: "uploading" as const, playback: undefined };
-  const processing = { ...base, status: "processing" as const, playback: undefined, revision: 3 };
-  const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = String(input);
-    if (!init?.method || init.method === "GET") {
-      return new Response(JSON.stringify({ items: [] }));
-    }
-    if (url.endsWith("/uploads")) {
-      return new Response(
-        JSON.stringify({
-          item: uploading,
-          upload: {
-            endpoint: "https://video.example/tusupload",
-            signature: "short-lived-signature",
-            expiration_time: 1234,
-            library_id: "42",
-            video_id: "video-guid",
-            filename: "live.mp4",
-            mime_type: "video/mp4",
-          },
-        }),
-        { status: 201 },
-      );
-    }
-    if (url.endsWith("/sync")) {
-      return new Response(JSON.stringify(processing));
-    }
-    return new Response(null, { status: 500 });
-  });
+  const uploading = {
+    ...base,
+    status: "uploading" as const,
+    playback: undefined,
+  };
+  const processing = {
+    ...base,
+    status: "processing" as const,
+    playback: undefined,
+    revision: 3,
+  };
+  const fetcher = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (!init?.method || init.method === "GET") {
+        return new Response(JSON.stringify({ items: [] }));
+      }
+      if (url.endsWith("/uploads")) {
+        return new Response(
+          JSON.stringify({
+            item: uploading,
+            upload: {
+              endpoint: "https://video.example/tusupload",
+              signature: "short-lived-signature",
+              expiration_time: 1234,
+              library_id: "42",
+              video_id: "video-guid",
+              filename: "live.mp4",
+              mime_type: "video/mp4",
+            },
+          }),
+          { status: 201 },
+        );
+      }
+      if (url.endsWith("/sync")) {
+        return new Response(JSON.stringify(processing));
+      }
+      return new Response(null, { status: 500 });
+    },
+  );
   vi.stubGlobal("fetch", fetcher);
   render(<VideoAdmin />);
-  await screen.findByText("No videos yet. Upload the first Bunny Stream asset above.");
+  await screen.findByText(
+    "No videos yet. Upload the first Bunny Stream asset above.",
+  );
   fireEvent.change(screen.getByLabelText("Title"), {
     target: { value: "Live set" },
   });
@@ -224,10 +259,19 @@ it("creates a resumable upload, reports progress and synchronizes processing", a
       files: [new File(["video"], "live.mp4", { type: "video/mp4" })],
     },
   });
-  fireEvent.submit(screen.getByRole("button", { name: "Start resumable upload" }).closest("form")!);
+  expect(screen.getByText("live.mp4")).toBeVisible();
+  expect(screen.getByText("Ready to upload")).toBeVisible();
+  expect(screen.getByText("Replace")).toBeVisible();
+  fireEvent.submit(
+    screen
+      .getByRole("button", { name: "Start resumable upload" })
+      .closest("form")!,
+  );
 
   expect(
-    await screen.findByText("Upload complete. Bunny Stream is processing the video."),
+    await screen.findByText(
+      "Upload complete. Bunny Stream is processing the video.",
+    ),
   ).toBeVisible();
   expect(await screen.findByDisplayValue("Live set")).toBeVisible();
   expect(fetcher).toHaveBeenCalledWith(
@@ -242,31 +286,33 @@ it("creates a resumable upload, reports progress and synchronizes processing", a
 
 it("edits metadata, synchronizes and publishes without replacing the asset", async () => {
   let current = base;
-  const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = String(input);
-    if (!init?.method || init.method === "GET") {
-      return new Response(JSON.stringify({ items: [current] }));
-    }
-    if (url.endsWith("/sync")) {
-      current = { ...current, revision: current.revision + 1 };
-      return new Response(JSON.stringify(current));
-    }
-    if (url.endsWith("/publication")) {
-      current = {
-        ...current,
-        is_published: true,
-        published_at: "2026-08-10T01:00:00Z",
-        revision: current.revision + 1,
-      };
-      return new Response(JSON.stringify(current));
-    }
-    if (init.method === "PATCH") {
-      const patch = JSON.parse(String(init.body)) as Partial<VideoItem>;
-      current = { ...current, ...patch, revision: current.revision + 1 };
-      return new Response(JSON.stringify(current));
-    }
-    return new Response(null, { status: 500 });
-  });
+  const fetcher = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (!init?.method || init.method === "GET") {
+        return new Response(JSON.stringify({ items: [current] }));
+      }
+      if (url.endsWith("/sync")) {
+        current = { ...current, revision: current.revision + 1 };
+        return new Response(JSON.stringify(current));
+      }
+      if (url.endsWith("/publication")) {
+        current = {
+          ...current,
+          is_published: true,
+          published_at: "2026-08-10T01:00:00Z",
+          revision: current.revision + 1,
+        };
+        return new Response(JSON.stringify(current));
+      }
+      if (init.method === "PATCH") {
+        const patch = JSON.parse(String(init.body)) as Partial<VideoItem>;
+        current = { ...current, ...patch, revision: current.revision + 1 };
+        return new Response(JSON.stringify(current));
+      }
+      return new Response(null, { status: 500 });
+    },
+  );
   vi.stubGlobal("fetch", fetcher);
   render(<VideoAdmin />);
 
@@ -287,14 +333,24 @@ it("edits metadata, synchronizes and publishes without replacing the asset", asy
   fireEvent.click(screen.getByRole("button", { name: "Save metadata" }));
   expect(await screen.findByText("Video metadata saved.")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Check processing" }));
-  await waitFor(() => expect(fetcher.mock.calls.some(([url]) => String(url).endsWith("/sync"))).toBe(true));
+  await waitFor(() =>
+    expect(
+      fetcher.mock.calls.some(([url]) => String(url).endsWith("/sync")),
+    ).toBe(true),
+  );
   const publish = screen.getByRole("button", { name: "Publish" });
   await waitFor(() => expect(publish).toBeEnabled());
   fireEvent.click(publish);
-  await waitFor(() => expect(screen.getByRole("button", { name: "Unpublish" })).toBeVisible());
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Unpublish" })).toBeVisible(),
+  );
   expect(screen.getByDisplayValue("live, comedy")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Reload" }));
-  await waitFor(() => expect(fetcher.mock.calls.filter(([, init]) => !init?.method).length).toBeGreaterThan(1));
+  await waitFor(() =>
+    expect(
+      fetcher.mock.calls.filter(([, init]) => !init?.method).length,
+    ).toBeGreaterThan(1),
+  );
 });
 
 it("shows a pending indicator and disables destructive controls while deleting", async () => {
@@ -315,9 +371,7 @@ it("shows a pending indicator and disables destructive controls while deleting",
 
   const deleteButton = await screen.findByRole("button", { name: "Delete" });
   fireEvent.click(deleteButton);
-  expect(
-    await screen.findByRole("status", { name: "Deleting" }),
-  ).toBeVisible();
+  expect(await screen.findByRole("status", { name: "Deleting" })).toBeVisible();
   expect(deleteButton).toBeDisabled();
   expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
   finishDelete(new Response(null, { status: 204 }));
@@ -346,7 +400,9 @@ it("handles an empty response and reports a failed manual reload", async () => {
   vi.stubGlobal("fetch", fetcher);
   render(<VideoAdmin />);
   expect(
-    await screen.findByText("No videos yet. Upload the first Bunny Stream asset above."),
+    await screen.findByText(
+      "No videos yet. Upload the first Bunny Stream asset above.",
+    ),
   ).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Reload" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(

@@ -117,6 +117,107 @@
 .file {
   grid-column: 1 / -1;
 }
+.file {
+  display: grid;
+  gap: 0.45rem;
+}
+.fileHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+.fileHeading > span:last-child {
+  color: var(--ink-soft);
+  font-size: 0.67rem;
+  font-weight: 700;
+}
+.fileHeading > span[data-selected="true"] {
+  color: var(--feedback-success, #4ade80);
+}
+.filePicker {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 5.25rem;
+  padding: 0.9rem 1rem;
+  overflow: hidden;
+  border: 1px dashed color-mix(in srgb, var(--ink) 25%, transparent);
+  border-radius: var(--radius-control, 0.55rem);
+  background: color-mix(in srgb, var(--surface-canvas) 96%, var(--brand-j) 4%);
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 140ms ease;
+}
+.filePicker[data-selected="true"] {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--brand-j) 65%, transparent);
+  background: color-mix(in srgb, var(--surface-canvas) 93%, var(--brand-j) 7%);
+}
+.filePicker[data-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+.filePicker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.filePicker:focus-within {
+  border-color: var(--focus, var(--brand-k));
+  outline: 3px solid
+    color-mix(in srgb, var(--focus, var(--brand-k)) 25%, transparent);
+  outline-offset: 2px;
+}
+.fileIcon {
+  display: grid;
+  width: 2.8rem;
+  height: 2.8rem;
+  place-items: center;
+  border-radius: calc(var(--radius-control, 0.55rem) - 0.1rem);
+  background: color-mix(in srgb, var(--brand-j) 18%, transparent);
+  color: var(--brand-j);
+}
+.fileCopy {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+.fileCopy strong {
+  overflow: hidden;
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fileCopy small {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fileAction {
+  min-width: 5rem;
+  padding: 0.58rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 17%, transparent);
+  border-radius: var(--radius-control, 0.55rem);
+  background: var(--surface);
+  font-size: 0.72rem;
+  font-weight: 850;
+  text-align: center;
+}
 .progress {
   height: 0.45rem;
   overflow: hidden;
@@ -159,6 +260,19 @@
 .actions button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+@media (hover: hover) and (pointer: fine) {
+  .filePicker:not([data-disabled="true"]):hover {
+    border-color: var(--brand-j);
+    background: color-mix(
+      in srgb,
+      var(--surface-canvas) 91%,
+      var(--brand-j) 9%
+    );
+  }
+  .filePicker:not([data-disabled="true"]):active {
+    transform: scale(0.995);
+  }
 }
 .libraryHeading {
   display: flex;
@@ -273,12 +387,20 @@
   .inlineFields {
     grid-template-columns: 1fr;
   }
+  .filePicker {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .fileAction {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
   .actions button {
     flex: 1 1 45%;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .progress span {
+  .progress span,
+  .filePicker {
     transition: none;
   }
 }

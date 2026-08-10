@@ -389,15 +389,44 @@ export function VideoAdmin() {
               }
             />
           </label>
-          <label className={styles.file}>
-            Video file
-            <input
-              required
-              accept="video/mp4,video/webm,video/quicktime,video/x-matroska,.mp4,.webm,.mov,.mkv"
-              type="file"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-            />
-          </label>
+          <div className={styles.file}>
+            <div className={styles.fileHeading}>
+              <span id="video-file-label">Video file</span>
+              <span data-selected={file ? "true" : "false"}>
+                {file ? "Ready to upload" : "Required"}
+              </span>
+            </div>
+            <label
+              className={styles.filePicker}
+              data-disabled={pending ? "true" : "false"}
+              data-selected={file ? "true" : "false"}
+              htmlFor="video-file"
+            >
+              <input
+                required
+                accept="video/mp4,video/webm,video/quicktime,video/x-matroska,.mp4,.webm,.mov,.mkv"
+                aria-labelledby="video-file-label"
+                disabled={Boolean(pending)}
+                id="video-file"
+                type="file"
+                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              />
+              <span className={styles.fileIcon} aria-hidden="true">
+                <UploadSimple size={24} weight="bold" />
+              </span>
+              <span className={styles.fileCopy}>
+                <strong>{file ? file.name : "Select a video file"}</strong>
+                <small>
+                  {file
+                    ? `${formatBytes(file.size)} · ${file.type || "Video file"}`
+                    : "MP4, WebM, MOV or MKV"}
+                </small>
+              </span>
+              <span className={styles.fileAction} aria-hidden="true">
+                {file ? "Replace" : "Browse"}
+              </span>
+            </label>
+          </div>
         </div>
         {progress !== null ? (
           <div
