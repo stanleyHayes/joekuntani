@@ -120,3 +120,38 @@
     flex: 1 1 auto;
   }
 }
+
+/* Sits with the buttons rather than below them: it is a setting for the
+   control beside it, not a field of its own. */
+.voice select {
+  min-height: 2.4rem;
+  max-width: 12rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  border-radius: 999px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.voice select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* The select is self-describing on screen; the name is for a screen reader,
+   which otherwise meets an unlabelled combobox. Module-scoped because the
+   console has no global utility for this. */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

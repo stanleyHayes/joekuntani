@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { AdminPageGuide } from "./page-guide";
@@ -293,4 +293,56 @@ it("reads a little under natural pace", async () => {
   );
   expect(spoken[0].rate).toBeLessThan(1);
   expect(spoken[0].rate).toBeGreaterThan(0.85);
+});
+
+// The scored pick is a guess until somebody hears it, and what is installed
+// varies enormously between machines — so the choice has to be reachable.
+it("offers a voice picker when there is more than one to choose from", async () => {
+  render(<AdminPageGuide title="Media" />);
+  const picker = await screen.findByRole("combobox", {
+    name: /Reading voice/i,
+  });
+  const options = within(picker)
+    .getAllByRole("option")
+    .map((o) => o.textContent);
+  expect(options[0]).toBe("Best available");
+  expect(options).toContain("Samantha");
+  // Non-English voices are never offered; they read English as gibberish.
+  expect(options).not.toContain("Amélie");
+});
+
+it("hides the picker when the system offers no real choice", async () => {
+  voices = [{ name: "Samantha", lang: "en-US" }];
+  render(<AdminPageGuide title="Media" />);
+  await screen.findByRole("button", { name: /read this aloud/i });
+  expect(screen.queryByRole("combobox", { name: /Reading voice/i })).toBeNull();
+});
+
+it("reads in the chosen voice and remembers it", async () => {
+  const first = render(<AdminPageGuide title="Media" />);
+  fireEvent.change(
+    await screen.findByRole("combobox", { name: /Reading voice/i }),
+    { target: { value: "Samantha" } },
+  );
+  fireEvent.click(screen.getByRole("button", { name: /read this aloud/i }));
+  expect(spoken[0].voice?.name).toBe("Samantha");
+
+  first.unmount();
+  spoken = [];
+  render(<AdminPageGuide title="Media" />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: /read this aloud/i }),
+  );
+  expect(spoken[0].voice?.name).toBe("Samantha");
+});
+
+// A voice can disappear between visits — a language pack removed, a different
+// machine. The guide must fall back rather than read in none at all.
+it("falls back to the best voice when the chosen one is gone", async () => {
+  localStorage.setItem("jk.admin.guide.voice", "A Voice That Left");
+  render(<AdminPageGuide title="Media" />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: /read this aloud/i }),
+  );
+  expect(spoken[0].voice?.name).toBe("Google UK English Female");
 });

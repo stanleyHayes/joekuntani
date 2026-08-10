@@ -84,6 +84,73 @@ function bestVoice(): SpeechSynthesisVoice | null {
   return best;
 }
 
+const VOICE_KEY = "jk.admin.guide.voice";
+
+/**
+ * The English voices installed, as a stable array.
+ *
+ * `getVoices()` builds a new array on every call, which a React store cannot
+ * subscribe to — returning it directly re-renders forever. The list is cached
+ * and only replaced when the names actually change.
+ */
+let cachedVoices: SpeechSynthesisVoice[] = [];
+let cachedKey = "";
+
+function englishVoices(): SpeechSynthesisVoice[] {
+  if (!speechAvailable()) return cachedVoices;
+  const all = window.speechSynthesis
+    .getVoices()
+    .filter((voice) => voice.lang?.toLowerCase().startsWith("en"));
+  const key = all.map((voice) => `${voice.name}:${voice.lang}`).join("|");
+  if (key !== cachedKey) {
+    cachedKey = key;
+    cachedVoices = all;
+  }
+  return cachedVoices;
+}
+
+/** Chrome fills the list asynchronously and announces it with this event. */
+function subscribeVoices(listener: () => void) {
+  if (!speechAvailable()) return () => {};
+  const synthesis = window.speechSynthesis;
+  synthesis.addEventListener?.("voiceschanged", listener);
+  return () => synthesis.removeEventListener?.("voiceschanged", listener);
+}
+
+const noVoices: SpeechSynthesisVoice[] = [];
+const serverVoices = () => noVoices;
+
+const chosenVoiceListeners = new Set<() => void>();
+
+function subscribeChosenVoice(listener: () => void) {
+  chosenVoiceListeners.add(listener);
+  window.addEventListener("storage", listener);
+  return () => {
+    chosenVoiceListeners.delete(listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
+function chosenVoiceSnapshot() {
+  try {
+    return localStorage.getItem(VOICE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+const noChoice = () => "";
+
+function setChosenVoice(name: string) {
+  try {
+    if (name) localStorage.setItem(VOICE_KEY, name);
+    else localStorage.removeItem(VOICE_KEY);
+  } catch {
+    /* private mode: the choice just does not persist */
+  }
+  for (const listener of [...chosenVoiceListeners]) listener();
+}
+
 /** Whether the browser can speak is fixed for the life of the page. */
 const subscribeNothing = () => () => {};
 
@@ -154,6 +221,16 @@ export function AdminPageGuide({ title }: { title: string }) {
     speechAvailable,
     offOnServer,
   );
+  const voices = useSyncExternalStore(
+    subscribeVoices,
+    englishVoices,
+    serverVoices,
+  );
+  const chosenVoice = useSyncExternalStore(
+    subscribeChosenVoice,
+    chosenVoiceSnapshot,
+    noChoice,
+  );
 
   // Each play gets a number. `cancel()` fires error events on whatever was
   // already queued, and those land after the new run has set itself speaking —
@@ -194,7 +271,9 @@ export function AdminPageGuide({ title }: { title: string }) {
 
     const run = runRef.current + 1;
     runRef.current = run;
-    const voice = bestVoice();
+    // A chosen voice wins; the scored pick is only the starting point.
+    const voice =
+      voices.find((candidate) => candidate.name === chosenVoice) ?? bestVoice();
 
     sentences.forEach((sentence, index) => {
       const utterance = new SpeechSynthesisUtterance(sentence);
@@ -220,7 +299,7 @@ export function AdminPageGuide({ title }: { title: string }) {
     });
 
     setSpeaking(true);
-  }, [guide, title]);
+  }, [guide, title, voices, chosenVoice]);
 
   const toggle = useCallback(() => setGuideOpen(!open), [open]);
 
@@ -254,6 +333,28 @@ export function AdminPageGuide({ title }: { title: string }) {
             >
               {speaking ? "Stop reading" : "Read this aloud"}
             </button>
+          ) : null}
+          {/* Only worth showing when there is a choice to make. Systems vary
+              enormously in what they install, and the best one here is a guess
+              until someone hears it. */}
+          {canSpeak && voices.length > 1 ? (
+            <label className={styles.voice}>
+              <span className={styles.visuallyHidden}>Reading voice</span>
+              <select
+                value={chosenVoice}
+                onChange={(event) => setChosenVoice(event.target.value)}
+              >
+                <option value="">Best available</option>
+                {voices.map((voice) => (
+                  <option
+                    key={`${voice.name}:${voice.lang}`}
+                    value={voice.name}
+                  >
+                    {voice.name}
+                  </option>
+                ))}
+              </select>
+            </label>
           ) : null}
         </div>
       </div>
