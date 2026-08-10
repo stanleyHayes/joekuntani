@@ -8,9 +8,25 @@ vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
 
 type Utterance = {
   text: string;
+  voice?: { name: string; lang: string };
+  rate?: number;
   onend?: () => void;
   onerror?: () => void;
 };
+
+type Voice = { name: string; lang: string };
+
+/** What a typical machine offers: novelty, legacy and neural side by side. */
+const VOICES: Voice[] = [
+  { name: "Albert", lang: "en-US" },
+  { name: "Zarvox", lang: "en-US" },
+  { name: "Fred", lang: "en-US" },
+  { name: "Samantha", lang: "en-US" },
+  { name: "Google UK English Female", lang: "en-GB" },
+  { name: "Amélie", lang: "fr-CA" },
+];
+
+let voices: Voice[] = VOICES;
 
 let spoken: Utterance[] = [];
 let cancels = 0;
@@ -36,6 +52,7 @@ function installSpeech() {
     configurable: true,
     writable: true,
     value: {
+      getVoices: () => voices,
       speak: (utterance: Utterance) => spoken.push(utterance),
       cancel: () => {
         cancels += 1;
@@ -54,6 +71,7 @@ function removeSpeech() {
 }
 
 beforeEach(() => {
+  voices = VOICES;
   pathname = "/media";
   localStorage.clear();
   installSpeech();
@@ -219,4 +237,60 @@ it("returns to idle when the reading finishes on its own", async () => {
   expect(
     screen.getByRole("button", { name: /read this aloud/i }),
   ).toHaveAttribute("aria-pressed", "false");
+});
+
+// The browser's default is whatever the system nominated years ago, which on
+// most machines is a novelty or first-generation voice. Left unset, the guide
+// read in exactly that voice.
+it("reads with the most natural installed voice, not the default", async () => {
+  render(<AdminPageGuide title="Media" />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: /read this aloud/i }),
+  );
+  expect(spoken[0].voice?.name).toBe("Google UK English Female");
+});
+
+it("never picks a novelty or first-generation voice", async () => {
+  voices = [
+    { name: "Zarvox", lang: "en-US" },
+    { name: "Albert", lang: "en-US" },
+    { name: "Samantha", lang: "en-US" },
+  ];
+  render(<AdminPageGuide title="Media" />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: /read this aloud/i }),
+  );
+  expect(spoken[0].voice?.name).toBe("Samantha");
+});
+
+// A voice reading English with another language's phonetics is worse than a
+// robotic one, so a non-English voice is never chosen.
+it("ignores voices that do not speak English", async () => {
+  voices = [{ name: "Amélie", lang: "fr-CA" }];
+  render(<AdminPageGuide title="Media" />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: /read this aloud/i }),
+  );
+  expect(spoken[0].voice).toBeUndefined();
+});
+
+// Chrome reports an empty list until the voices load; asking too early must
+// fall back to the browser default rather than crash.
+it("still reads when the voice list has not loaded", async () => {
+  voices = [];
+  render(<AdminPageGuide title="Media" />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: /read this aloud/i }),
+  );
+  expect(spoken.length).toBeGreaterThan(0);
+  expect(spoken[0].voice).toBeUndefined();
+});
+
+it("reads a little under natural pace", async () => {
+  render(<AdminPageGuide title="Media" />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: /read this aloud/i }),
+  );
+  expect(spoken[0].rate).toBeLessThan(1);
+  expect(spoken[0].rate).toBeGreaterThan(0.85);
 });

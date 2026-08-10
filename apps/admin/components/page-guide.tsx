@@ -23,6 +23,67 @@ function speechAvailable() {
   );
 }
 
+/**
+ * Names that signal a modern neural engine rather than the legacy formant
+ * synthesiser most systems still default to.
+ */
+const NATURAL = /natural|neural|premium|enhanced|siri|online/i;
+
+/**
+ * Novelty and first-generation voices. Several ship as the system default,
+ * which is why the guide sounded like a robot without anyone choosing one.
+ */
+const ROBOTIC =
+  /albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|fred|kathy|princess|bruce|agnes|victoria|pipe organ/i;
+
+/** Well-regarded system voices, below the neural ones but far above the rest. */
+const DECENT = /samantha|daniel|karen|moira|serena|tessa|google|microsoft/i;
+
+/**
+ * Scores an installed voice. Higher is more natural.
+ *
+ * The browser's own default is whatever the operating system nominated years
+ * ago, so the only way to sound human is to look at what is actually
+ * installed and choose. English only — the guide is written in English, and a
+ * voice reading it with another language's phonetics is worse than robotic.
+ */
+function voiceScore(voice: SpeechSynthesisVoice) {
+  if (!voice.lang?.toLowerCase().startsWith("en")) return -1;
+  let score = 0;
+  const lang = voice.lang.toLowerCase();
+  // Ghana writes and reads British English, so that accent lands closest.
+  if (lang.startsWith("en-gb")) score += 3;
+  else if (lang.startsWith("en-us")) score += 2;
+  else score += 1;
+  if (NATURAL.test(voice.name)) score += 6;
+  else if (DECENT.test(voice.name)) score += 2;
+  if (ROBOTIC.test(voice.name)) score -= 10;
+  return score;
+}
+
+/**
+ * The best installed voice, or null to let the browser decide.
+ *
+ * Read at speak time rather than on mount: Chrome populates the list
+ * asynchronously and reports nothing on first call, so asking early gets an
+ * empty array and a robot.
+ */
+function bestVoice(): SpeechSynthesisVoice | null {
+  if (!speechAvailable()) return null;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  let best: SpeechSynthesisVoice | null = null;
+  let bestScore = 0;
+  for (const voice of voices) {
+    const score = voiceScore(voice);
+    if (score > bestScore) {
+      best = voice;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
 /** Whether the browser can speak is fixed for the life of the page. */
 const subscribeNothing = () => () => {};
 
@@ -133,10 +194,20 @@ export function AdminPageGuide({ title }: { title: string }) {
 
     const run = runRef.current + 1;
     runRef.current = run;
+    const voice = bestVoice();
 
     sentences.forEach((sentence, index) => {
       const utterance = new SpeechSynthesisUtterance(sentence);
-      utterance.rate = 0.98;
+      if (voice) {
+        utterance.voice = voice;
+        // Some engines read the wrong phonetics unless the language is set to
+        // match the voice, not just the voice itself.
+        utterance.lang = voice.lang;
+      }
+      // Marginally under natural pace: instructions are easier to follow read
+      // a little slowly, and the neural voices sound rushed at 1.
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
       utterance.onerror = () => {
         if (runRef.current === run) setSpeaking(false);
       };
