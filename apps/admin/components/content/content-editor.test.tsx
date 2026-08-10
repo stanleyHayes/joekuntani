@@ -317,7 +317,9 @@ it("lets a ready Bunny stream replace the required legacy video URLs", async () 
   const streamSelect = await screen.findByLabelText("Bunny Stream video");
   await waitFor(() => expect(streamSelect).toBeEnabled());
   fireEvent.click(streamSelect);
-  fireEvent.click(screen.getByRole("option", { name: "Accra live set (ready)" }));
+  fireEvent.click(
+    screen.getByRole("option", { name: "Accra live set (ready)" }),
+  );
 
   expect(screen.queryByRole("option", { name: /Still processing/ })).toBeNull();
   expect(screen.getByLabelText("Legacy HTTPS embed URL")).not.toBeRequired();
@@ -377,21 +379,21 @@ it("keeps legacy video fields usable when the Bunny library is unavailable", asy
   expect(screen.getByLabelText("Legacy HTTPS embed URL")).toBeRequired();
 });
 
-it("supports approval revocation, scheduled publishing, and unpublishing", async () => {
+it("publishes without scheduling and supports approval revocation and unpublishing", async () => {
   const revoked = { ...page, approved: false };
-  const scheduled = {
+  const published = {
     ...page,
     approved: true,
-    status: "scheduled" as const,
-    publish_at: "2026-08-06T10:00:00.000Z",
+    status: "published" as const,
+    published_at: "2026-08-06T10:00:00.000Z",
   };
   stubFetch({
     items: [{ ...page, approved: true }],
     responses: [
       json(revoked),
       json({ ...revoked, approved: true }),
-      json(scheduled),
-      json({ ...scheduled, status: "unpublished" as const }),
+      json(published),
+      json({ ...published, status: "unpublished" as const }),
     ],
   });
   render(
@@ -408,29 +410,18 @@ it("supports approval revocation, scheduled publishing, and unpublishing", async
   fireEvent.click(screen.getByRole("button", { name: "Approve" }));
   expect(await screen.findByText("Content approved.")).toBeVisible();
 
-  // The pickers stay behind the disclosure until a schedule is actually wanted.
+  // Saving and publishing is immediate; no date-picker detour is offered.
   expect(screen.queryByRole("button", { name: "Publish at" })).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
-  fireEvent.click(screen.getByRole("button", { name: "Publish at" }));
-  const publishDialog = screen.getByRole("dialog", { name: "Publish at" });
-  fireEvent.change(within(publishDialog).getByLabelText("Hour"), {
-    target: { value: "10" },
-  });
-  fireEvent.change(within(publishDialog).getByLabelText("Minute"), {
-    target: { value: "0" },
-  });
-  fireEvent.click(
-    within(publishDialog)
-      .getAllByRole("button", { name: "6" })
-      .find((button) => button.dataset.inMonth === "true")!,
-  );
-  fireEvent.click(screen.getByRole("button", { name: "Confirm schedule" }));
+  expect(screen.queryByRole("button", { name: "Schedule" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Publish now" }));
   expect(
     await screen.findByText(
-      /Publication scheduled\. Public cache refresh requested/,
+      /Content published\. Public cache refresh requested/,
     ),
   ).toBeVisible();
-  expect(screen.getByText(/Goes live/)).toBeVisible();
+  expect(
+    screen.getByText("Published", { selector: "[data-stage]" }),
+  ).toBeVisible();
 
   fireEvent.click(screen.getByRole("button", { name: "Unpublish" }));
   expect(
@@ -453,9 +444,11 @@ it("names the stage and the one thing blocking the next step", async () => {
   );
   expect(await screen.findByText("Draft")).toBeVisible();
   expect(
-    screen.getByText("Add summary and body or page sections before it can be approved."),
+    screen.getByText(
+      "Add summary and body or page sections before it can be approved.",
+    ),
   ).toBeVisible();
-  expect(screen.getByText("No schedule set")).toBeVisible();
+  expect(screen.getByText("Publishes immediately on save")).toBeVisible();
   expect(screen.getByRole("button", { name: "Approve" })).toBeDisabled();
   expect(screen.queryByRole("button", { name: "Publish now" })).toBeNull();
 });
@@ -480,9 +473,43 @@ it("offers only the actions a published item still has", async () => {
   );
   expect(await screen.findByText("Published")).toBeVisible();
   expect(screen.getByText("Live on the public site.")).toBeVisible();
-  expect(screen.getByText(/Goes live/)).toBeVisible();
+  expect(screen.getByText("Publishes immediately on save")).toBeVisible();
   expect(screen.getByRole("button", { name: "Unpublish" })).toBeEnabled();
   expect(screen.queryByRole("button", { name: "Publish now" })).toBeNull();
+});
+
+it("keeps published content live and refreshes the public site on save", async () => {
+  const published = {
+    ...page,
+    approved: true,
+    status: "published" as const,
+    published_at: "2026-09-12T17:00:00.000Z",
+  };
+  const refreshed = vi.fn().mockResolvedValue(undefined);
+  const fetcher = stubFetch({
+    items: [published],
+    responses: [json({ ...published, revision: 2, title: "Live update" })],
+  });
+  render(
+    <ContentEditor
+      kind="page"
+      contentID={page.id}
+      requestCacheInvalidation={refreshed}
+    />,
+  );
+
+  fireEvent.change(await screen.findByLabelText("Title"), {
+    target: { value: "Live update" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save and publish" }));
+
+  expect(
+    await screen.findByText("Saved and published. Public site refreshed."),
+  ).toBeVisible();
+  expect(mutations(fetcher)).toHaveLength(1);
+  expect(refreshed).toHaveBeenCalledWith(
+    expect.objectContaining({ contentID: page.id, reason: "publish" }),
+  );
 });
 
 it("fails closed for preview, mutation, and load errors", async () => {

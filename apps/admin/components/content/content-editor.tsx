@@ -6,7 +6,6 @@ import {
   type FormEvent,
   useCallback,
   useEffect,
-  useId,
   useMemo,
   useState,
 } from "react";
@@ -34,7 +33,6 @@ import {
   mutationHeaders,
   refreshPublishedContent,
   split,
-  toLocal,
   whenLabel,
   type CacheInvalidationRequest,
   type MediaOption,
@@ -66,7 +64,6 @@ export function ContentEditor({
 }) {
   const router = useRouter();
   const creating = contentID === "new";
-  const scheduleID = useId();
   const [role, setRole] = useState<StaffRole | null>(null);
   const [media, setMedia] = useState<MediaOption[]>([]);
   const [selected, setSelected] = useState<ContentItem | null>(null);
@@ -74,9 +71,6 @@ export function ContentEditor({
   const [tags, setTags] = useState("");
   const [gallery, setGallery] = useState("");
   const [results, setResults] = useState<ContentItem["results"]>([]);
-  const [publishAt, setPublishAt] = useState("");
-  const [unpublishAt, setUnpublishAt] = useState("");
-  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [accessError, setAccessError] = useState("");
@@ -100,8 +94,6 @@ export function ContentEditor({
     setTags(item.tags.join(", "));
     setGallery(item.gallery_asset_ids.join("\n"));
     setResults(item.results ?? []);
-    setPublishAt(item.publish_at ? toLocal(item.publish_at) : "");
-    setUnpublishAt(item.unpublish_at ? toLocal(item.unpublish_at) : "");
     setPreview(null);
   }, []);
 
@@ -191,7 +183,7 @@ export function ContentEditor({
           ? "This item changed in another session. Reload the content type before editing again."
           : cause instanceof MutationError && cause.status === 403
             ? "Your role cannot perform this action. Ask an administrator for approval or publication."
-            : "The content change was not accepted. Check the fields, approval, and schedule.",
+            : "The content change was not accepted. Check the fields and approval state.",
       );
       return null;
     } finally {
@@ -221,8 +213,25 @@ export function ContentEditor({
           (entry) => entry.label.trim() || entry.value.trim(),
         ),
       },
-      "Draft saved. Editing a published item always returns it to review.",
+      selected?.status === "published"
+        ? "Saved and published."
+        : "Draft saved for administrator review.",
     );
+    // A live item stays live when it is saved. Refresh the public cache in the
+    // same workflow so the new revision replaces the old one immediately.
+    if (saved?.status === "published") {
+      try {
+        await requestCacheInvalidation(invalidationFor(saved, "publish"));
+        setMessage("Saved and published. Public site refreshed.");
+      } catch (cause) {
+        const reason = cause instanceof Error ? cause.message : "";
+        setError(
+          `Content was published, but the public site is still serving the old version. ${
+            reason || "The cache refresh request failed."
+          } Save again or contact an administrator.`,
+        );
+      }
+    }
     // A created item has an id now, so the URL must stop saying `new`.
     // Reloading it otherwise would file a second copy. The editor stays put:
     // approval and publication are decided here, not back on the list.
@@ -239,7 +248,7 @@ export function ContentEditor({
     );
   }
 
-  async function publication(action: "publish" | "schedule" | "unpublish") {
+  async function publication(action: "publish" | "unpublish") {
     if (!selected) return;
     const saved = await mutate(
       `/api/admin/content/${kind}/${selected.id}/publication`,
@@ -247,14 +256,10 @@ export function ContentEditor({
       {
         action,
         revision: selected.revision,
-        publish_at: publishAt ? new Date(publishAt).toISOString() : "",
-        unpublish_at: unpublishAt ? new Date(unpublishAt).toISOString() : "",
+        publish_at: "",
+        unpublish_at: "",
       },
-      action === "schedule"
-        ? "Publication scheduled."
-        : action === "publish"
-          ? "Content published."
-          : "Content unpublished.",
+      action === "publish" ? "Content published." : "Content unpublished.",
     );
     if (saved) {
       try {
@@ -324,8 +329,8 @@ export function ContentEditor({
               : `New ${kindLabel(kind).toLocaleLowerCase()}`}
           </h2>
           <p className="stage-head__lede">
-            Drafts never appear publicly. Approval and publication are separate
-            controls, and every accepted change is audited.
+            Changes to published content go live as soon as they are saved.
+            Draft approval remains audited before the first publication.
           </p>
         </div>
         <div className="stage-head__actions">
@@ -646,7 +651,9 @@ export function ContentEditor({
 
           <div className={styles.actions}>
             <button className={styles.save} disabled={pending} type="submit">
-              Save draft
+              {selected?.status === "published"
+                ? "Save and publish"
+                : "Save draft"}
             </button>
             <Link className={styles.cancel} href="/content">
               Cancel
@@ -683,17 +690,6 @@ export function ContentEditor({
                     Publish now
                   </button>
                 ) : null}
-                {stage === "approved" || stage === "scheduled" ? (
-                  <button
-                    aria-controls={scheduleID}
-                    aria-expanded={scheduleOpen}
-                    className={styles.ghost}
-                    onClick={() => setScheduleOpen((open) => !open)}
-                    type="button"
-                  >
-                    Schedule
-                  </button>
-                ) : null}
                 {stage === "scheduled" || stage === "published" ? (
                   <button
                     className={styles.caution}
@@ -727,40 +723,6 @@ export function ContentEditor({
               </>
             ) : null}
           </div>
-
-          {/* Kept behind a disclosure: two date pickers permanently on screen
-              said the schedule was the point, when most items are simply
-              published now. */}
-          {selected && scheduleOpen ? (
-            <div className={styles.schedule} id={scheduleID}>
-              <Field
-                label="Publish at"
-                type="datetime-local"
-                value={publishAt}
-                onChange={setPublishAt}
-              />
-              <Field
-                label="Optional unpublish at"
-                type="datetime-local"
-                value={unpublishAt}
-                onChange={setUnpublishAt}
-              />
-              <button
-                className={styles.ghost}
-                disabled={
-                  pending ||
-                  !canApprove ||
-                  !selected.approved ||
-                  !publishAt ||
-                  missingFields.length > 0
-                }
-                onClick={() => void publication("schedule")}
-                type="button"
-              >
-                Confirm schedule
-              </button>
-            </div>
-          ) : null}
         </section>
       </form>
 
@@ -830,21 +792,19 @@ function blockerFor(
     return canApprove
       ? "Complete and ready for approval."
       : "Complete. An administrator has to approve it before it can go live.";
-  if (stage === "scheduled") return "Approved and waiting for its start time.";
+  if (stage === "scheduled")
+    return "Previously scheduled. Save to publish it immediately.";
   if (stage === "published") return "Live on the public site.";
   if (stage === "unpublished")
     return "Taken down. Publish it again when it is ready.";
-  return "Approved. Publish it now or schedule a time.";
+  return "Approved. Save to publish it immediately.";
 }
 
-/** The schedule as a person would say it, not two ISO strings. */
 function scheduleLine(item: ContentItem | null) {
   if (!item) return "Not saved yet";
-  const parts = [
-    item.publish_at ? `Goes live ${whenLabel(item.publish_at)}` : "",
-    item.unpublish_at ? `Comes down ${whenLabel(item.unpublish_at)}` : "",
-  ].filter(Boolean);
-  return parts.length ? parts.join(" · ") : "No schedule set";
+  if (item.status === "published" && item.published_at)
+    return `Published ${whenLabel(item.published_at)}`;
+  return "Publishes immediately on save";
 }
 
 function listOf(parts: string[]) {

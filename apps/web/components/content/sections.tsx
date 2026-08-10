@@ -38,6 +38,7 @@ export function ContentSections({
           section={section}
           index={index}
           resolveImage={resolveImage}
+          variant={variant}
         />
       ))}
     </div>
@@ -48,12 +49,19 @@ function Section({
   section,
   index,
   resolveImage,
+  variant,
 }: {
   section: ContentSection;
   index: number;
   resolveImage?: (assetID: string) => string | undefined;
+  variant: "default" | "about";
 }) {
   const heading = section.heading?.trim();
+  const tone = ["gold", "cyan", "magenta"][index % 3];
+  const sectionAttributes = {
+    "data-section-type": section.type,
+    "data-tone": tone,
+  };
   // Blocks are body content beneath the page's own h1, so they start at h2.
   const Heading = heading ? (
     <h2 className={styles.heading}>{heading}</h2>
@@ -65,14 +73,20 @@ function Section({
       ))}
     </ul>
   ) : null;
+  const HeaderTags = variant === "default" ? Tags : null;
+  const FooterTags = variant === "about" ? Tags : null;
 
   switch (section.type) {
     case "quote":
       return (
-        <blockquote className={`${styles.quote} scroll-reveal-target`}>
-          {Tags}
+        <blockquote
+          className={`${styles.quote} scroll-reveal-target`}
+          {...sectionAttributes}
+        >
+          {HeaderTags}
           {Heading}
           <Markdown className={styles.quoteBody}>{section.body}</Markdown>
+          {FooterTags}
         </blockquote>
       );
 
@@ -80,8 +94,8 @@ function Section({
       const items = section.items?.filter((item) => item.label || item.value);
       if (!items?.length) return null;
       return (
-        <section className={styles.statsBlock}>
-          {Tags}
+        <section className={styles.statsBlock} {...sectionAttributes}>
+          {HeaderTags}
           {Heading}
           <dl className={styles.stats}>
             {items.map((item) => (
@@ -91,6 +105,7 @@ function Section({
               </div>
             ))}
           </dl>
+          {FooterTags}
         </section>
       );
     }
@@ -103,8 +118,8 @@ function Section({
         );
       if (!images.length) return null;
       return (
-        <section className={styles.galleryBlock}>
-          {Tags}
+        <section className={styles.galleryBlock} {...sectionAttributes}>
+          {HeaderTags}
           {Heading}
           <ul
             className={styles.gallery}
@@ -120,6 +135,7 @@ function Section({
           {section.body ? (
             <Markdown className={styles.caption}>{section.body}</Markdown>
           ) : null}
+          {FooterTags}
         </section>
       );
     }
@@ -130,10 +146,11 @@ function Section({
       // column beside the text would leave a hole rather than a layout.
       if (!src) {
         return (
-          <section className={styles.prose}>
-            {Tags}
+          <section className={styles.prose} {...sectionAttributes}>
+            {HeaderTags}
             {Heading}
             <Markdown>{section.body}</Markdown>
+            {FooterTags}
           </section>
         );
       }
@@ -142,11 +159,13 @@ function Section({
           className={styles.proseImage}
           // Alternates sides so consecutive blocks do not march down one edge.
           data-flip={section.flip || index % 2 === 1 ? "true" : "false"}
+          {...sectionAttributes}
         >
           <div className={styles.proseImageCopy}>
-            {Tags}
+            {HeaderTags}
             {Heading}
             <Markdown>{section.body}</Markdown>
+            {FooterTags}
           </div>
           <figure className={styles.proseImageMedia}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -158,10 +177,11 @@ function Section({
 
     default:
       return (
-        <section className={styles.prose}>
-          {Tags}
+        <section className={styles.prose} {...sectionAttributes}>
+          {HeaderTags}
           {Heading}
           <Markdown>{section.body}</Markdown>
+          {FooterTags}
         </section>
       );
   }

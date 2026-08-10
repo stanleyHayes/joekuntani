@@ -43,7 +43,9 @@ it("starts block headings at h2", () => {
 it("renders section tags as block-level topics", () => {
   render(
     <ContentSections
-      sections={[block({ heading: "A unique style", tags: ["comedy", "guitar"] })]}
+      sections={[
+        block({ heading: "A unique style", tags: ["comedy", "guitar"] }),
+      ]}
     />,
   );
   const topics = screen.getByRole("list", { name: "A unique style topics" });
@@ -51,10 +53,36 @@ it("renders section tags as block-level topics", () => {
   expect(topics).toHaveTextContent("guitar");
 });
 
+it("moves About topics below the section body and assigns brand tones", () => {
+  const { container } = render(
+    <ContentSections
+      variant="about"
+      sections={[
+        block({ heading: "Origins", body: "First body", tags: ["life"] }),
+        block({ heading: "The stage", body: "Second body", tags: ["comedy"] }),
+        block({ heading: "The sound", body: "Third body", tags: ["music"] }),
+      ]}
+    />,
+  );
+
+  const sections = container.querySelectorAll("section");
+  expect([...sections].map((section) => section.dataset.tone)).toEqual([
+    "gold",
+    "cyan",
+    "magenta",
+  ]);
+  expect(sections[0].lastElementChild).toHaveAttribute(
+    "aria-label",
+    "Origins topics",
+  );
+});
+
 it("renders a quote as a blockquote rather than prose", () => {
   const { container } = render(
     <ContentSections
-      sections={[block({ type: "quote", body: "He doesn't tell comedy — he plays it." })]}
+      sections={[
+        block({ type: "quote", body: "He doesn't tell comedy — he plays it." }),
+      ]}
     />,
   );
   expect(container.querySelector("blockquote")).toHaveTextContent(
@@ -115,7 +143,9 @@ it("degrades prose_image to prose when the image is missing", () => {
 it("renders prose_image with its picture when the id resolves", () => {
   const { container } = render(
     <ContentSections
-      sections={[block({ type: "prose_image", body: "copy", asset_ids: ["hero"] })]}
+      sections={[
+        block({ type: "prose_image", body: "copy", asset_ids: ["hero"] }),
+      ]}
       resolveImage={image}
     />,
   );

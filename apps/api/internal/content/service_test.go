@@ -229,7 +229,7 @@ func TestLifecycleRequiresIndependentApprovalAndHonoursSchedule(t *testing.T) {
 	}
 }
 
-func TestUpdatePreservesIdentityAndRevokesApproval(t *testing.T) {
+func TestUpdatePreservesIdentityAndKeepsPublishedContentLive(t *testing.T) {
 	domain, _ := domainFixture()
 	item, err := domain.Create(context.Background(), editor, validPage())
 	if err != nil {
@@ -250,7 +250,7 @@ func TestUpdatePreservesIdentityAndRevokesApproval(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if item.PublicID != testID || item.Slug != "about-joe" || item.Approved || item.Status != Draft {
+	if item.PublicID != testID || item.Slug != "about-joe" || !item.Approved || item.Status != Published {
 		t.Fatalf("identity/lifecycle changed incorrectly: %#v", item)
 	}
 }

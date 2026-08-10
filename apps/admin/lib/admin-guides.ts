@@ -104,7 +104,7 @@ const ADMIN_GUIDES: Record<string, AdminGuide> = {
       "Pick the type you are editing, then open a record or create one.",
       "Write the copy, then use the section blocks to lay the page out; each block can be moved up or down.",
       "Preview before you publish — the editor has a preview tab that renders exactly what visitors will see.",
-      "Publishing is two steps: approve the revision, then publish it. Both are recorded in the audit log.",
+      "Approve a new draft once. After it is published, every save updates the public page immediately and remains recorded in the audit log.",
     ],
   },
   "/crm": {
@@ -247,7 +247,6 @@ const ADMIN_GUIDES: Record<string, AdminGuide> = {
 export function adminGuide(pathname: string): AdminGuide | undefined {
   const guide = matchAdminRoute(ADMIN_GUIDES, pathname);
   // matchAdminRoute falls back to the root; only return it on the real route.
-  if (guide === ADMIN_GUIDES["/"] && pathname !== "/")
-    return undefined;
+  if (guide === ADMIN_GUIDES["/"] && pathname !== "/") return undefined;
   return guide;
 }

@@ -117,6 +117,7 @@ func (domain *Domain) Update(ctx context.Context, actor Actor, id string, revisi
 	if err = input.Validate(false); err != nil {
 		return Item{}, err
 	}
+	wasPublished := current.Status == Published && current.Approved
 	current.Title, current.Summary, current.Body, current.Category = input.Title, input.Summary, input.Body, input.Category
 	current.Tags, current.Featured, current.GalleryAssetIDs, current.Results = input.Tags, input.Featured, input.GalleryAssetIDs, input.Results
 	// Blocks are replaced wholesale on save: the editor sends the page's
@@ -127,10 +128,17 @@ func (domain *Domain) Update(ctx context.Context, actor Actor, id string, revisi
 	current.SEO = input.SEO
 	current.UpdatedAt = domain.now().UTC()
 	current.Revision++
-	current.Approved = false
+	current.Approved = wasPublished
 	switch current.Status {
 	case Draft:
-	case Published, Scheduled, Unpublished:
+	case Published:
+		if wasPublished {
+			break
+		}
+		current.Status = Draft
+		current.PublishAt = nil
+		current.UnpublishAt = nil
+	case Scheduled, Unpublished:
 		current.Status = Draft
 		current.PublishAt = nil
 		current.UnpublishAt = nil
