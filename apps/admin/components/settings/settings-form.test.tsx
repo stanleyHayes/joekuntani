@@ -155,3 +155,109 @@ it("shows a safe error when settings cannot load", async () => {
     await screen.findByText("Settings could not be loaded. Try again."),
   ).toBeVisible();
 });
+
+/** Loads settings, then answers the next call with `status`. */
+function stubSettings(status: number, loaded: Record<string, unknown> = admin) {
+  Object.defineProperty(document, "cookie", {
+    configurable: true,
+    value: "jk_admin_csrf=test-csrf",
+  });
+  const fetch = vi
+    .fn()
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify(loaded), { status: 200 }),
+    )
+    .mockResolvedValueOnce(new Response(JSON.stringify(admin), { status }));
+  vi.stubGlobal("fetch", fetch);
+  return fetch;
+}
+
+/** Publishing is only offered once the settings are marked complete. */
+const complete = { ...admin, content_complete: true };
+
+// Settings are the public face of the site. A save that quietly fails while
+// the screen says it succeeded is how a wrong phone number goes live.
+it.each([
+  [409, "Another editor saved changes. Reload before trying again."],
+  [422, "The settings were not accepted. Review every field."],
+])(
+  "reports a %s from saving instead of claiming success",
+  async (status, message) => {
+    stubSettings(status);
+    render(<SettingsForm />);
+    await screen.findByLabelText("Public brand name");
+    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+
+    expect(await screen.findByText(message)).toBeVisible();
+    expect(screen.queryByText("Draft settings saved and audited.")).toBeNull();
+  },
+);
+
+it.each([
+  [409, "The draft changed. Reload before publishing."],
+  [422, "Publishing is blocked until content is complete and valid."],
+])("reports a %s from publishing", async (status, message) => {
+  stubSettings(status, complete);
+  render(<SettingsForm />);
+  await screen.findByLabelText("Public brand name");
+  fireEvent.click(
+    screen.getByRole("button", { name: "Publish approved settings" }),
+  );
+
+  expect(await screen.findByText(message)).toBeVisible();
+  expect(screen.queryByText("Approved settings published.")).toBeNull();
+});
+
+it("says so when the network drops mid-save", async () => {
+  Object.defineProperty(document, "cookie", {
+    configurable: true,
+    value: "jk_admin_csrf=test-csrf",
+  });
+  vi.stubGlobal(
+    "fetch",
+    vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(admin), { status: 200 }),
+      )
+      .mockRejectedValueOnce(new Error("offline")),
+  );
+  render(<SettingsForm />);
+  await screen.findByLabelText("Public brand name");
+  fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+  expect(await screen.findByText("Settings could not be saved.")).toBeVisible();
+});
+
+// An editor without the manage permission can read the settings but must not
+// be offered a publish button that would fail server-side anyway.
+it("withholds publishing from someone who cannot manage settings", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ...admin, can_manage: false }), {
+        status: 200,
+      }),
+    ),
+  );
+  render(<SettingsForm />);
+  await screen.findByLabelText("Public brand name");
+  expect(
+    screen.queryByRole("button", { name: "Publish approved settings" }),
+  ).toBeNull();
+});
+
+// Publishing before the settings are confirmed complete would fail on the
+// server; the button says so by being unavailable rather than by erroring.
+it("keeps publishing unavailable until the settings are marked complete", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify(admin), { status: 200 })),
+  );
+  render(<SettingsForm />);
+  await screen.findByLabelText("Public brand name");
+  expect(
+    screen.getByRole("button", { name: "Publish approved settings" }),
+  ).toBeDisabled();
+});
