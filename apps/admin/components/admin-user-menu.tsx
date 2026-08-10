@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  CaretDown,
+  IdentificationCard,
+  LockKey,
+  MapTrifold,
+  SignOut,
+  SlidersHorizontal,
+  UsersThree,
+} from "@phosphor-icons/react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 import { ROLE_LABELS } from "../lib/admin-nav";
 import styles from "./admin-user-menu.module.css";
@@ -112,22 +121,13 @@ export function AdminUserMenu({ onReplayTour }: AdminUserMenuProps) {
           <span className={styles.name}>{label}</span>
           <span className={styles.role}>{role}</span>
         </span>
-        <svg
+        <CaretDown
           className={styles.chevron}
           data-open={open ? "true" : "false"}
-          viewBox="0 0 24 24"
-          width="14"
-          height="14"
+          size={15}
+          weight="bold"
           aria-hidden="true"
-        >
-          <path
-            d="M6 9l6 6 6-6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-          />
-        </svg>
+        />
       </button>
       {open ? (
         <div className={styles.menu} role="menu" id={menuId}>
@@ -141,24 +141,28 @@ export function AdminUserMenu({ onReplayTour }: AdminUserMenuProps) {
           <div className={styles.items}>
             <MenuLink
               href="/account"
+              icon={<IdentificationCard size={20} weight="duotone" />}
               title="My profile"
               sub="Name and account details"
               onClick={() => setOpen(false)}
             />
             <MenuLink
               href="/account/security"
+              icon={<LockKey size={20} weight="duotone" />}
               title="Security & MFA"
               sub="Password and authenticator"
               onClick={() => setOpen(false)}
             />
             <MenuLink
               href="/account/preferences"
+              icon={<SlidersHorizontal size={20} weight="duotone" />}
               title="Preferences"
               sub="Alerts and workspace density"
               onClick={() => setOpen(false)}
             />
             <MenuLink
               href="/team"
+              icon={<UsersThree size={20} weight="duotone" />}
               title="Users & roles"
               sub="Invite and manage staff"
               onClick={() => setOpen(false)}
@@ -172,18 +176,28 @@ export function AdminUserMenu({ onReplayTour }: AdminUserMenuProps) {
                 onReplayTour?.();
               }}
             >
-              <span className={styles.itemTitle}>Replay tour</span>
-              <span className={styles.itemSub}>Show me around again</span>
+              <MenuItemContent
+                icon={<MapTrifold size={20} weight="duotone" />}
+                title="Replay tour"
+                sub="Show me around again"
+              />
             </button>
           </div>
           <div className={styles.footer}>
             <button
               type="button"
               role="menuitem"
+              aria-label="Sign out"
               className={styles.logout}
               onClick={() => void logout()}
             >
-              Sign out
+              <span className={styles.logoutIcon} aria-hidden="true">
+                <SignOut size={19} weight="bold" />
+              </span>
+              <span className={styles.logoutCopy}>
+                <span className={styles.logoutTitle}>Sign out</span>
+                <span className={styles.logoutSub}>End this admin session</span>
+              </span>
             </button>
           </div>
         </div>
@@ -194,19 +208,42 @@ export function AdminUserMenu({ onReplayTour }: AdminUserMenuProps) {
 
 function MenuLink({
   href,
+  icon,
   title,
   sub,
   onClick,
 }: {
   href: string;
+  icon: ReactNode;
   title: string;
   sub: string;
   onClick: () => void;
 }) {
   return (
     <Link href={href} role="menuitem" className={styles.item} onClick={onClick}>
-      <span className={styles.itemTitle}>{title}</span>
-      <span className={styles.itemSub}>{sub}</span>
+      <MenuItemContent icon={icon} title={title} sub={sub} />
     </Link>
+  );
+}
+
+function MenuItemContent({
+  icon,
+  title,
+  sub,
+}: {
+  icon: ReactNode;
+  title: string;
+  sub: string;
+}) {
+  return (
+    <>
+      <span className={styles.itemIcon} aria-hidden="true">
+        {icon}
+      </span>
+      <span className={styles.itemCopy}>
+        <span className={styles.itemTitle}>{title}</span>
+        <span className={styles.itemSub}>{sub}</span>
+      </span>
+    </>
   );
 }
