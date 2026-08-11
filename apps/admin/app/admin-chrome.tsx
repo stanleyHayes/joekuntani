@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
 import { AdminShell } from "../components/layout/admin-shell";
+import { SessionExpiryBoundary } from "../components/auth/session-expiry-boundary";
 import { adminPageMeta } from "../lib/admin-page-meta";
 
 /**
@@ -32,8 +33,10 @@ export function AdminChrome({ children }: { children: ReactNode }) {
 
   const meta = adminPageMeta(pathname);
   return (
-    <AdminShell title={meta.title} description={meta.description}>
-      {children}
-    </AdminShell>
+    <SessionExpiryBoundary>
+      <AdminShell title={meta.title} description={meta.description}>
+        {children}
+      </AdminShell>
+    </SessionExpiryBoundary>
   );
 }
