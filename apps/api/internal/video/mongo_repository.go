@@ -43,6 +43,32 @@ type videoDocument struct {
 	UpdatedAt         time.Time     `bson:"updated_at"`
 }
 
+type categoryDocument struct {
+	ID           bson.ObjectID `bson:"_id,omitempty"`
+	PublicID     string        `bson:"public_id"`
+	Slug         string        `bson:"slug"`
+	Title        string        `bson:"title"`
+	Description  string        `bson:"description"`
+	ImageAssetID string        `bson:"image_asset_id"`
+	Active       bool          `bson:"active"`
+	SortOrder    int           `bson:"sort_order"`
+	Revision     int64         `bson:"revision"`
+	CreatedBy    bson.ObjectID `bson:"created_by"`
+	CreatedAt    time.Time     `bson:"created_at"`
+	UpdatedAt    time.Time     `bson:"updated_at"`
+}
+
+func categoryDocumentFrom(category Category) (categoryDocument, error) {
+	createdBy, err := bson.ObjectIDFromHex(category.CreatedBy)
+	if err != nil {
+		return categoryDocument{}, ErrInvalid
+	}
+	return categoryDocument{PublicID: category.PublicID, Slug: category.Slug, Title: category.Title, Description: category.Description, ImageAssetID: category.ImageAssetID, Active: category.Active, SortOrder: category.SortOrder, Revision: category.Revision, CreatedBy: createdBy, CreatedAt: category.CreatedAt, UpdatedAt: category.UpdatedAt}, nil
+}
+func (document categoryDocument) category() Category {
+	return Category{ID: document.ID.Hex(), PublicID: document.PublicID, Slug: document.Slug, Title: document.Title, Description: document.Description, ImageAssetID: document.ImageAssetID, Active: document.Active, SortOrder: document.SortOrder, Revision: document.Revision, CreatedBy: document.CreatedBy.Hex(), CreatedAt: document.CreatedAt, UpdatedAt: document.UpdatedAt}
+}
+
 func documentFrom(item Item) (videoDocument, error) {
 	createdBy, err := bson.ObjectIDFromHex(item.CreatedBy)
 	if err != nil {
@@ -138,4 +164,52 @@ func emptyStrings(values []string) []string {
 		return []string{}
 	}
 	return values
+}
+
+func (repository *MongoRepository) CreateCategory(ctx context.Context, category Category) error {
+	document, err := categoryDocumentFrom(category)
+	if err != nil {
+		return err
+	}
+	_, err = repository.database.Collection("video_categories").InsertOne(ctx, document)
+	return mapMongoError(err)
+}
+func (repository *MongoRepository) ListCategories(ctx context.Context) ([]Category, error) {
+	cursor, err := repository.database.Collection("video_categories").Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+	var documents []categoryDocument
+	if err = cursor.All(ctx, &documents); err != nil {
+		return nil, err
+	}
+	result := make([]Category, len(documents))
+	for index, document := range documents {
+		result[index] = document.category()
+	}
+	return result, nil
+}
+func (repository *MongoRepository) GetCategory(ctx context.Context, publicID string) (Category, error) {
+	var document categoryDocument
+	err := repository.database.Collection("video_categories").FindOne(ctx, bson.M{"public_id": publicID}).Decode(&document)
+	if err != nil {
+		return Category{}, mapMongoError(err)
+	}
+	return document.category(), nil
+}
+func (repository *MongoRepository) UpdateCategory(ctx context.Context, category Category, revision int64) (Category, error) {
+	document, err := categoryDocumentFrom(category)
+	if err != nil {
+		return Category{}, err
+	}
+	document.Revision = revision + 1
+	result, err := repository.database.Collection("video_categories").ReplaceOne(ctx, bson.M{"public_id": category.PublicID, "revision": revision}, document)
+	if err != nil {
+		return Category{}, mapMongoError(err)
+	}
+	if result.MatchedCount != 1 {
+		return Category{}, ErrConflict
+	}
+	return document.category(), nil
 }

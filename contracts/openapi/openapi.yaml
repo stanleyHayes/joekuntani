@@ -83,6 +83,63 @@ paths:
         "403": { $ref: "#/components/responses/Problem" }
         "422": { $ref: "#/components/responses/Problem" }
         "503": { $ref: "#/components/responses/Problem" }
+  /api/admin/video-categories:
+    get:
+      operationId: listVideoCategories
+      summary: List reusable video categories
+      tags: [Video]
+      security: [{ staffSession: [] }]
+      responses:
+        "200":
+          description: Video categories
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VideoCategoryList" }
+        "403": { $ref: "#/components/responses/Problem" }
+    post:
+      operationId: createVideoCategory
+      summary: Create a reusable video category
+      tags: [Video]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VideoCategoryInput" }
+      responses:
+        "201":
+          description: Video category created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VideoCategory" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /api/admin/video-categories/{categoryID}:
+    parameters:
+      - name: categoryID
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      operationId: updateVideoCategory
+      summary: Update a reusable video category
+      tags: [Video]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VideoCategoryUpdateInput" }
+      responses:
+        "200":
+          description: Video category updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VideoCategory" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
   /api/admin/videos/{videoID}:
     parameters:
       - name: videoID
@@ -4531,6 +4588,61 @@ components:
     VideoVisibility:
       type: string
       enum: [public, private, unlisted]
+    VideoCategory:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          slug,
+          title,
+          description,
+          image_asset_id,
+          active,
+          sort_order,
+          revision,
+          created_at,
+          updated_at,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 500 }
+        image_asset_id: { type: string, maxLength: 100 }
+        active: { type: boolean }
+        sort_order: { type: integer }
+        revision: { type: integer, format: int64, minimum: 1 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    VideoCategoryList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          { type: array, items: { $ref: "#/components/schemas/VideoCategory" } }
+    VideoCategoryInput:
+      type: object
+      additionalProperties: false
+      required: [title]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 500, default: "" }
+        image_asset_id: { type: string, maxLength: 100, default: "" }
+        active: { type: boolean, default: true }
+        sort_order: { type: integer, default: 0 }
+    VideoCategoryUpdateInput:
+      type: object
+      additionalProperties: false
+      required: [title, revision]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 500, default: "" }
+        image_asset_id: { type: string, maxLength: 100, default: "" }
+        active: { type: boolean }
+        sort_order: { type: integer, default: 0 }
+        revision: { type: integer, format: int64, minimum: 1 }
     VideoStatus:
       type: string
       enum: [uploading, processing, ready, failed, archived]

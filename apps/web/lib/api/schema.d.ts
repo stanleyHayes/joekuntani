@@ -38,6 +38,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/video-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List reusable video categories */
+        get: operations["listVideoCategories"];
+        put?: never;
+        /** Create a reusable video category */
+        post: operations["createVideoCategory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/video-categories/{categoryID}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                categoryID: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a reusable video category */
+        patch: operations["updateVideoCategory"];
+        trace?: never;
+    };
     "/api/admin/videos/{videoID}": {
         parameters: {
             query?: never;
@@ -2775,6 +2812,48 @@ export interface components {
         };
         /** @enum {string} */
         VideoVisibility: "public" | "private" | "unlisted";
+        VideoCategory: {
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            title: string;
+            description: string;
+            image_asset_id: string;
+            active: boolean;
+            sort_order: number;
+            /** Format: int64 */
+            revision: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        VideoCategoryList: {
+            items: components["schemas"]["VideoCategory"][];
+        };
+        VideoCategoryInput: {
+            title: string;
+            /** @default  */
+            description: string;
+            /** @default  */
+            image_asset_id: string;
+            /** @default true */
+            active: boolean;
+            /** @default 0 */
+            sort_order: number;
+        };
+        VideoCategoryUpdateInput: {
+            title: string;
+            /** @default  */
+            description: string;
+            /** @default  */
+            image_asset_id: string;
+            active?: boolean;
+            /** @default 0 */
+            sort_order: number;
+            /** Format: int64 */
+            revision: number;
+        };
         /** @enum {string} */
         VideoStatus: "uploading" | "processing" | "ready" | "failed" | "archived";
         VideoPlayback: {
@@ -3424,6 +3503,83 @@ export interface operations {
             403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
             503: components["responses"]["Problem"];
+        };
+    };
+    listVideoCategories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Video categories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoCategoryList"];
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    createVideoCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VideoCategoryInput"];
+            };
+        };
+        responses: {
+            /** @description Video category created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoCategory"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    updateVideoCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                categoryID: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VideoCategoryUpdateInput"];
+            };
+        };
+        responses: {
+            /** @description Video category updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoCategory"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     deleteVideo: {

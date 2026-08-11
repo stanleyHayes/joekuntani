@@ -135,6 +135,72 @@ func (service *Service) Public(ctx context.Context, publicID string) (Item, Play
 	return item, service.provider.Playback(item.ProviderVideoID), nil
 }
 
+func (service *Service) ListCategories(ctx context.Context, actor Actor) ([]Category, error) {
+	if !actor.CanManage {
+		return nil, ErrForbidden
+	}
+	categories, err := service.repository.ListCategories(ctx)
+	if err != nil {
+		return nil, err
+	}
+	sort.SliceStable(categories, func(i, j int) bool {
+		if categories[i].SortOrder != categories[j].SortOrder {
+			return categories[i].SortOrder < categories[j].SortOrder
+		}
+		return categories[i].Title < categories[j].Title
+	})
+	return categories, nil
+}
+
+func (service *Service) CreateCategory(ctx context.Context, actor Actor, input CategoryInput) (Category, error) {
+	if !actor.CanManage || actor.ID == "" {
+		return Category{}, ErrForbidden
+	}
+	title := strings.TrimSpace(input.Title)
+	if title == "" || len(title) > 100 || len(strings.TrimSpace(input.Description)) > 500 || len(strings.TrimSpace(input.ImageAssetID)) > 100 {
+		return Category{}, ErrInvalid
+	}
+	now := service.now().UTC()
+	active := true
+	if input.Active != nil {
+		active = *input.Active
+	}
+	category := Category{PublicID: newPublicID(), Slug: categorySlug(title), Title: title, Description: strings.TrimSpace(input.Description), ImageAssetID: strings.TrimSpace(input.ImageAssetID), Active: active, SortOrder: input.SortOrder, Revision: 1, CreatedBy: actor.ID, CreatedAt: now, UpdatedAt: now}
+	if category.Slug == "" {
+		return Category{}, ErrInvalid
+	}
+	if err := service.repository.CreateCategory(ctx, category); err != nil {
+		return Category{}, err
+	}
+	return category, nil
+}
+
+func (service *Service) UpdateCategory(ctx context.Context, actor Actor, publicID string, input CategoryInput) (Category, error) {
+	if !actor.CanManage {
+		return Category{}, ErrForbidden
+	}
+	category, err := service.repository.GetCategory(ctx, publicID)
+	if err != nil {
+		return Category{}, err
+	}
+	title := strings.TrimSpace(input.Title)
+	if input.Revision < 1 || title == "" || len(title) > 100 || len(strings.TrimSpace(input.Description)) > 500 || len(strings.TrimSpace(input.ImageAssetID)) > 100 {
+		return Category{}, ErrInvalid
+	}
+	category.Title, category.Description, category.ImageAssetID, category.SortOrder = title, strings.TrimSpace(input.Description), strings.TrimSpace(input.ImageAssetID), input.SortOrder
+	if input.Active != nil {
+		category.Active = *input.Active
+	}
+	category.UpdatedAt = service.now().UTC()
+	return service.repository.UpdateCategory(ctx, category, input.Revision)
+}
+
+func categorySlug(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	value = regexp.MustCompile(`[^a-z0-9]+`).ReplaceAllString(value, "-")
+	return strings.Trim(value, "-")
+}
+
 func (service *Service) Update(ctx context.Context, actor Actor, publicID string, input UpdateInput) (Item, error) {
 	if !actor.CanManage {
 		return Item{}, ErrForbidden

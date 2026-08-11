@@ -27,77 +27,79 @@ type problemResponse struct {
 type ReadinessCheck func(context.Context) error
 
 type Options struct {
-	Logger                   *slog.Logger
-	ReadinessChecks          []ReadinessCheck
-	CapturePanic             func(error)
-	AdminAuth                http.Handler
-	PublicSettings           http.Handler
-	AdminSettingsRead        http.Handler
-	AdminSettingsUpdate      http.Handler
-	AdminSettingsPublish     http.Handler
-	AdminMediaList           http.Handler
-	AdminMediaUpload         http.Handler
-	AdminMediaRetry          http.Handler
-	AdminMediaConfirm        http.Handler
-	AdminMediaUpdate         http.Handler
-	AdminMediaDelete         http.Handler
-	MediaCallback            http.Handler
-	PublicServicesList       http.Handler
-	PublicServicesDetail     http.Handler
-	PublicEnquirySubmit      http.Handler
-	PublicEnquiryChallenge   http.Handler
-	PublicTicketOrderCreate  http.Handler
-	PublicTicketCheckout     http.Handler
-	PublicTicketConfirmation http.Handler
-	PaymentWebhook           http.Handler
-	PublicEvents             http.Handler
-	AdminServicesList        http.Handler
-	AdminServicesCreate      http.Handler
-	AdminServicesOrder       http.Handler
-	AdminServicesUpdate      http.Handler
-	AdminServicesActive      http.Handler
-	AdminServicesRetire      http.Handler
-	PublicContentList        http.Handler
-	PublicContentDetail      http.Handler
-	PublicMediaAsset         http.Handler
-	AdminContentList         http.Handler
-	AdminContentCreate       http.Handler
-	AdminContentPreview      http.Handler
-	AdminContentUpdate       http.Handler
-	AdminContentDelete       http.Handler
-	AdminContentApproval     http.Handler
-	AdminContentPublish      http.Handler
-	AdminVideosList          http.Handler
-	AdminVideosCreateUpload  http.Handler
-	AdminVideosItem          http.Handler
-	AdminVideosPublish       http.Handler
-	AdminVideosSync          http.Handler
-	VideoWebhook             http.Handler
-	PublicVideosList         http.Handler
-	PublicVideoDetail        http.Handler
-	AdminEventsRead          http.Handler
-	AdminEventsWrite         http.Handler
-	AdminCRM                 http.Handler
-	AdminCRMWorkflow         http.Handler
-	AdminCRMProposalDownload http.Handler
-	AdminTicketDeadLetters   http.Handler
-	AdminBookings            http.Handler
-	AdminCampaigns           http.Handler
-	AdminTicketOps           http.Handler
-	AdminExports             http.Handler
-	AdminAudit               http.Handler
-	AdminAnalytics           http.Handler
-	AdminPrivacy             http.Handler
-	AdminSearch              http.Handler
-	AdminCheckin             http.Handler
-	AdminTicketAnalytics     http.Handler
-	PublicAnalyticsTrack     http.Handler
-	PublicNewsletter         http.Handler
-	AdminNewsletter          http.Handler
-	PublicSupport            http.Handler
-	AdminSupport             http.Handler
-	PublicMerch              http.Handler
-	AdminMerch               http.Handler
+	Logger                    *slog.Logger
+	ReadinessChecks           []ReadinessCheck
+	CapturePanic              func(error)
+	AdminAuth                 http.Handler
+	PublicSettings            http.Handler
+	AdminSettingsRead         http.Handler
+	AdminSettingsUpdate       http.Handler
+	AdminSettingsPublish      http.Handler
+	AdminMediaList            http.Handler
+	AdminMediaUpload          http.Handler
+	AdminMediaRetry           http.Handler
+	AdminMediaConfirm         http.Handler
+	AdminMediaUpdate          http.Handler
+	AdminMediaDelete          http.Handler
+	MediaCallback             http.Handler
+	PublicServicesList        http.Handler
+	PublicServicesDetail      http.Handler
+	PublicEnquirySubmit       http.Handler
+	PublicEnquiryChallenge    http.Handler
+	PublicTicketOrderCreate   http.Handler
+	PublicTicketCheckout      http.Handler
+	PublicTicketConfirmation  http.Handler
+	PaymentWebhook            http.Handler
+	PublicEvents              http.Handler
+	AdminServicesList         http.Handler
+	AdminServicesCreate       http.Handler
+	AdminServicesOrder        http.Handler
+	AdminServicesUpdate       http.Handler
+	AdminServicesActive       http.Handler
+	AdminServicesRetire       http.Handler
+	PublicContentList         http.Handler
+	PublicContentDetail       http.Handler
+	PublicMediaAsset          http.Handler
+	AdminContentList          http.Handler
+	AdminContentCreate        http.Handler
+	AdminContentPreview       http.Handler
+	AdminContentUpdate        http.Handler
+	AdminContentDelete        http.Handler
+	AdminContentApproval      http.Handler
+	AdminContentPublish       http.Handler
+	AdminVideosList           http.Handler
+	AdminVideosCreateUpload   http.Handler
+	AdminVideosItem           http.Handler
+	AdminVideosPublish        http.Handler
+	AdminVideosSync           http.Handler
+	AdminVideoCategoriesRead  http.Handler
+	AdminVideoCategoriesWrite http.Handler
+	VideoWebhook              http.Handler
+	PublicVideosList          http.Handler
+	PublicVideoDetail         http.Handler
+	AdminEventsRead           http.Handler
+	AdminEventsWrite          http.Handler
+	AdminCRM                  http.Handler
+	AdminCRMWorkflow          http.Handler
+	AdminCRMProposalDownload  http.Handler
+	AdminTicketDeadLetters    http.Handler
+	AdminBookings             http.Handler
+	AdminCampaigns            http.Handler
+	AdminTicketOps            http.Handler
+	AdminExports              http.Handler
+	AdminAudit                http.Handler
+	AdminAnalytics            http.Handler
+	AdminPrivacy              http.Handler
+	AdminSearch               http.Handler
+	AdminCheckin              http.Handler
+	AdminTicketAnalytics      http.Handler
+	PublicAnalyticsTrack      http.Handler
+	PublicNewsletter          http.Handler
+	AdminNewsletter           http.Handler
+	PublicSupport             http.Handler
+	AdminSupport              http.Handler
+	PublicMerch               http.Handler
+	AdminMerch                http.Handler
 }
 
 func NewHandler(options ...Options) http.Handler {
@@ -242,6 +244,13 @@ func NewHandler(options ...Options) http.Handler {
 	}
 	if configuration.AdminVideosSync != nil {
 		router.Method(http.MethodPost, "/api/admin/videos/{videoID}/sync", configuration.AdminVideosSync)
+	}
+	if configuration.AdminVideoCategoriesRead != nil {
+		router.Method(http.MethodGet, "/api/admin/video-categories", configuration.AdminVideoCategoriesRead)
+	}
+	if configuration.AdminVideoCategoriesWrite != nil {
+		router.Method(http.MethodPost, "/api/admin/video-categories", configuration.AdminVideoCategoriesWrite)
+		router.Method(http.MethodPatch, "/api/admin/video-categories/{categoryID}", configuration.AdminVideoCategoriesWrite)
 	}
 	if configuration.VideoWebhook != nil {
 		router.Method(http.MethodPost, "/api/webhooks/videos/bunny", configuration.VideoWebhook)

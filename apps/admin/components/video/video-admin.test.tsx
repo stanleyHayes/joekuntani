@@ -317,7 +317,7 @@ it("edits metadata, synchronizes and publishes without replacing the asset", asy
   vi.stubGlobal("fetch", fetcher);
   render(<VideoAdmin />);
 
-  const title = await screen.findByDisplayValue("Live set");
+  const title = await screen.findByLabelText("Title for live-set");
   fireEvent.change(title, { target: { value: "Edited title" } });
   fireEvent.change(screen.getByLabelText("Description for live-set"), {
     target: { value: "Edited description" },
@@ -356,16 +356,17 @@ it("edits metadata, synchronizes and publishes without replacing the asset", asy
 
 it("shows a pending indicator and disables destructive controls while deleting", async () => {
   let finishDelete!: (response: Response) => void;
-  const fetcher = vi
-    .fn()
-    .mockResolvedValueOnce(
-      new Response(JSON.stringify({ items: [base] }), {
-        headers: { "Content-Type": "application/json" },
-      }),
-    )
-    .mockImplementationOnce(
-      () => new Promise<Response>((resolve) => (finishDelete = resolve)),
-    );
+  const fetcher = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/video-categories"))
+        return new Response(JSON.stringify({ items: [] }));
+      if (!init?.method)
+        return new Response(JSON.stringify({ items: [base] }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      return new Promise<Response>((resolve) => (finishDelete = resolve));
+    },
+  );
   vi.stubGlobal("fetch", fetcher);
   vi.spyOn(window, "confirm").mockReturnValue(true);
   render(<VideoAdmin />);
@@ -388,7 +389,7 @@ it("keeps the library recoverable when loading fails", async () => {
   );
   render(<VideoAdmin />);
   expect(await screen.findByRole("alert")).toHaveTextContent(
-    "video library could not be loaded",
+    "could not be loaded",
   );
   expect(screen.getByRole("button", { name: "Try again" })).toBeVisible();
 });
@@ -410,10 +411,37 @@ it("handles an empty response and reports a failed manual reload", async () => {
   );
 });
 
-it("selects starter categories and creates a new category inline", async () => {
+it("loads seeded categories and creates a new category inline", async () => {
+  const comedy = {
+    id: "category-comedy",
+    slug: "comedy",
+    title: "Comedy",
+    description: "Stand-up and sketches",
+    image_asset_id: "",
+    active: true,
+    sort_order: 0,
+    revision: 1,
+  };
   vi.stubGlobal(
     "fetch",
-    vi.fn(async () => new Response(JSON.stringify({ items: [] }))),
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (
+        String(input).endsWith("/video-categories") &&
+        init?.method === "POST"
+      )
+        return new Response(
+          JSON.stringify({
+            ...comedy,
+            id: "category-bts",
+            slug: "behind-the-scenes",
+            title: "Behind the scenes",
+          }),
+          { status: 201 },
+        );
+      if (String(input).endsWith("/video-categories"))
+        return new Response(JSON.stringify({ items: [comedy] }));
+      return new Response(JSON.stringify({ items: [] }));
+    }),
   );
   render(<VideoAdmin />);
 
@@ -425,8 +453,8 @@ it("selects starter categories and creates a new category inline", async () => {
   });
   fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
-  expect(category).toHaveValue("Behind the scenes");
   expect(
-    screen.getByRole("option", { name: "Behind the scenes" }),
+    await screen.findByRole("option", { name: "Behind the scenes" }),
   ).toBeVisible();
+  await waitFor(() => expect(category).toHaveValue("Behind the scenes"));
 });

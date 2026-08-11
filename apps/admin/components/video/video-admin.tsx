@@ -25,6 +25,7 @@ import {
   ButtonPending,
   formatAdminTimestamp,
 } from "../admin-feedback";
+import { AssetUploadField } from "../media/asset-picker";
 import styles from "./video-admin.module.css";
 
 export type VideoItem = {
@@ -72,6 +73,25 @@ type Draft = {
   sortOrder: string;
 };
 
+type VideoCategory = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  image_asset_id: string;
+  active: boolean;
+  sort_order: number;
+  revision: number;
+};
+
+type CategoryDraft = {
+  title: string;
+  description: string;
+  image_asset_id: string;
+  active: boolean;
+  sort_order: string;
+};
+
 const emptyDraft: Draft = {
   title: "",
   slug: "",
@@ -82,7 +102,13 @@ const emptyDraft: Draft = {
   sortOrder: "0",
 };
 
-const starterCategories = ["Comedy", "Live performance", "Music", "Interview"];
+const emptyCategoryDraft: CategoryDraft = {
+  title: "",
+  description: "",
+  image_asset_id: "",
+  active: true,
+  sort_order: "0",
+};
 
 export function VideoAdmin() {
   const [items, setItems] = useState<VideoItem[] | null>(null);
@@ -94,6 +120,9 @@ export function VideoAdmin() {
   const [error, setError] = useState("");
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCategory, setNewCategory] = useState("");
+  const [categoryDraft, setCategoryDraft] = useState(emptyCategoryDraft);
+  const [categoryItems, setCategoryItems] = useState<VideoCategory[]>([]);
+  const [categoryPending, setCategoryPending] = useState("");
 
   const load = useCallback(async () => {
     const response = await fetch("/api/admin/videos", {
@@ -120,6 +149,31 @@ export function VideoAdmin() {
       })
       .catch(() => {
         if (active) setError("The video library could not be loaded.");
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/admin/video-categories", {
+      cache: "no-store",
+      credentials: "include",
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error();
+        return (await response.json()) as { items?: VideoCategory[] };
+      })
+      .then((body) => {
+        if (active)
+          setCategoryItems((body.items ?? []).filter(isVideoCategory));
+      })
+      .catch(() => {
+        if (active)
+          setError(
+            (current) => current || "Video categories could not be loaded.",
+          );
       });
     return () => {
       active = false;
@@ -288,23 +342,81 @@ export function VideoAdmin() {
     () =>
       [
         ...new Set([
-          ...starterCategories,
           draft.category,
+          ...categoryItems
+            .filter((category) => category.active)
+            .map((category) => category.title),
           ...(items ?? []).map((item) => item.category),
         ]),
       ]
         .map((category) => category.trim())
         .filter(Boolean)
         .sort((left, right) => left.localeCompare(right)),
-    [draft.category, items],
+    [categoryItems, draft.category, items],
   );
 
-  function createCategory() {
-    const category = newCategory.trim();
-    if (!category) return;
-    setDraft((current) => ({ ...current, category }));
-    setNewCategory("");
-    setAddingCategory(false);
+  async function createCategory() {
+    const title = (categoryDraft.title || newCategory).trim();
+    if (!title || categoryPending) return;
+    setCategoryPending("create");
+    setError("");
+    try {
+      const response = await api("/api/admin/video-categories", {
+        method: "POST",
+        body: JSON.stringify({
+          title,
+          description: categoryDraft.description,
+          image_asset_id: categoryDraft.image_asset_id,
+          active: categoryDraft.active,
+          sort_order: Number(categoryDraft.sort_order) || categoryItems.length,
+        }),
+      });
+      if (!response.ok) throw new Error();
+      const category = (await response.json()) as VideoCategory;
+      setCategoryItems((current) => [...current, category]);
+      setDraft((current) => ({ ...current, category: category.title }));
+      setCategoryDraft(emptyCategoryDraft);
+      setNewCategory("");
+      setAddingCategory(false);
+      setMessage(`Category “${category.title}” created.`);
+    } catch {
+      setError(
+        "The category could not be created. Its title may already exist.",
+      );
+    } finally {
+      setCategoryPending("");
+    }
+  }
+
+  async function saveCategory(category: VideoCategory) {
+    setCategoryPending(category.id);
+    setError("");
+    try {
+      const response = await api(
+        `/api/admin/video-categories/${encodeURIComponent(category.id)}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            title: category.title,
+            description: category.description,
+            image_asset_id: category.image_asset_id,
+            active: category.active,
+            sort_order: category.sort_order,
+            revision: category.revision,
+          }),
+        },
+      );
+      if (!response.ok) throw new Error();
+      const updated = (await response.json()) as VideoCategory;
+      setCategoryItems((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item)),
+      );
+      setMessage(`Category “${updated.title}” saved.`);
+    } catch {
+      setError("The category could not be saved. Reload and try again.");
+    } finally {
+      setCategoryPending("");
+    }
   }
 
   if (!items && !error)
@@ -330,6 +442,109 @@ export function VideoAdmin() {
         <AdminErrorState title="Video action failed" message={error} />
       ) : null}
       {message ? <p className={styles.message}>{message}</p> : null}
+
+      <details className={styles.categoryManager}>
+        <summary>
+          <span>Video categories</span>
+          <small>{categoryItems.length} reusable categories</small>
+        </summary>
+        <div className={styles.categoryGrid}>
+          {categoryItems.map((category) => (
+            <article className={styles.categoryCard} key={category.id}>
+              <AssetUploadField
+                label={`${category.title || "Category"} image`}
+                hint="Optional cover art for category-led pages and filters."
+                folder="video-categories"
+                value={category.image_asset_id}
+                onChange={(image_asset_id) =>
+                  setCategoryItems((current) =>
+                    current.map((item) =>
+                      item.id === category.id
+                        ? { ...item, image_asset_id }
+                        : item,
+                    ),
+                  )
+                }
+              />
+              <label>
+                Title
+                <input
+                  required
+                  value={category.title}
+                  onChange={(event) =>
+                    setCategoryItems((current) =>
+                      current.map((item) =>
+                        item.id === category.id
+                          ? { ...item, title: event.target.value }
+                          : item,
+                      ),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Description
+                <textarea
+                  value={category.description}
+                  onChange={(event) =>
+                    setCategoryItems((current) =>
+                      current.map((item) =>
+                        item.id === category.id
+                          ? { ...item, description: event.target.value }
+                          : item,
+                      ),
+                    )
+                  }
+                />
+              </label>
+              <div className={styles.categoryMetaFields}>
+                <label>
+                  Order
+                  <input
+                    inputMode="numeric"
+                    value={category.sort_order}
+                    onChange={(event) =>
+                      setCategoryItems((current) =>
+                        current.map((item) =>
+                          item.id === category.id
+                            ? {
+                                ...item,
+                                sort_order: Number(event.target.value) || 0,
+                              }
+                            : item,
+                        ),
+                      )
+                    }
+                  />
+                </label>
+                <label className={styles.activeToggle}>
+                  <input
+                    type="checkbox"
+                    checked={category.active}
+                    onChange={(event) =>
+                      setCategoryItems((current) =>
+                        current.map((item) =>
+                          item.id === category.id
+                            ? { ...item, active: event.target.checked }
+                            : item,
+                        ),
+                      )
+                    }
+                  />
+                  Available to use
+                </label>
+              </div>
+              <button
+                type="button"
+                disabled={Boolean(categoryPending) || !category.title.trim()}
+                onClick={() => void saveCategory(category)}
+              >
+                {categoryPending === category.id ? "Saving…" : "Save category"}
+              </button>
+            </article>
+          ))}
+        </div>
+      </details>
 
       <form className={styles.uploadPanel} id="video-upload" onSubmit={submit}>
         <div className={styles.uploadHeading}>
@@ -392,16 +607,21 @@ export function VideoAdmin() {
                   autoFocus
                   maxLength={100}
                   placeholder="e.g. Behind the scenes"
-                  value={newCategory}
-                  onChange={(event) => setNewCategory(event.target.value)}
+                  value={categoryDraft.title || newCategory}
+                  onChange={(event) =>
+                    setCategoryDraft({
+                      ...categoryDraft,
+                      title: event.target.value,
+                    })
+                  }
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
                       event.preventDefault();
-                      createCategory();
+                      void createCategory();
                     }
                   }}
                 />
-                <button type="button" onClick={createCategory}>
+                <button type="button" onClick={() => void createCategory()}>
                   Add
                 </button>
                 <button type="button" onClick={() => setAddingCategory(false)}>
@@ -762,6 +982,15 @@ export function slugify(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+function isVideoCategory(value: VideoCategory) {
+  return Boolean(
+    value &&
+      typeof value.id === "string" &&
+      typeof value.slug === "string" &&
+      typeof value.title === "string" &&
+      typeof value.active === "boolean",
+  );
 }
 export function uniqueItems(items: VideoItem[]) {
   const seen = new Set<string>();

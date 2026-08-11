@@ -6,13 +6,14 @@ import (
 )
 
 type MemoryRepository struct {
-	mu       sync.Mutex
-	items    map[string]Item
-	webhooks map[string]bool
+	mu         sync.Mutex
+	items      map[string]Item
+	webhooks   map[string]bool
+	categories map[string]Category
 }
 
 func NewMemoryRepository() *MemoryRepository {
-	return &MemoryRepository{items: map[string]Item{}, webhooks: map[string]bool{}}
+	return &MemoryRepository{items: map[string]Item{}, webhooks: map[string]bool{}, categories: map[string]Category{}}
 }
 
 func (repository *MemoryRepository) Create(_ context.Context, item Item) error {
@@ -80,3 +81,47 @@ func (repository *MemoryRepository) RecordWebhook(_ context.Context, key, _ stri
 	return true, nil
 }
 func cloneItem(item Item) Item { item.Tags = append([]string{}, item.Tags...); return item }
+
+func (repository *MemoryRepository) CreateCategory(_ context.Context, category Category) error {
+	repository.mu.Lock()
+	defer repository.mu.Unlock()
+	for _, current := range repository.categories {
+		if current.Slug == category.Slug {
+			return ErrConflict
+		}
+	}
+	repository.categories[category.PublicID] = category
+	return nil
+}
+func (repository *MemoryRepository) ListCategories(_ context.Context) ([]Category, error) {
+	repository.mu.Lock()
+	defer repository.mu.Unlock()
+	result := make([]Category, 0, len(repository.categories))
+	for _, category := range repository.categories {
+		result = append(result, category)
+	}
+	return result, nil
+}
+func (repository *MemoryRepository) GetCategory(_ context.Context, publicID string) (Category, error) {
+	repository.mu.Lock()
+	defer repository.mu.Unlock()
+	category, ok := repository.categories[publicID]
+	if !ok {
+		return Category{}, ErrNotFound
+	}
+	return category, nil
+}
+func (repository *MemoryRepository) UpdateCategory(_ context.Context, category Category, revision int64) (Category, error) {
+	repository.mu.Lock()
+	defer repository.mu.Unlock()
+	current, ok := repository.categories[category.PublicID]
+	if !ok {
+		return Category{}, ErrNotFound
+	}
+	if current.Revision != revision {
+		return Category{}, ErrConflict
+	}
+	category.Revision = revision + 1
+	repository.categories[category.PublicID] = category
+	return category, nil
+}

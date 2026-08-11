@@ -28,6 +28,44 @@ func TestAdminUploadHTTPRequiresAuthenticatedAdministrator(t *testing.T) {
 	}
 }
 
+func TestAdminCategoryHTTPCreateListAndUpdate(t *testing.T) {
+	service, _, _ := testService(t)
+	handler, err := NewHTTPHandler(service, func(*http.Request) (Actor, error) { return admin(), nil }, "secret")
+	if err != nil {
+		t.Fatal(err)
+	}
+	router := chi.NewRouter()
+	router.Method(http.MethodGet, "/api/admin/video-categories", handler.AdminCategories())
+	router.Method(http.MethodPost, "/api/admin/video-categories", handler.AdminCategories())
+	router.Method(http.MethodPatch, "/api/admin/video-categories/{categoryID}", handler.AdminCategories())
+
+	createdResponse := httptest.NewRecorder()
+	router.ServeHTTP(createdResponse, httptest.NewRequest(http.MethodPost, "/api/admin/video-categories", strings.NewReader(`{"title":"Music"}`)))
+	if createdResponse.Code != http.StatusCreated {
+		t.Fatalf("create status=%d body=%s", createdResponse.Code, createdResponse.Body.String())
+	}
+	var created categoryResponse
+	if err = json.Unmarshal(createdResponse.Body.Bytes(), &created); err != nil {
+		t.Fatal(err)
+	}
+	if created.Title != "Music" || !created.Active || created.Slug != "music" {
+		t.Fatalf("created=%+v", created)
+	}
+
+	listResponse := httptest.NewRecorder()
+	router.ServeHTTP(listResponse, httptest.NewRequest(http.MethodGet, "/api/admin/video-categories", nil))
+	if listResponse.Code != http.StatusOK || !strings.Contains(listResponse.Body.String(), `"title":"Music"`) {
+		t.Fatalf("list status=%d body=%s", listResponse.Code, listResponse.Body.String())
+	}
+
+	updateResponse := httptest.NewRecorder()
+	body := `{"title":"Music sessions","description":"Guitar and songs","image_asset_id":"asset","active":true,"sort_order":2,"revision":1}`
+	router.ServeHTTP(updateResponse, httptest.NewRequest(http.MethodPatch, "/api/admin/video-categories/"+created.ID, strings.NewReader(body)))
+	if updateResponse.Code != http.StatusOK || !strings.Contains(updateResponse.Body.String(), `"revision":2`) {
+		t.Fatalf("update status=%d body=%s", updateResponse.Code, updateResponse.Body.String())
+	}
+}
+
 func TestAdminUploadHTTPRejectsAuthenticatedNonAdministrator(t *testing.T) {
 	service, _, _ := testService(t)
 	handler, err := NewHTTPHandler(service, func(*http.Request) (Actor, error) {

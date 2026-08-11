@@ -63,6 +63,40 @@ func TestCreateUploadValidatesBeforeCallingProvider(t *testing.T) {
 		t.Fatal("provider should not be touched")
 	}
 }
+
+func TestCategoryRequiresOnlyTitleAndDefaultsActive(t *testing.T) {
+	service, _, _ := testService(t)
+	category, err := service.CreateCategory(t.Context(), admin(), CategoryInput{Title: "  Acting & Film  "})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if category.Title != "Acting & Film" || category.Slug != "acting-film" || !category.Active || category.Description != "" || category.ImageAssetID != "" || category.Revision != 1 {
+		t.Fatalf("category=%+v", category)
+	}
+	items, err := service.ListCategories(t.Context(), admin())
+	if err != nil || len(items) != 1 || items[0].PublicID != category.PublicID {
+		t.Fatalf("items=%+v err=%v", items, err)
+	}
+}
+
+func TestCategoryUpdatePreservesSlugAndUsesRevision(t *testing.T) {
+	service, _, _ := testService(t)
+	category, err := service.CreateCategory(t.Context(), admin(), CategoryInput{Title: "Comedy"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	inactive := false
+	updated, err := service.UpdateCategory(t.Context(), admin(), category.PublicID, CategoryInput{Title: "Comedy and satire", Description: "Stand-up and sketches.", ImageAssetID: "asset-id", Active: &inactive, SortOrder: 4, Revision: category.Revision})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated.Slug != "comedy" || updated.Active || updated.Revision != 2 || updated.ImageAssetID != "asset-id" {
+		t.Fatalf("updated=%+v", updated)
+	}
+	if _, err = service.UpdateCategory(t.Context(), admin(), category.PublicID, CategoryInput{Title: "Stale", Revision: 1}); !errors.Is(err, ErrConflict) {
+		t.Fatalf("stale err=%v", err)
+	}
+}
 func TestReadyIsRequiredBeforePublish(t *testing.T) {
 	service, _, provider := testService(t)
 	item, _, err := service.CreateUpload(context.Background(), admin(), validInput())

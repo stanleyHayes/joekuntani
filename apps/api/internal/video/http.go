@@ -32,9 +32,12 @@ func (handler *HTTPHandler) AdminCreateUpload() http.Handler {
 func (handler *HTTPHandler) AdminItem() http.Handler    { return http.HandlerFunc(handler.item) }
 func (handler *HTTPHandler) AdminPublish() http.Handler { return http.HandlerFunc(handler.publish) }
 func (handler *HTTPHandler) AdminSync() http.Handler    { return http.HandlerFunc(handler.sync) }
-func (handler *HTTPHandler) Webhook() http.Handler      { return http.HandlerFunc(handler.webhook) }
-func (handler *HTTPHandler) PublicList() http.Handler   { return http.HandlerFunc(handler.publicList) }
-func (handler *HTTPHandler) PublicItem() http.Handler   { return http.HandlerFunc(handler.publicItem) }
+func (handler *HTTPHandler) AdminCategories() http.Handler {
+	return http.HandlerFunc(handler.categories)
+}
+func (handler *HTTPHandler) Webhook() http.Handler    { return http.HandlerFunc(handler.webhook) }
+func (handler *HTTPHandler) PublicList() http.Handler { return http.HandlerFunc(handler.publicList) }
+func (handler *HTTPHandler) PublicItem() http.Handler { return http.HandlerFunc(handler.publicItem) }
 
 type itemResponse struct {
 	ID              string        `json:"id"`
@@ -77,6 +80,23 @@ type publicVideoResponse struct {
 	CreatedAt       time.Time    `json:"created_at"`
 	UpdatedAt       time.Time    `json:"updated_at"`
 	Playback        PlaybackInfo `json:"playback"`
+}
+
+type categoryResponse struct {
+	ID           string    `json:"id"`
+	Slug         string    `json:"slug"`
+	Title        string    `json:"title"`
+	Description  string    `json:"description"`
+	ImageAssetID string    `json:"image_asset_id"`
+	Active       bool      `json:"active"`
+	SortOrder    int       `json:"sort_order"`
+	Revision     int64     `json:"revision"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+func categoryResponseFor(category Category) categoryResponse {
+	return categoryResponse{ID: category.PublicID, Slug: category.Slug, Title: category.Title, Description: category.Description, ImageAssetID: category.ImageAssetID, Active: category.Active, SortOrder: category.SortOrder, Revision: category.Revision, CreatedAt: category.CreatedAt, UpdatedAt: category.UpdatedAt}
 }
 
 func publicResponseFor(item Item, playback PlaybackInfo) publicVideoResponse {
@@ -219,6 +239,54 @@ func (handler *HTTPHandler) sync(response http.ResponseWriter, request *http.Req
 		return
 	}
 	writeJSON(response, http.StatusOK, responseFor(item, handler.service.provider.Playback(item.ProviderVideoID)))
+}
+func (handler *HTTPHandler) categories(response http.ResponseWriter, request *http.Request) {
+	actor, ok := handler.resolve(response, request)
+	if !ok {
+		return
+	}
+	categoryID := chi.URLParam(request, "categoryID")
+	switch request.Method {
+	case http.MethodGet:
+		items, err := handler.service.ListCategories(request.Context(), actor)
+		if err != nil {
+			writeError(response, err)
+			return
+		}
+		result := make([]categoryResponse, len(items))
+		for index, item := range items {
+			result[index] = categoryResponseFor(item)
+		}
+		writeJSON(response, http.StatusOK, map[string]any{"items": result})
+	case http.MethodPost:
+		var input CategoryInput
+		if !decode(response, request, &input) {
+			return
+		}
+		item, err := handler.service.CreateCategory(request.Context(), actor, input)
+		if err != nil {
+			writeError(response, err)
+			return
+		}
+		writeJSON(response, http.StatusCreated, categoryResponseFor(item))
+	case http.MethodPatch:
+		if categoryID == "" {
+			writeError(response, ErrInvalid)
+			return
+		}
+		var input CategoryInput
+		if !decode(response, request, &input) {
+			return
+		}
+		item, err := handler.service.UpdateCategory(request.Context(), actor, categoryID, input)
+		if err != nil {
+			writeError(response, err)
+			return
+		}
+		writeJSON(response, http.StatusOK, categoryResponseFor(item))
+	default:
+		response.WriteHeader(http.StatusMethodNotAllowed)
+	}
 }
 func (handler *HTTPHandler) webhook(response http.ResponseWriter, request *http.Request) {
 	body, err := io.ReadAll(http.MaxBytesReader(response, request.Body, 64<<10))

@@ -65,3 +65,25 @@ func TestRegistrySeedsAreFullyDeclared(t *testing.T) {
 		names[item.Name] = true
 	}
 }
+
+func TestInitialVideoCategoriesAreUsefulAndComplete(t *testing.T) {
+	categories := initialVideoCategories()
+	if len(categories) != 8 {
+		t.Fatalf("category count=%d, want 8", len(categories))
+	}
+	want := map[string]bool{"Comedy": false, "Music": false, "Acting & Film": false, "Live Performances": false, "Interviews & Conversations": false, "Skits & Short-form": false, "Behind the Scenes": false, "Events & Appearances": false}
+	for _, category := range categories {
+		if category.id == "" || category.slug == "" || category.title == "" || category.description == "" {
+			t.Fatalf("incomplete category=%+v", category)
+		}
+		if _, ok := want[category.title]; !ok {
+			t.Fatalf("unexpected category=%q", category.title)
+		}
+		want[category.title] = true
+	}
+	for title, found := range want {
+		if !found {
+			t.Errorf("missing category %q", title)
+		}
+	}
+}

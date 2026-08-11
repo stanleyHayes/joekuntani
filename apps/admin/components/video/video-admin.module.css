@@ -55,6 +55,87 @@
   );
   color: var(--feedback-success, #4ade80);
 }
+.categoryManager {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 13%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface) 96%, var(--brand-k) 4%);
+}
+.categoryManager summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  cursor: pointer;
+  font-weight: 850;
+}
+.categoryManager summary small {
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+}
+.categoryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 0.8rem;
+  padding: 0 1rem 1rem;
+}
+.categoryCard {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 11%, transparent);
+  border-radius: 0.8rem;
+  background: var(--surface-canvas);
+}
+.categoryCard label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+.categoryCard input,
+.categoryCard textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 0.58rem 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: var(--radius-control, 0.55rem);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+}
+.categoryCard textarea {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+.categoryCard > button {
+  width: fit-content;
+  padding: 0.58rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: var(--radius-control, 0.55rem);
+  background: var(--brand-j);
+  color: var(--brand-contrast, #171717);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+.categoryMetaFields {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  align-items: end;
+  gap: 0.7rem;
+}
+.activeToggle {
+  display: flex !important;
+  min-height: 2.5rem;
+  align-items: center;
+  grid-template-columns: auto 1fr;
+}
+.activeToggle input {
+  width: auto;
+}
 .uploadPanel {
   display: grid;
   gap: 1rem;

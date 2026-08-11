@@ -82,6 +82,24 @@ type UpdateInput struct {
 	Revision    int64      `json:"revision"`
 }
 
+type Category struct {
+	ID, PublicID, Slug, Title, Description, ImageAssetID string
+	Active                                               bool
+	SortOrder                                            int
+	Revision                                             int64
+	CreatedBy                                            string
+	CreatedAt, UpdatedAt                                 time.Time
+}
+
+type CategoryInput struct {
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	ImageAssetID string `json:"image_asset_id"`
+	Active       *bool  `json:"active,omitempty"`
+	SortOrder    int    `json:"sort_order"`
+	Revision     int64  `json:"revision,omitempty"`
+}
+
 type ProviderVideo struct {
 	ID, LibraryID, ThumbnailURL string
 	DurationSeconds             int
@@ -120,6 +138,10 @@ type Repository interface {
 	List(context.Context, bool) ([]Item, error)
 	Update(context.Context, Item, int64) (Item, error)
 	RecordWebhook(context.Context, string, string, []byte) (bool, error)
+	CreateCategory(context.Context, Category) error
+	ListCategories(context.Context) ([]Category, error)
+	GetCategory(context.Context, string) (Category, error)
+	UpdateCategory(context.Context, Category, int64) (Category, error)
 }
 
 type UnavailableProvider struct{}
