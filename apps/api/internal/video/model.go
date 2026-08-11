@@ -60,19 +60,26 @@ type Actor struct {
 }
 
 type CreateInput struct {
-	Title, Slug, Description, Category, Filename, MIMEType string
-	Tags                                                   []string
-	Visibility                                             Visibility
-	Bytes                                                  int64
-	SortOrder                                              int
+	Title       string     `json:"title"`
+	Slug        string     `json:"slug"`
+	Description string     `json:"description"`
+	Category    string     `json:"category"`
+	Filename    string     `json:"filename"`
+	MIMEType    string     `json:"mime_type"`
+	Tags        []string   `json:"tags"`
+	Visibility  Visibility `json:"visibility"`
+	Bytes       int64      `json:"bytes"`
+	SortOrder   int        `json:"sort_order"`
 }
 
 type UpdateInput struct {
-	Title, Description, Category string
-	Tags                         []string
-	Visibility                   Visibility
-	SortOrder                    int
-	Revision                     int64
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Category    string     `json:"category"`
+	Tags        []string   `json:"tags"`
+	Visibility  Visibility `json:"visibility"`
+	SortOrder   int        `json:"sort_order"`
+	Revision    int64      `json:"revision"`
 }
 
 type ProviderVideo struct {

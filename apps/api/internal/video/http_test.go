@@ -127,6 +127,59 @@ func TestAdminUploadHTTPRejectsUnknownAndTrailingJSON(t *testing.T) {
 	}
 }
 
+// Regression: the admin client and the OpenAPI contract both send snake_case
+// (sort_order, mime_type). These tests post the exact wire payload instead of
+// marshaling the Go struct, which previously masked the missing JSON tags.
+func TestAdminUploadHTTPAcceptsExactAdminClientPayload(t *testing.T) {
+	service, _, _ := testService(t)
+	handler, err := NewHTTPHandler(service, func(*http.Request) (Actor, error) { return admin(), nil }, "secret")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := `{"title":"Live set","slug":"live-set","description":"Behind the booth","category":"sets","tags":["live","accra"],"visibility":"public","sort_order":3,"filename":"live-set.mp4","mime_type":"video/mp4","bytes":900}`
+	response := httptest.NewRecorder()
+	handler.AdminCreateUpload().ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/api/admin/videos/uploads", strings.NewReader(body)))
+	if response.Code != http.StatusCreated {
+		t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
+	}
+	var payload struct {
+		Item itemResponse `json:"item"`
+	}
+	if err = json.Unmarshal(response.Body.Bytes(), &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.Item.SortOrder != 3 || payload.Item.MIMEType != "video/mp4" || payload.Item.Filename != "live-set.mp4" || payload.Item.Bytes != 900 {
+		t.Fatalf("item=%+v", payload.Item)
+	}
+}
+
+func TestAdminUpdateHTTPAcceptsExactAdminClientPayload(t *testing.T) {
+	service, _, _ := testService(t)
+	handler, err := NewHTTPHandler(service, func(*http.Request) (Actor, error) { return admin(), nil }, "secret")
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, _, err := service.CreateUpload(t.Context(), admin(), validInput())
+	if err != nil {
+		t.Fatal(err)
+	}
+	router := chi.NewRouter()
+	router.Method(http.MethodPatch, "/api/admin/videos/{videoID}", handler.AdminItem())
+	body := `{"title":"Live set (remaster)","description":"Behind the booth","category":"sets","tags":["live"],"visibility":"unlisted","sort_order":7,"revision":1}`
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodPatch, "/api/admin/videos/"+item.PublicID, strings.NewReader(body)))
+	if response.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
+	}
+	var updated itemResponse
+	if err = json.Unmarshal(response.Body.Bytes(), &updated); err != nil {
+		t.Fatal(err)
+	}
+	if updated.SortOrder != 7 || updated.Visibility != VisibilityUnlisted || updated.Title != "Live set (remaster)" {
+		t.Fatalf("item=%+v", updated)
+	}
+}
+
 func TestVideoHTTPLifecycleCreateListPublishUnpublishAndDelete(t *testing.T) {
 	service, _, provider := testService(t)
 	handler, err := NewHTTPHandler(service, func(*http.Request) (Actor, error) { return admin(), nil }, "secret")
