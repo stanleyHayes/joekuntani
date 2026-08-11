@@ -13,9 +13,11 @@ import {
 import {
   ArrowClockwise,
   FilmStrip,
+  FolderSimplePlus,
   Trash,
   UploadSimple,
 } from "@phosphor-icons/react";
+import { AiAssist } from "@joe-kuntani/shared/ui/ai-assist";
 
 import {
   AdminErrorState,
@@ -80,6 +82,8 @@ const emptyDraft: Draft = {
   sortOrder: "0",
 };
 
+const starterCategories = ["Comedy", "Live performance", "Music", "Interview"];
+
 export function VideoAdmin() {
   const [items, setItems] = useState<VideoItem[] | null>(null);
   const [draft, setDraft] = useState(emptyDraft);
@@ -88,6 +92,8 @@ export function VideoAdmin() {
   const [pending, setPending] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
 
   const load = useCallback(async () => {
     const response = await fetch("/api/admin/videos", {
@@ -278,6 +284,28 @@ export function VideoAdmin() {
       ).length ?? 0,
     [items],
   );
+  const categories = useMemo(
+    () =>
+      [
+        ...new Set([
+          ...starterCategories,
+          draft.category,
+          ...(items ?? []).map((item) => item.category),
+        ]),
+      ]
+        .map((category) => category.trim())
+        .filter(Boolean)
+        .sort((left, right) => left.localeCompare(right)),
+    [draft.category, items],
+  );
+
+  function createCategory() {
+    const category = newCategory.trim();
+    if (!category) return;
+    setDraft((current) => ({ ...current, category }));
+    setNewCategory("");
+    setAddingCategory(false);
+  }
 
   if (!items && !error)
     return <AdminSkeleton label="Loading video library" variant="cards" />;
@@ -303,7 +331,7 @@ export function VideoAdmin() {
       ) : null}
       {message ? <p className={styles.message}>{message}</p> : null}
 
-      <form className={styles.uploadPanel} onSubmit={submit}>
+      <form className={styles.uploadPanel} id="video-upload" onSubmit={submit}>
         <div className={styles.uploadHeading}>
           <UploadSimple size={22} aria-hidden="true" />
           <div>
@@ -317,33 +345,80 @@ export function VideoAdmin() {
           <label>
             Title
             <input
+              id="video-upload-title"
               required
               value={draft.title}
-              onChange={(event) =>
-                setDraft({ ...draft, title: event.target.value })
-              }
+              onChange={(event) => {
+                const title = event.target.value;
+                setDraft({ ...draft, title, slug: slugify(title) });
+              }}
             />
           </label>
           <label>
             Public slug
             <input
+              aria-label="Public slug"
               required
               pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
               value={draft.slug}
-              onChange={(event) =>
-                setDraft({ ...draft, slug: event.target.value.toLowerCase() })
-              }
+              readOnly
+              aria-describedby="video-slug-help"
             />
+            <small id="video-slug-help">
+              Generated automatically from the title.
+            </small>
           </label>
-          <label>
-            Category
-            <input
-              value={draft.category}
-              onChange={(event) =>
-                setDraft({ ...draft, category: event.target.value })
-              }
-            />
-          </label>
+          <div className={styles.categoryField}>
+            <label>
+              Category
+              <select
+                value={draft.category}
+                onChange={(event) =>
+                  setDraft({ ...draft, category: event.target.value })
+                }
+              >
+                <option value="">Select a category</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {addingCategory ? (
+              <div className={styles.newCategory}>
+                <input
+                  aria-label="New category name"
+                  autoFocus
+                  maxLength={100}
+                  placeholder="e.g. Behind the scenes"
+                  value={newCategory}
+                  onChange={(event) => setNewCategory(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      createCategory();
+                    }
+                  }}
+                />
+                <button type="button" onClick={createCategory}>
+                  Add
+                </button>
+                <button type="button" onClick={() => setAddingCategory(false)}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                className={styles.addCategory}
+                type="button"
+                onClick={() => setAddingCategory(true)}
+              >
+                <FolderSimplePlus size={15} aria-hidden="true" /> Create
+                category
+              </button>
+            )}
+          </div>
           <label>
             Tags
             <input
@@ -380,15 +455,23 @@ export function VideoAdmin() {
               }
             />
           </label>
-          <label className={styles.description}>
-            Description
-            <textarea
+          <div className={styles.description}>
+            <label>
+              Description
+              <textarea
+                value={draft.description}
+                onChange={(event) =>
+                  setDraft({ ...draft, description: event.target.value })
+                }
+              />
+            </label>
+            <AiAssist
+              field="description"
+              label="Video description"
               value={draft.description}
-              onChange={(event) =>
-                setDraft({ ...draft, description: event.target.value })
-              }
+              onApply={(description) => setDraft({ ...draft, description })}
             />
-          </label>
+          </div>
           <div className={styles.file}>
             <div className={styles.fileHeading}>
               <span id="video-file-label">Video file</span>
@@ -618,9 +701,24 @@ export function VideoAdmin() {
             ))}
           </div>
         ) : (
-          <p className={styles.empty}>
-            No videos yet. Upload the first Bunny Stream asset above.
-          </p>
+          <div className={styles.empty}>
+            <span className={styles.emptyIcon} aria-hidden="true">
+              <FilmStrip size={30} weight="duotone" />
+            </span>
+            <div>
+              <h4>Your video library is ready</h4>
+              <p>
+                Add the first video, follow its processing status here, then
+                publish it when the stream is ready.
+              </p>
+            </div>
+            <a href="#video-upload-title">Upload your first video</a>
+            <ol aria-label="Video publishing steps">
+              <li>Choose a category</li>
+              <li>Upload to Bunny</li>
+              <li>Review and publish</li>
+            </ol>
+          </div>
         )}
       </section>
     </div>
@@ -656,6 +754,14 @@ function splitTags(value: string) {
         .filter(Boolean),
     ),
   ];
+}
+export function slugify(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 export function uniqueItems(items: VideoItem[]) {
   const seen = new Set<string>();

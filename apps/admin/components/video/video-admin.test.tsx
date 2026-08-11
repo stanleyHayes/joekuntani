@@ -4,6 +4,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import {
   uploadToBunny,
   uniqueItems,
+  slugify,
   VideoAdmin,
   type VideoItem,
 } from "./video-admin";
@@ -145,6 +146,10 @@ it("collapses duplicate provider rows by stable video id", () => {
   ).toEqual(["Live set", "Second"]);
 });
 
+it("generates URL-safe slugs from video titles", () => {
+  expect(slugify("  Joe’s Café — Live!  ")).toBe("joe-s-cafe-live");
+});
+
 it("renders distinct processing states and enables playback only when ready", async () => {
   const items: VideoItem[] = [
     base,
@@ -245,15 +250,11 @@ it("creates a resumable upload, reports progress and synchronizes processing", a
   );
   vi.stubGlobal("fetch", fetcher);
   render(<VideoAdmin />);
-  await screen.findByText(
-    "No videos yet. Upload the first Bunny Stream asset above.",
-  );
+  await screen.findByText("Your video library is ready");
   fireEvent.change(screen.getByLabelText("Title"), {
     target: { value: "Live set" },
   });
-  fireEvent.change(screen.getByLabelText("Public slug"), {
-    target: { value: "LIVE-SET" },
-  });
+  expect(screen.getByLabelText("Public slug")).toHaveValue("live-set");
   fireEvent.change(screen.getByLabelText("Video file"), {
     target: {
       files: [new File(["video"], "live.mp4", { type: "video/mp4" })],
@@ -399,13 +400,33 @@ it("handles an empty response and reports a failed manual reload", async () => {
     .mockResolvedValueOnce(new Response(null, { status: 503 }));
   vi.stubGlobal("fetch", fetcher);
   render(<VideoAdmin />);
+  expect(await screen.findByText("Your video library is ready")).toBeVisible();
   expect(
-    await screen.findByText(
-      "No videos yet. Upload the first Bunny Stream asset above.",
-    ),
-  ).toBeVisible();
+    screen.getByRole("link", { name: "Upload your first video" }),
+  ).toHaveAttribute("href", "#video-upload-title");
   fireEvent.click(screen.getByRole("button", { name: "Reload" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "video library could not be loaded",
   );
+});
+
+it("selects starter categories and creates a new category inline", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => new Response(JSON.stringify({ items: [] }))),
+  );
+  render(<VideoAdmin />);
+
+  const category = await screen.findByLabelText("Category");
+  expect(screen.getByRole("option", { name: "Comedy" })).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Create category" }));
+  fireEvent.change(screen.getByLabelText("New category name"), {
+    target: { value: "Behind the scenes" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Add" }));
+
+  expect(category).toHaveValue("Behind the scenes");
+  expect(
+    screen.getByRole("option", { name: "Behind the scenes" }),
+  ).toBeVisible();
 });
