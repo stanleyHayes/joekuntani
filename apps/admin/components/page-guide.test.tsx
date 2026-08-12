@@ -301,7 +301,9 @@ it("offers a voice picker when there is more than one to choose from", async () 
   render(<AdminPageGuide title="Media" />);
   // The picker holds its list until opened, so the choices are read from the
   // open popover rather than from the closed control.
-  fireEvent.click(await screen.findByRole("button", { name: /Reading voice/i }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: /Reading voice/i }),
+  );
   const options = screen.getAllByRole("option").map((o) => o.textContent);
   expect(options[0]).toBe("Best available");
   // Each row carries its language beside the name, so match within the row.
@@ -319,7 +321,9 @@ it("hides the picker when the system offers no real choice", async () => {
 
 it("reads in the chosen voice and remembers it", async () => {
   const first = render(<AdminPageGuide title="Media" />);
-  fireEvent.click(await screen.findByRole("button", { name: /Reading voice/i }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: /Reading voice/i }),
+  );
   fireEvent.click(screen.getByRole("option", { name: /Samantha/ }));
   fireEvent.click(screen.getByRole("button", { name: /read this aloud/i }));
   expect(spoken[0].voice?.name).toBe("Samantha");

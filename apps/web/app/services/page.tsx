@@ -15,7 +15,13 @@ export async function generateMetadata() {
     title: "Services",
     description: "Approved services and enquiry paths.",
     path: "/services",
-    keywords: ["comedy services", "corporate host", "MC for hire", "wedding comedian", "brand collaboration comedy"],
+    keywords: [
+      "comedy services",
+      "corporate host",
+      "MC for hire",
+      "wedding comedian",
+      "brand collaboration comedy",
+    ],
   };
   return services.length || demo
     ? pageMetadata(input)

@@ -243,7 +243,12 @@ export function MarkdownField({
       </div>
 
       {assist ? (
-        <AiAssist field={assist} label={label} value={value} onApply={onChange} />
+        <AiAssist
+          field={assist}
+          label={label}
+          value={value}
+          onApply={onChange}
+        />
       ) : null}
     </div>
   );

@@ -23,7 +23,9 @@ const section = (over: Partial<ContentSection> = {}): ContentSection => ({
 
 it("invites the editor to add a section when the page is empty", () => {
   render(<SectionsField value={[]} onChange={vi.fn()} />);
-  expect(screen.getByText("No sections yet. Add the first section below.")).toBeVisible();
+  expect(
+    screen.getByText("No sections yet. Add the first section below."),
+  ).toBeVisible();
 });
 
 it("converts a legacy body into titled sections without rewriting its copy", () => {
@@ -60,7 +62,10 @@ it("converts a legacy body into titled sections without rewriting its copy", () 
 it("appends a text block and leaves the existing ones alone", () => {
   const onChange = vi.fn();
   render(
-    <SectionsField value={[section({ heading: "First" })]} onChange={onChange} />,
+    <SectionsField
+      value={[section({ heading: "First" })]}
+      onChange={onChange}
+    />,
   );
   fireEvent.click(screen.getByRole("button", { name: "Add section" }));
 
@@ -78,12 +83,18 @@ it("labels a row by its heading, then its body, then its type", () => {
   const summary = () => screen.getByRole("button", { expanded: true });
 
   const { rerender } = render(
-    <SectionsField value={[section({ heading: "Roots" })]} onChange={vi.fn()} />,
+    <SectionsField
+      value={[section({ heading: "Roots" })]}
+      onChange={vi.fn()}
+    />,
   );
   expect(summary()).toHaveAccessibleName(/Roots/);
 
   rerender(
-    <SectionsField value={[section({ body: "A long passage" })]} onChange={vi.fn()} />,
+    <SectionsField
+      value={[section({ body: "A long passage" })]}
+      onChange={vi.fn()}
+    />,
   );
   expect(summary()).toHaveAccessibleName(/A long passage/);
 
@@ -175,7 +186,10 @@ it("shows only the controls the chosen type uses", () => {
   expect(screen.getByText("Images picker")).toBeVisible();
 
   rerender(
-    <SectionsField value={[section({ type: "prose_image" })]} onChange={vi.fn()} />,
+    <SectionsField
+      value={[section({ type: "prose_image" })]}
+      onChange={vi.fn()}
+    />,
   );
   expect(screen.getByText("Image picker")).toBeVisible();
   expect(screen.getByLabelText("Put the image first")).toBeVisible();
@@ -228,7 +242,9 @@ it("changes a block's type without discarding what is written", () => {
 // row stands in — and it has to behave like a real row, not a placeholder.
 it("offers one blank figure row before any have been added", () => {
   const onChange = vi.fn();
-  render(<SectionsField value={[section({ type: "stats" })]} onChange={onChange} />);
+  render(
+    <SectionsField value={[section({ type: "stats" })]} onChange={onChange} />,
+  );
 
   expect(screen.getByLabelText("Label 1")).toHaveValue("");
   fireEvent.change(screen.getByLabelText("Label 1"), {
@@ -246,7 +262,10 @@ it("adds, edits and removes figure rows", () => {
     { label: "Cities", value: "8" },
   ];
   render(
-    <SectionsField value={[section({ type: "stats", items })]} onChange={onChange} />,
+    <SectionsField
+      value={[section({ type: "stats", items })]}
+      onChange={onChange}
+    />,
   );
 
   fireEvent.change(screen.getByLabelText("Value 2"), {
@@ -272,7 +291,10 @@ it("adds, edits and removes figure rows", () => {
 it("flips a text-and-image block so the picture leads", () => {
   const onChange = vi.fn();
   render(
-    <SectionsField value={[section({ type: "prose_image" })]} onChange={onChange} />,
+    <SectionsField
+      value={[section({ type: "prose_image" })]}
+      onChange={onChange}
+    />,
   );
   fireEvent.click(screen.getByLabelText("Put the image first"));
   expect((onChange.mock.calls[0][0] as ContentSection[])[0].flip).toBe(true);

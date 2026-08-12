@@ -170,7 +170,9 @@ export function SectionsField({
 
                     {section.type !== "stats" ? (
                       <MarkdownField
-                        label={section.type === "quote" ? "Quote" : "Description"}
+                        label={
+                          section.type === "quote" ? "Quote" : "Description"
+                        }
                         // Every Markdown field offers the assistant. These
                         // blocks carry the bulk of a page's prose now, so
                         // leaving them out meant the writing help disappeared
@@ -193,7 +195,9 @@ export function SectionsField({
                           update(index, { tags: splitTags(event.target.value) })
                         }
                       />
-                      <small>Comma separated. These describe this section only.</small>
+                      <small>
+                        Comma separated. These describe this section only.
+                      </small>
                     </label>
 
                     {section.type === "prose_image" ||

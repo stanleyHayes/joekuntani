@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { CampaignEditor } from "./campaign-editor";
 
@@ -17,8 +23,6 @@ const entries: [string, string][] = [
   ["Organization ID", "10000000-0000-4000-8000-000000000003"],
   ["Campaign title", "New campaign"],
   ["Objective", "Objective"],
-  ["Start date", "2026-08-10"],
-  ["End date", "2026-09-10"],
   ["Fee", "200"],
   ["Expenses", "10"],
   ["Platforms", "Instagram"],
@@ -26,9 +30,25 @@ const entries: [string, string][] = [
   ["Asset IDs", "10000000-0000-4000-8000-000000000003"],
 ];
 
+// The dates are pickers, not text boxes, so they are driven the way an
+// operator drives them: open the calendar and choose a day. The month is
+// whichever one the calendar opens on, which is why the assertions below check
+// the day and the shape rather than a fixed date.
+function pickDay(field: string, day: string) {
+  fireEvent.click(screen.getByRole("button", { name: field }));
+  const calendar = screen.getByRole("dialog", { name: field });
+  const target = within(calendar)
+    .getAllByRole("button", { name: day })
+    .find((button) => button.dataset.inMonth === "true");
+  if (!target) throw new Error(`day ${day} not selectable in ${field}`);
+  fireEvent.click(target);
+}
+
 function fill() {
   for (const [label, value] of entries)
     fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  pickDay("Start date", "10");
+  pickDay("End date", "20");
 }
 
 it("creates an audited campaign and returns to the list", async () => {
@@ -51,6 +71,10 @@ it("creates an audited campaign and returns to the list", async () => {
   );
   const body = JSON.parse(String(fetcher.mock.calls[0][1]?.body));
   expect(body.status).toBe("draft");
+  // The picker has to reach the posted form, which it does through a hidden
+  // input carrying the name the API expects.
+  expect(body.starts_on).toMatch(/^\d{4}-\d{2}-10$/);
+  expect(body.ends_on).toMatch(/^\d{4}-\d{2}-20$/);
   expect(body.platforms).toEqual(["Instagram"]);
   expect(body.results).toEqual([{ label: "Reach", value: "1000" }]);
   expect(body.fee).toEqual({ amount: "200", currency: "GHS" });

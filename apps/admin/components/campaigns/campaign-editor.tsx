@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { DateField } from "@joe-kuntani/shared/ui/date-field";
 import { Select } from "@joe-kuntani/shared/ui/select";
 import { currencies, request, splitValues } from "./campaign-api";
 import styles from "./campaign-editor.module.css";
@@ -123,11 +124,11 @@ export function CampaignEditor() {
           <div className={styles.fieldGrid}>
             <label>
               Start date
-              <input name="starts_on" type="date" required />
+              <DateField name="starts_on" aria-label="Start date" required />
             </label>
             <label>
               End date
-              <input name="ends_on" type="date" required />
+              <DateField name="ends_on" aria-label="End date" required />
             </label>
           </div>
         </fieldset>

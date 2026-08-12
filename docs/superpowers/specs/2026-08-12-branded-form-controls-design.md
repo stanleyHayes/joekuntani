@@ -31,13 +31,13 @@ an existing one has to be made twice.
 
 ## Decisions
 
-| Question | Decision |
-| --- | --- |
-| Scope | Every native control, not only the dropdowns |
-| Duplication | Single implementation in `@joe-kuntani/shared`; the web copies are deleted |
-| Unknown category | Offer inline create from the autocomplete |
-| Checkbox and radio | Paint the native input with `appearance: none` |
-| Delivery | One branch, a commit per stage, landing on `main` |
+| Question           | Decision                                                                   |
+| ------------------ | -------------------------------------------------------------------------- |
+| Scope              | Every native control, not only the dropdowns                               |
+| Duplication        | Single implementation in `@joe-kuntani/shared`; the web copies are deleted |
+| Unknown category   | Offer inline create from the autocomplete                                  |
+| Checkbox and radio | Paint the native input with `appearance: none`                             |
+| Delivery           | One branch, a commit per stage, landing on `main`                          |
 
 ### Why the native input stays for checkbox and radio
 
@@ -57,17 +57,17 @@ the only way to get the design.
 
 Counts are of source files, excluding `.next` build output.
 
-| Control | Sites | Treatment |
-| --- | --- | --- |
-| `<select>` — Category | 1 | New `Combobox`, with inline create |
-| `<select>` — Reading voice | 1 | New `Combobox`, search only |
-| `<select>` — Visibility ×2, Section type, Text style | 4 | Existing `Select` |
-| Category free-text on list rows | 1 | New `Combobox`, closing the typo hole |
-| `type="checkbox"` | 19 | Branded `Checkbox` |
-| `type="radio"` | 2 | Branded `Radio` |
-| `type="file"` | 3 of 6 | New `FileInput`; 3 in `asset-picker` are already hidden behind styled labels and need no change |
-| `type="date"` / `datetime-local"` | 4 | Existing `DateField` |
-| Duplicated components | 9 | Re-export from shared, delete copies |
+| Control                                              | Sites  | Treatment                                                                                       |
+| ---------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
+| `<select>` — Category                                | 1      | New `Combobox`, with inline create                                                              |
+| `<select>` — Reading voice                           | 1      | New `Combobox`, search only                                                                     |
+| `<select>` — Visibility ×2, Section type, Text style | 4      | Existing `Select`                                                                               |
+| Category free-text on list rows                      | 1      | New `Combobox`, closing the typo hole                                                           |
+| `type="checkbox"`                                    | 19     | Branded `Checkbox`                                                                              |
+| `type="radio"`                                       | 2      | Branded `Radio`                                                                                 |
+| `type="file"`                                        | 3 of 6 | New `FileInput`; 3 in `asset-picker` are already hidden behind styled labels and need no change |
+| `type="date"` / `datetime-local"`                    | 4      | Existing `DateField`                                                                            |
+| Duplicated components                                | 9      | Re-export from shared, delete copies                                                            |
 
 `markdown-field.tsx`'s "Text style" is not a value picker — it applies a heading
 and resets itself to empty. It becomes a `Select` held at `value=""`, which
@@ -89,13 +89,13 @@ type ComboboxProps = {
   options: readonly ComboboxOption[];
   value?: string;
   onChange?: (value: string) => void;
-  placeholder?: string;          // closed-state text when nothing is chosen
+  placeholder?: string; // closed-state text when nothing is chosen
   searchPlaceholder?: string;
-  emptyMessage?: string;         // shown when the filter matches nothing
-  onCreate?: (label: string) => void | Promise<void>;  // presence enables create
+  emptyMessage?: string; // shown when the filter matches nothing
+  onCreate?: (label: string) => void | Promise<void>; // presence enables create
   createPending?: boolean;
   disabled?: boolean;
-  name?: string;                 // hidden input, for uncontrolled form posts
+  name?: string; // hidden input, for uncontrolled form posts
   id?: string;
   required?: boolean;
   className?: string;

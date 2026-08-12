@@ -79,8 +79,10 @@
   opacity: 0;
 }
 
-:where(.admin-stage, .jk-controls) input[type="checkbox"]:not([data-bare]):checked,
-:where(.admin-stage, .jk-controls) input[type="radio"]:not([data-bare]):checked {
+:where(.admin-stage, .jk-controls)
+  input[type="checkbox"]:not([data-bare]):checked,
+:where(.admin-stage, .jk-controls)
+  input[type="radio"]:not([data-bare]):checked {
   border-color: var(--accent);
   background: var(--accent);
 }
@@ -94,7 +96,8 @@
 
 :where(.admin-stage, .jk-controls)
   input[type="checkbox"]:not([data-bare]):disabled,
-:where(.admin-stage, .jk-controls) input[type="radio"]:not([data-bare]):disabled {
+:where(.admin-stage, .jk-controls)
+  input[type="radio"]:not([data-bare]):disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
@@ -112,4 +115,55 @@
   :where(.admin-stage, .jk-controls) input[type="radio"]:not([data-bare]) {
     transition: none;
   }
+}
+
+/*
+ * File inputs, whose own button is the last piece of browser chrome the
+ * platform still shows anywhere.
+ *
+ * Every file input in the product today already avoids it — three hide behind
+ * a styled label, one behind the upload drop zone, and the media library
+ * dresses its own button. This is the floor beneath those, so the next file
+ * input added is branded because the platform says so rather than because
+ * somebody remembered. Local treatments outweigh it and keep their own look.
+ *
+ * An input hidden behind a label is unaffected: styling the button of a
+ * control shrunk to a pixel costs nothing.
+ */
+:where(.admin-stage, .jk-controls) input[type="file"] {
+  max-width: 100%;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+:where(.admin-stage, .jk-controls) input[type="file"]::file-selector-button {
+  margin-right: 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius-control, 0.55rem) - 0.15rem);
+  padding: 0.5rem 0.85rem;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--brand-j) 12%, transparent),
+      color-mix(in srgb, var(--brand-k) 12%, transparent)
+    ),
+    var(--surface-raised);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+:where(.admin-stage, .jk-controls)
+  input[type="file"]:hover:not(:disabled)::file-selector-button {
+  border-color: var(--brand-k);
+}
+
+:where(.admin-stage, .jk-controls) input[type="file"]:focus-visible {
+  outline: 2px solid var(--focus, var(--brand-k));
+  outline-offset: 2px;
 }

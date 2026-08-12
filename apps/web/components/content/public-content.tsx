@@ -63,7 +63,9 @@ export function ContentGrid({
             <h2>{item.title}</h2>
             {item.summary ? <p>{item.summary}</p> : null}
             {detailBase && item.slug ? (
-              <Link href={`${detailBase}/${item.slug}`}>Read the case study</Link>
+              <Link href={`${detailBase}/${item.slug}`}>
+                Read the case study
+              </Link>
             ) : item.external_url ? (
               <a
                 className={styles.external}
