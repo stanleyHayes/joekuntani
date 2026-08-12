@@ -30,6 +30,11 @@ type SelectProps = {
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
+  /**
+   * "bare" drops the border and fill for a control that sits inside a toolbar,
+   * where a full field would read as a second panel rather than a button.
+   */
+  variant?: "field" | "bare";
   className?: string;
   "aria-label"?: string;
 };
@@ -44,6 +49,7 @@ export function Select({
   placeholder = "Choose one",
   required,
   disabled,
+  variant = "field",
   className,
   "aria-label": ariaLabel,
 }: SelectProps) {
@@ -194,6 +200,7 @@ export function Select({
       ref={rootRef}
       className={[styles.root, className].filter(Boolean).join(" ")}
       data-open={open ? "true" : "false"}
+      data-variant={variant}
     >
       {name ? (
         <input

@@ -58,7 +58,7 @@ it("offers the formatting an editor actually reaches for", () => {
     expect(screen.getByRole("button", { name })).toBeInTheDocument();
   }
   expect(
-    screen.getByRole("combobox", { name: "Text style" }),
+    screen.getByRole("button", { name: "Text style" }),
   ).toBeInTheDocument();
 });
 
@@ -83,8 +83,29 @@ it("applies a heading from the text-style control", () => {
   const { onChange } = setup("Section title");
   const area = screen.getByRole("textbox") as HTMLTextAreaElement;
   area.setSelectionRange(0, area.value.length);
-  fireEvent.change(screen.getByRole("combobox", { name: "Text style" }), {
-    target: { value: "2" },
-  });
+  fireEvent.click(screen.getByRole("button", { name: "Text style" }));
+  fireEvent.click(screen.getByRole("option", { name: "Heading 2" }));
   expect(onChange).toHaveBeenCalledWith("## Section title");
+});
+
+// The control is a command: after applying a style it goes back to reading
+// "Normal text" rather than holding the heading it just applied.
+it("returns the text-style control to Normal text after applying one", () => {
+  setup("Section title");
+  const trigger = screen.getByRole("button", { name: "Text style" });
+  fireEvent.click(trigger);
+  fireEvent.click(screen.getByRole("option", { name: "Heading 3" }));
+  expect(trigger).toHaveTextContent("Normal text");
+});
+
+// Choosing it is deliberately inert: applyHeading ignores an empty level, so
+// "Normal text" names the resting state rather than an action. That was true
+// of the native select too, and the picker must not quietly change it.
+it("does nothing when Normal text is chosen", () => {
+  const { onChange } = setup("## Section title");
+  const area = screen.getByRole("textbox") as HTMLTextAreaElement;
+  area.setSelectionRange(0, area.value.length);
+  fireEvent.click(screen.getByRole("button", { name: "Text style" }));
+  fireEvent.click(screen.getByRole("option", { name: "Normal text" }));
+  expect(onChange).not.toHaveBeenCalled();
 });

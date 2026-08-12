@@ -215,9 +215,8 @@ it("changes a block's type without discarding what is written", () => {
       onChange={onChange}
     />,
   );
-  fireEvent.change(screen.getByLabelText(/^Type/), {
-    target: { value: "quote" },
-  });
+  fireEvent.click(screen.getByRole("button", { name: "Type" }));
+  fireEvent.click(screen.getByRole("option", { name: "Quote" }));
 
   const next = (onChange.mock.calls[0][0] as ContentSection[])[0];
   expect(next.type).toBe("quote");

@@ -153,6 +153,7 @@
 }
 
 .body > label,
+.body > .typeField,
 .statRow label {
   display: grid;
   gap: 0.3rem;

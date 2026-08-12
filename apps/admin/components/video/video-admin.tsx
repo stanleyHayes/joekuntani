@@ -19,6 +19,7 @@ import {
 } from "@phosphor-icons/react";
 import { AiAssist } from "@joe-kuntani/shared/ui/ai-assist";
 import { Combobox } from "@joe-kuntani/shared/ui/combobox";
+import { Select } from "@joe-kuntani/shared/ui/select";
 
 import {
   AdminErrorState,
@@ -28,6 +29,13 @@ import {
 } from "../admin-feedback";
 import { AssetUploadField } from "../media/asset-picker";
 import styles from "./video-admin.module.css";
+
+/** Declared once: the draft editor and every library row offer the same three. */
+const VISIBILITIES = [
+  { value: "private", label: "Private" },
+  { value: "unlisted", label: "Unlisted" },
+  { value: "public", label: "Public" },
+] as const;
 
 export type VideoItem = {
   id: string;
@@ -654,22 +662,21 @@ export function VideoAdmin() {
               placeholder="interview, live set"
             />
           </label>
-          <label>
-            Visibility
-            <select
+          <div className={styles.visibilityField}>
+            <span>Visibility</span>
+            <Select
+              aria-label="Visibility"
+              options={VISIBILITIES}
               value={draft.visibility}
-              onChange={(event) =>
+              onChange={(visibility) =>
                 setDraft({
                   ...draft,
-                  visibility: event.target.value as Draft["visibility"],
+                  visibility: visibility as Draft["visibility"],
                 })
               }
-            >
-              <option value="private">Private</option>
-              <option value="unlisted">Unlisted</option>
-              <option value="public">Public</option>
-            </select>
-          </label>
+              required
+            />
+          </div>
           <label>
             Order
             <input
@@ -825,20 +832,17 @@ export function VideoAdmin() {
                       searchPlaceholder="Search categories…"
                       emptyMessage="No category matches that."
                     />
-                    <select
+                    <Select
                       aria-label={`Visibility for ${item.slug}`}
+                      options={VISIBILITIES}
                       value={item.visibility}
-                      onChange={(event) =>
+                      onChange={(visibility) =>
                         edit(item.id, {
-                          visibility: event.target
-                            .value as VideoItem["visibility"],
+                          visibility: visibility as VideoItem["visibility"],
                         })
                       }
-                    >
-                      <option value="private">Private</option>
-                      <option value="unlisted">Unlisted</option>
-                      <option value="public">Public</option>
-                    </select>
+                      required
+                    />
                   </div>
                   <input
                     aria-label={`Tags for ${item.slug}`}

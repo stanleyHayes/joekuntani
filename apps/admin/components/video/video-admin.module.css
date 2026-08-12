@@ -184,6 +184,14 @@
   display: grid;
   gap: 0.35rem;
 }
+
+/* Matches the label-above-field shape the surrounding <label> elements get by
+   default, now that the control is a picker rather than a native select. */
+.visibilityField {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
 .addCategory,
 .newCategory button {
   display: inline-flex;

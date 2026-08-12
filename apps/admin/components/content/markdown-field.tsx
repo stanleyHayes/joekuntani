@@ -15,7 +15,16 @@ import {
 import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { AiAssist, type AiAssistField } from "@joe-kuntani/shared/ui/ai-assist";
 import { Markdown } from "@joe-kuntani/shared/ui/markdown";
+import { Select } from "@joe-kuntani/shared/ui/select";
 import styles from "./markdown-field.module.css";
+
+/** "Normal text" is the placeholder rather than an entry: it names the resting
+    state, and applyHeading ignores the empty value choosing it sends. */
+const HEADINGS = [
+  { value: "2", label: "Heading 2" },
+  { value: "3", label: "Heading 3" },
+  { value: "4", label: "Heading 4" },
+] as const;
 
 type Wrap = { before: string; after: string; placeholder: string };
 
@@ -140,23 +149,20 @@ export function MarkdownField({
       <div className={styles.editor}>
         <div className={styles.toolbar} aria-label={`${label} formatting`}>
           <div className={styles.formatting} aria-hidden={tab === "preview"}>
-            <label className={styles.styleSelect}>
-              <span className={styles.visuallyHidden}>Text style</span>
-              <select
+            {/* A command, not a stored value: it applies a style and returns to
+                reading "Normal text". Holding the value at "" is what makes the
+                control snap back, exactly as the old select's own reset did. */}
+            <div className={styles.styleSelect}>
+              <Select
                 aria-label="Text style"
-                defaultValue=""
+                variant="bare"
+                value=""
+                options={HEADINGS}
+                placeholder="Normal text"
                 disabled={tab === "preview"}
-                onChange={(event) => {
-                  applyHeading(event.target.value);
-                  event.target.value = "";
-                }}
-              >
-                <option value="">Normal text</option>
-                <option value="2">Heading 2</option>
-                <option value="3">Heading 3</option>
-                <option value="4">Heading 4</option>
-              </select>
-            </label>
+                onChange={applyHeading}
+              />
+            </div>
             <span className={styles.divider} aria-hidden="true" />
             {ACTIONS.map((action, index) => {
               const Icon = action.icon;

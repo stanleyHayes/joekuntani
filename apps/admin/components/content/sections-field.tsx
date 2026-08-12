@@ -5,6 +5,8 @@ import type {
   ContentSection,
   SectionType,
 } from "@joe-kuntani/shared/types/content";
+import { Select } from "@joe-kuntani/shared/ui/select";
+
 import { AssetUploadList } from "../media/asset-picker";
 import { MarkdownField } from "./markdown-field";
 import styles from "./sections-field.module.css";
@@ -139,24 +141,19 @@ export function SectionsField({
 
                 {expanded ? (
                   <div className={styles.body}>
-                    <label>
+                    <div className={styles.typeField}>
                       <span>Type</span>
-                      <select
+                      <Select
+                        aria-label="Type"
+                        options={TYPES}
                         value={section.type}
-                        onChange={(event) =>
-                          update(index, {
-                            type: event.target.value as SectionType,
-                          })
+                        onChange={(value) =>
+                          update(index, { type: value as SectionType })
                         }
-                      >
-                        {TYPES.map((entry) => (
-                          <option value={entry.value} key={entry.value}>
-                            {entry.label}
-                          </option>
-                        ))}
-                      </select>
+                        required
+                      />
                       <small>{type?.hint}</small>
-                    </label>
+                    </div>
 
                     {section.type !== "quote" ? (
                       <label>
