@@ -4,7 +4,7 @@ import { getPublicServices } from "../../components/services/data";
 import styles from "../../components/services/services.module.css";
 import { ButtonLink } from "../../components/ui/button-link";
 import { DemoBanner } from "../../components/ui/demo-banner";
-import { EmptyState } from "../../components/ui/empty-state";
+import { EmptyState } from "@joe-kuntani/shared/ui/empty-state";
 import { demoContentEnabled, demoServices } from "../../lib/demo/content";
 import { pageMetadata, unavailableMetadata } from "../../lib/seo";
 

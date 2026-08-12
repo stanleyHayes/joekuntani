@@ -3,7 +3,6 @@
 import {
   useEffect,
   useId,
-  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -12,6 +11,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import styles from "./select.module.css";
+import { usePopoverPlacement } from "./use-popover-placement";
 
 const subscribeToMount = () => () => {};
 
@@ -32,15 +32,6 @@ type SelectProps = {
   disabled?: boolean;
   className?: string;
   "aria-label"?: string;
-};
-
-type ListPlacement = {
-  top: number;
-  left: number;
-  /** Floor, not a fixed size — the popover grows to fit its longest option. */
-  minWidth: number;
-  maxWidth: number;
-  maxHeight: number;
 };
 
 export function Select({
@@ -64,7 +55,6 @@ export function Select({
   const selected = isControlled ? value : internal;
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [placement, setPlacement] = useState<ListPlacement | null>(null);
   const mounted = useSyncExternalStore(
     subscribeToMount,
     () => true,
@@ -73,64 +63,10 @@ export function Select({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const placement = usePopoverPlacement(open, triggerRef, listRef);
 
   const selectedOption = options.find((item) => item.value === selected);
   const label = selectedOption?.label || placeholder;
-
-  useLayoutEffect(() => {
-    if (!open || !rootRef.current) {
-      setPlacement(null);
-      return;
-    }
-
-    const update = () => {
-      const trigger = triggerRef.current;
-      if (!trigger) return;
-      const rect = trigger.getBoundingClientRect();
-      const gap = 6;
-      const viewportPad = 8;
-      const spaceBelow = window.innerHeight - rect.bottom - viewportPad;
-      const spaceAbove = rect.top - viewportPad;
-      const preferDown = spaceBelow >= 160 || spaceBelow >= spaceAbove;
-      const maxHeight = Math.max(
-        120,
-        Math.min(288, preferDown ? spaceBelow - gap : spaceAbove - gap),
-      );
-      const top = preferDown
-        ? rect.bottom + gap
-        : Math.max(viewportPad, rect.top - gap - maxHeight);
-      // The popover was pinned to the trigger's width, so a narrow control (a
-      // "Status" filter reading "All") clipped its own options to "payme…".
-      // The trigger width becomes a floor instead, and the list is allowed to
-      // run to the viewport edge. Measure the natural width first so a list
-      // that would overflow gets pulled left rather than cropped.
-      const list = listRef.current;
-      const natural = list
-        ? Math.max(rect.width, list.scrollWidth + 2)
-        : rect.width;
-      const available = window.innerWidth - viewportPad * 2;
-      const width = Math.min(natural, available);
-      const left = Math.max(
-        viewportPad,
-        Math.min(rect.left, window.innerWidth - viewportPad - width),
-      );
-      setPlacement({
-        top,
-        left,
-        minWidth: rect.width,
-        maxWidth: available,
-        maxHeight,
-      });
-    };
-
-    update();
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    return () => {
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
-    };
-  }, [open]);
 
   useEffect(() => {
     if (!open) return;

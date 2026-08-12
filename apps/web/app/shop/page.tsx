@@ -8,7 +8,7 @@ import {
   getCatalogue,
   totalStock,
 } from "../../components/shop/data";
-import { EmptyState } from "../../components/ui/empty-state";
+import { EmptyState } from "@joe-kuntani/shared/ui/empty-state";
 import { pageMetadata } from "../../lib/seo";
 import { coverURLs } from "../../lib/media";
 import { getPublicSettings } from "../../lib/settings";

@@ -12,9 +12,9 @@ import {
 } from "react";
 import type { PublicService, ServiceQuestion } from "../services/types";
 import { ButtonLink } from "../ui/button-link";
-import { DateField } from "../ui/date-field";
-import { EmptyState } from "../ui/empty-state";
-import { Select } from "../ui/select";
+import { DateField } from "@joe-kuntani/shared/ui/date-field";
+import { EmptyState } from "@joe-kuntani/shared/ui/empty-state";
+import { Select } from "@joe-kuntani/shared/ui/select";
 import styles from "./booking-form.module.css";
 
 const DRAFT_KEY = "jk-enquiry-draft-v1";

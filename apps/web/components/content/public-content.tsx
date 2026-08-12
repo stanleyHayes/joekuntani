@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { EmptyState } from "../ui/empty-state";
+import { EmptyState } from "@joe-kuntani/shared/ui/empty-state";
 import { ButtonLink } from "../ui/button-link";
 import type { ContentItem } from "./types";
 import styles from "./content.module.css";

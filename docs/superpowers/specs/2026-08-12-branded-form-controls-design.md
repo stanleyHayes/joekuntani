@@ -34,7 +34,7 @@ an existing one has to be made twice.
 | Question | Decision |
 | --- | --- |
 | Scope | Every native control, not only the dropdowns |
-| Duplication | Single implementation in `@joe-kuntani/shared`; the web files become re-export shims |
+| Duplication | Single implementation in `@joe-kuntani/shared`; the web copies are deleted |
 | Unknown category | Offer inline create from the autocomplete |
 | Checkbox and radio | Paint the native input with `appearance: none` |
 | Delivery | One branch, a commit per stage, landing on `main` |
@@ -147,14 +147,21 @@ pending state. Applied to the two `media-library` inputs and the one in
 
 ## Consolidation
 
-`apps/web/components/ui/*` currently duplicates nine files. Each becomes a
-re-export from `@joe-kuntani/shared/ui/*`, then the duplicate implementation and
-its duplicated test are deleted. Web imports keep their existing specifiers
-where a re-export is left in place, so the diff stays in the `ui` directory
-rather than spreading across every consumer.
+`apps/web/components/ui/` duplicates nine components byte for byte. Only three
+of them — `select`, `date-field`, `empty-state` — are imported by web code at
+all, across eight import lines in four files. The other three components
+(`ai-assist`, `otp-input`, `content-incomplete-warning`) have no web consumer
+whatsoever; they are dead copies kept alive only by sitting next to live ones.
+
+So the copies are deleted outright rather than left as re-export shims: the
+eight imports move to `@joe-kuntani/shared/ui/*`, and the duplicate files, their
+stylesheets and their duplicated tests go. A shim would have kept a file per
+component forever to save eight import lines.
 
 The duplicated tests are removed rather than kept, because the shared package
-already runs the same assertions against the same source.
+already runs the same assertions against the same source. Components genuinely
+local to web — `brand-splash`, `brand-watermark`, `button-link`,
+`content-placeholder`, `demo-banner` — stay where they are.
 
 ## Category, end to end
 

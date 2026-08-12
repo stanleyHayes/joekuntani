@@ -4,8 +4,8 @@ import { FormEvent, useId, useRef, useState } from "react";
 import type { PublicService } from "../services/types";
 import type { PublicSettings } from "../../lib/settings";
 import { ButtonLink } from "../ui/button-link";
-import { EmptyState } from "../ui/empty-state";
-import { Select } from "../ui/select";
+import { EmptyState } from "@joe-kuntani/shared/ui/empty-state";
+import { Select } from "@joe-kuntani/shared/ui/select";
 import styles from "./public-info.module.css";
 
 const MESSAGE_MIN = 20;

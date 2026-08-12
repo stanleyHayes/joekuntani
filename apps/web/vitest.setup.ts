@@ -39,13 +39,23 @@ Object.defineProperty(window, "localStorage", {
   },
 });
 
+// GSAP's ticker can outlive the jsdom environment. A frame queued before
+// teardown fires after `window` has gone, and reaching through `window` here
+// threw a ReferenceError that failed the whole run from outside any test — the
+// suite reported "46 passed, 1 error". Which file happened to be last decided
+// whether it appeared at all, so it surfaced only when the file list changed.
+//
+// Taking the timer from the module scope keeps the shim working through
+// teardown, and a frame that lands after the document is gone is dropped: that
+// is what a real browser does with a torn-down document, and GSAP is entitled
+// to assume its callback runs against a live one.
 globalThis.requestAnimationFrame = ((cb: FrameRequestCallback) =>
-  window.setTimeout(
-    () => cb(Date.now()),
-    16,
-  )) as unknown as typeof requestAnimationFrame;
+  setTimeout(() => {
+    if (typeof window === "undefined") return;
+    cb(Date.now());
+  }, 16)) as unknown as typeof requestAnimationFrame;
 globalThis.cancelAnimationFrame = ((id: number) => {
-  window.clearTimeout(id);
+  clearTimeout(id);
 }) as unknown as typeof cancelAnimationFrame;
 
 vi.mock("next/font/google", () => ({

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { DateField } from "../ui/date-field";
-import { Select } from "../ui/select";
+import { DateField } from "@joe-kuntani/shared/ui/date-field";
+import { Select } from "@joe-kuntani/shared/ui/select";
 import styles from "./events.module.css";
 
 type EventFiltersProps = {

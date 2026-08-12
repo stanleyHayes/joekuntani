@@ -9,7 +9,7 @@ import type { PublicEvent } from "../../components/events/types";
 import styles from "../../components/events/events.module.css";
 import { PublicShell } from "../../components/layout/public-shell";
 import { DemoBanner } from "../../components/ui/demo-banner";
-import { EmptyState } from "../../components/ui/empty-state";
+import { EmptyState } from "@joe-kuntani/shared/ui/empty-state";
 import {
   demoContentEnabled,
   demoEventCovers,
