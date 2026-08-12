@@ -18,6 +18,7 @@ import {
   UploadSimple,
 } from "@phosphor-icons/react";
 import { AiAssist } from "@joe-kuntani/shared/ui/ai-assist";
+import { Combobox } from "@joe-kuntani/shared/ui/combobox";
 
 import {
   AdminErrorState,
@@ -354,9 +355,15 @@ export function VideoAdmin() {
         .sort((left, right) => left.localeCompare(right)),
     [categoryItems, draft.category, items],
   );
+  const categoryOptions = useMemo(
+    () => categories.map((category) => ({ value: category, label: category })),
+    [categories],
+  );
 
-  async function createCategory() {
-    const title = (categoryDraft.title || newCategory).trim();
+  // The name is passed in when the picker offers to create what was typed into
+  // its filter; the "Create category" panel below still supplies its own.
+  async function createCategory(proposed?: string) {
+    const title = (proposed ?? (categoryDraft.title || newCategory)).trim();
     if (!title || categoryPending) return;
     setCategoryPending("create");
     setError("");
@@ -584,22 +591,20 @@ export function VideoAdmin() {
             </small>
           </label>
           <div className={styles.categoryField}>
-            <label>
-              Category
-              <select
+            <div className={styles.categoryPicker}>
+              <span>Category</span>
+              <Combobox
+                aria-label="Category"
+                options={categoryOptions}
                 value={draft.category}
-                onChange={(event) =>
-                  setDraft({ ...draft, category: event.target.value })
-                }
-              >
-                <option value="">Select a category</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </label>
+                onChange={(category) => setDraft({ ...draft, category })}
+                onCreate={(title) => createCategory(title)}
+                createPending={categoryPending === "create"}
+                placeholder="Select a category"
+                searchPlaceholder="Search categories…"
+                emptyMessage="No category matches that."
+              />
+            </div>
             {addingCategory ? (
               <div className={styles.newCategory}>
                 <input
@@ -808,13 +813,17 @@ export function VideoAdmin() {
                     }
                   />
                   <div className={styles.inlineFields}>
-                    <input
+                    {/* Choose, never invent. This row used to be free text, so
+                        a category the picker above was careful to keep single
+                        could be re-spelled into a second one from here. */}
+                    <Combobox
                       aria-label={`Category for ${item.slug}`}
+                      options={categoryOptions}
                       value={item.category}
-                      onChange={(event) =>
-                        edit(item.id, { category: event.target.value })
-                      }
+                      onChange={(category) => edit(item.id, { category })}
                       placeholder="Category"
+                      searchPlaceholder="Search categories…"
+                      emptyMessage="No category matches that."
                     />
                     <select
                       aria-label={`Visibility for ${item.slug}`}

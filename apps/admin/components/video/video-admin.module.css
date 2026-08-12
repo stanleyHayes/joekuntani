@@ -179,6 +179,7 @@
   min-width: 0;
 }
 .categoryField > label,
+.categoryField > .categoryPicker,
 .description > label {
   display: grid;
   gap: 0.35rem;

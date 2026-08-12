@@ -4,11 +4,13 @@ import {
   useCallback,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
 } from "react";
 import { usePathname } from "next/navigation";
+import { Combobox } from "@joe-kuntani/shared/ui/combobox";
 
 import { adminGuide } from "../lib/admin-guides";
 import styles from "./page-guide.module.css";
@@ -232,6 +234,21 @@ export function AdminPageGuide({ title }: { title: string }) {
     noChoice,
   );
 
+  // "Best available" is a real choice rather than an absent one, so it is an
+  // option in the list instead of a placeholder: picking it again is how the
+  // reader hands the decision back to the machine.
+  const voiceOptions = useMemo(
+    () => [
+      { value: "", label: "Best available" },
+      ...voices.map((voice) => ({
+        value: voice.name,
+        label: voice.name,
+        hint: voice.lang,
+      })),
+    ],
+    [voices],
+  );
+
   // Each play gets a number. `cancel()` fires error events on whatever was
   // already queued, and those land after the new run has set itself speaking —
   // without this the stale event switches the button back to "Listen" while
@@ -338,23 +355,18 @@ export function AdminPageGuide({ title }: { title: string }) {
               enormously in what they install, and the best one here is a guess
               until someone hears it. */}
           {canSpeak && voices.length > 1 ? (
-            <label className={styles.voice}>
-              <span className={styles.visuallyHidden}>Reading voice</span>
-              <select
+            <div className={styles.voice}>
+              <Combobox
+                aria-label="Reading voice"
+                size="compact"
+                options={voiceOptions}
                 value={chosenVoice}
-                onChange={(event) => setChosenVoice(event.target.value)}
-              >
-                <option value="">Best available</option>
-                {voices.map((voice) => (
-                  <option
-                    key={`${voice.name}:${voice.lang}`}
-                    value={voice.name}
-                  >
-                    {voice.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+                onChange={setChosenVoice}
+                placeholder="Best available"
+                searchPlaceholder="Search voices…"
+                emptyMessage="No installed voice matches that."
+              />
+            </div>
           ) : null}
         </div>
       </div>

@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 
 import {
@@ -290,6 +296,26 @@ it("edits metadata, synchronizes and publishes without replacing the asset", asy
   const fetcher = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      // The row's category picker can only offer what exists, so the category
+      // this test moves the video to has to exist.
+      if (url.endsWith("/video-categories")) {
+        return new Response(
+          JSON.stringify({
+            items: [
+              {
+                id: "category-comedy",
+                slug: "comedy",
+                title: "Comedy",
+                description: "",
+                image_asset_id: "",
+                active: true,
+                sort_order: 0,
+                revision: 1,
+              },
+            ],
+          }),
+        );
+      }
       if (!init?.method || init.method === "GET") {
         return new Response(JSON.stringify({ items: [current] }));
       }
@@ -322,9 +348,10 @@ it("edits metadata, synchronizes and publishes without replacing the asset", asy
   fireEvent.change(screen.getByLabelText("Description for live-set"), {
     target: { value: "Edited description" },
   });
-  fireEvent.change(screen.getByLabelText("Category for live-set"), {
-    target: { value: "Comedy" },
-  });
+  fireEvent.click(
+    screen.getByRole("button", { name: "Category for live-set" }),
+  );
+  fireEvent.click(await screen.findByRole("option", { name: "Comedy" }));
   fireEvent.change(screen.getByLabelText("Visibility for live-set"), {
     target: { value: "unlisted" },
   });
@@ -445,16 +472,226 @@ it("loads seeded categories and creates a new category inline", async () => {
   );
   render(<VideoAdmin />);
 
-  const category = await screen.findByLabelText("Category");
-  expect(screen.getByRole("option", { name: "Comedy" })).toBeVisible();
+  // The picker holds its options until it is opened, so the seeded category is
+  // proved by opening it rather than by reading the closed control.
+  const category = await screen.findByRole("button", { name: "Category" });
+  fireEvent.click(category);
+  expect(await screen.findByRole("option", { name: "Comedy" })).toBeVisible();
+  fireEvent.keyDown(screen.getByRole("combobox", { name: /filter$/ }), {
+    key: "Escape",
+  });
+
   fireEvent.click(screen.getByRole("button", { name: "Create category" }));
   fireEvent.change(screen.getByLabelText("New category name"), {
     target: { value: "Behind the scenes" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
+  await waitFor(() => expect(category).toHaveTextContent("Behind the scenes"));
+});
+
+it("creates a category from the picker's own filter", async () => {
+  const comedy = {
+    id: "category-comedy",
+    slug: "comedy",
+    title: "Comedy",
+    description: "Stand-up and sketches",
+    image_asset_id: "",
+    active: true,
+    sort_order: 0,
+    revision: 1,
+  };
+  const post = vi.fn();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (
+        String(input).endsWith("/video-categories") &&
+        init?.method === "POST"
+      ) {
+        post(JSON.parse(String(init.body)));
+        return new Response(
+          JSON.stringify({
+            ...comedy,
+            id: "category-poetry",
+            slug: "poetry",
+            title: "Poetry",
+          }),
+          { status: 201 },
+        );
+      }
+      if (String(input).endsWith("/video-categories"))
+        return new Response(JSON.stringify({ items: [comedy] }));
+      return new Response(JSON.stringify({ items: [] }));
+    }),
+  );
+  render(<VideoAdmin />);
+
+  const category = await screen.findByRole("button", { name: "Category" });
+  fireEvent.click(category);
+  await screen.findByRole("option", { name: "Comedy" });
+
+  fireEvent.change(screen.getByRole("combobox", { name: /filter$/ }), {
+    target: { value: "Poetry" },
+  });
+  fireEvent.click(screen.getByText("Create “Poetry”"));
+
+  await waitFor(() =>
+    expect(post).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Poetry" }),
+    ),
+  );
+  await waitFor(() => expect(category).toHaveTextContent("Poetry"));
+});
+
+const seededCategory = {
+  id: "category-comedy",
+  slug: "comedy",
+  title: "Comedy",
+  description: "Stand-up and sketches",
+  image_asset_id: "",
+  active: true,
+  sort_order: 0,
+  revision: 1,
+};
+
+function categoryManager() {
+  const heading = screen.getByText("Video categories");
+  const manager = heading.closest("details");
+  if (!manager) throw new Error("category manager not found");
+  return within(manager);
+}
+
+it("edits a reusable category and saves the whole record", async () => {
+  const patched = vi.fn();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/video-categories") && init?.method === "PATCH") {
+        patched(JSON.parse(String(init.body)));
+        return new Response(
+          JSON.stringify({
+            ...seededCategory,
+            title: "Comedy & sketch",
+            revision: 2,
+          }),
+        );
+      }
+      if (url.endsWith("/video-categories"))
+        return new Response(JSON.stringify({ items: [seededCategory] }));
+      return new Response(JSON.stringify({ items: [] }));
+    }),
+  );
+  render(<VideoAdmin />);
+  await screen.findByText("1 reusable categories");
+
+  const manager = categoryManager();
+  fireEvent.change(manager.getByLabelText("Title"), {
+    target: { value: "Comedy & sketch" },
+  });
+  fireEvent.change(manager.getByLabelText("Description"), {
+    target: { value: "Stand-up, sketch and character work" },
+  });
+  fireEvent.change(manager.getByLabelText("Order"), { target: { value: "3" } });
+  fireEvent.click(manager.getByLabelText("Available to use"));
+  fireEvent.click(manager.getByRole("button", { name: "Save category" }));
+
+  // The revision goes with the write: the API rejects a stale one, which is
+  // what stops two operators overwriting each other.
+  await waitFor(() =>
+    expect(patched).toHaveBeenCalledWith({
+      title: "Comedy & sketch",
+      description: "Stand-up, sketch and character work",
+      image_asset_id: "",
+      active: false,
+      sort_order: 3,
+      revision: 1,
+    }),
+  );
   expect(
-    await screen.findByRole("option", { name: "Behind the scenes" }),
+    await screen.findByText("Category “Comedy & sketch” saved."),
   ).toBeVisible();
-  await waitFor(() => expect(category).toHaveValue("Behind the scenes"));
+});
+
+it("refuses to save a category whose title has been emptied", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).endsWith("/video-categories"))
+        return new Response(JSON.stringify({ items: [seededCategory] }));
+      return new Response(JSON.stringify({ items: [] }));
+    }),
+  );
+  render(<VideoAdmin />);
+  await screen.findByText("1 reusable categories");
+
+  const manager = categoryManager();
+  fireEvent.change(manager.getByLabelText("Title"), {
+    target: { value: "   " },
+  });
+
+  expect(manager.getByRole("button", { name: "Save category" })).toBeDisabled();
+});
+
+it("reports a category that could not be saved", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/video-categories") && init?.method === "PATCH")
+        return new Response(null, { status: 409 });
+      if (url.endsWith("/video-categories"))
+        return new Response(JSON.stringify({ items: [seededCategory] }));
+      return new Response(JSON.stringify({ items: [] }));
+    }),
+  );
+  render(<VideoAdmin />);
+  await screen.findByText("1 reusable categories");
+
+  fireEvent.click(
+    categoryManager().getByRole("button", { name: "Save category" }),
+  );
+
+  expect(
+    await screen.findByText(
+      "The category could not be saved. Reload and try again.",
+    ),
+  ).toBeVisible();
+});
+
+it("offers only existing categories on a library row", async () => {
+  const comedy = {
+    id: "category-comedy",
+    slug: "comedy",
+    title: "Comedy",
+    description: "Stand-up and sketches",
+    image_asset_id: "",
+    active: true,
+    sort_order: 0,
+    revision: 1,
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).endsWith("/video-categories"))
+        return new Response(JSON.stringify({ items: [comedy] }));
+      return new Response(JSON.stringify({ items: [base] }));
+    }),
+  );
+  render(<VideoAdmin />);
+
+  const row = await screen.findByRole("button", {
+    name: "Category for live-set",
+  });
+  fireEvent.click(row);
+  fireEvent.change(screen.getByRole("combobox", { name: /filter$/ }), {
+    target: { value: "Poetry" },
+  });
+
+  // A row may only assign a category that exists; inventing one from here is
+  // exactly how the taxonomy used to drift.
+  // Scoped to the create row's own wording: the panel below has a permanent
+  // "Create category" button that a looser matcher would catch.
+  expect(screen.queryByText(/^Create “/)).not.toBeInTheDocument();
 });

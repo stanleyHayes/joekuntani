@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { AdminPageGuide } from "./page-guide";
@@ -299,31 +299,28 @@ it("reads a little under natural pace", async () => {
 // varies enormously between machines — so the choice has to be reachable.
 it("offers a voice picker when there is more than one to choose from", async () => {
   render(<AdminPageGuide title="Media" />);
-  const picker = await screen.findByRole("combobox", {
-    name: /Reading voice/i,
-  });
-  const options = within(picker)
-    .getAllByRole("option")
-    .map((o) => o.textContent);
+  // The picker holds its list until opened, so the choices are read from the
+  // open popover rather than from the closed control.
+  fireEvent.click(await screen.findByRole("button", { name: /Reading voice/i }));
+  const options = screen.getAllByRole("option").map((o) => o.textContent);
   expect(options[0]).toBe("Best available");
-  expect(options).toContain("Samantha");
+  // Each row carries its language beside the name, so match within the row.
+  expect(options.some((label) => label?.includes("Samantha"))).toBe(true);
   // Non-English voices are never offered; they read English as gibberish.
-  expect(options).not.toContain("Amélie");
+  expect(options.some((label) => label?.includes("Amélie"))).toBe(false);
 });
 
 it("hides the picker when the system offers no real choice", async () => {
   voices = [{ name: "Samantha", lang: "en-US" }];
   render(<AdminPageGuide title="Media" />);
   await screen.findByRole("button", { name: /read this aloud/i });
-  expect(screen.queryByRole("combobox", { name: /Reading voice/i })).toBeNull();
+  expect(screen.queryByRole("button", { name: /Reading voice/i })).toBeNull();
 });
 
 it("reads in the chosen voice and remembers it", async () => {
   const first = render(<AdminPageGuide title="Media" />);
-  fireEvent.change(
-    await screen.findByRole("combobox", { name: /Reading voice/i }),
-    { target: { value: "Samantha" } },
-  );
+  fireEvent.click(await screen.findByRole("button", { name: /Reading voice/i }));
+  fireEvent.click(screen.getByRole("option", { name: /Samantha/ }));
   fireEvent.click(screen.getByRole("button", { name: /read this aloud/i }));
   expect(spoken[0].voice?.name).toBe("Samantha");
 

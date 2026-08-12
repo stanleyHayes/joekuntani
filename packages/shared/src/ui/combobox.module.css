@@ -1,0 +1,223 @@
+/* The closed state is deliberately identical to Select's trigger: a form that
+   mixes a plain picker with a searchable one should read as one control that
+   sometimes offers a filter, not as two different widgets. */
+.root {
+  position: relative;
+  width: 100%;
+}
+
+.trigger {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 2.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 0.7rem 0.9rem;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--brand-j) 8%, transparent),
+      color-mix(in srgb, var(--brand-k) 8%, transparent)
+    ),
+    var(--surface-raised);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    transform 100ms ease,
+    box-shadow 160ms ease;
+}
+
+.trigger:hover:not(:disabled) {
+  border-color: var(--brand-k);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.trigger span[data-empty="true"] {
+  color: var(--ink-soft);
+  font-weight: 550;
+}
+
+.chevron {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid var(--brand-j);
+  border-bottom: 2px solid var(--brand-k);
+  transform: rotate(45deg) translateY(-0.1rem);
+}
+
+.root[data-open="true"] .chevron {
+  transform: rotate(225deg) translateY(-0.05rem);
+}
+
+/* A toolbar control sits beside buttons and text, not in a form column, so it
+   takes the pill shape those toolbars already use and stops short of the width
+   a full field would claim. */
+.root[data-size="compact"] {
+  width: auto;
+}
+
+.root[data-size="compact"] .trigger {
+  min-height: 2.4rem;
+  max-width: 12rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.root[data-size="compact"] .trigger > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The panel is the scroll boundary, not the list: the filter field has to stay
+   put while the options move under it. */
+.panel {
+  position: fixed;
+  z-index: var(--layer-popover, 95);
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 0.35rem;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.search {
+  flex: none;
+  width: 100%;
+  min-width: 12rem;
+  margin-bottom: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius-control) - 0.35rem - 1px);
+  padding: 0.55rem 0.7rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 550;
+}
+
+.search::placeholder {
+  color: var(--ink-soft);
+}
+
+.search:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -1px;
+  border-color: var(--brand-k);
+}
+
+.list {
+  flex: 1;
+  /* Without this a flex child refuses to shrink below its content, and the
+     panel grows past the height the placement hook allowed. */
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+/* Concentric radius: the row sits inside the panel's 1px border and 0.35rem
+   padding, so it comes in by that whole inset. */
+.option,
+.create,
+.empty {
+  border-radius: calc(var(--radius-control) - 0.35rem - 1px);
+  padding: 0.65rem 0.75rem;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.option,
+.create {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.optionLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hint {
+  margin-left: auto;
+  padding-left: 0.75rem;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 550;
+}
+
+.option[data-active="true"],
+.option:hover,
+.create[data-active="true"],
+.create:hover {
+  background: color-mix(in srgb, var(--brand-k) 16%, var(--surface));
+}
+
+.option[aria-selected="true"] {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--brand-j) 22%, transparent),
+    color-mix(in srgb, var(--brand-k) 18%, transparent)
+  );
+  font-weight: 750;
+}
+
+/* Making a category is a different kind of act from picking one, so it is set
+   apart rather than sitting in the run of options. */
+.create {
+  margin-top: 0.2rem;
+  border-top: 1px solid var(--line);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.createMark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand-j), var(--brand-k));
+  color: var(--accent-contrast, #fff);
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.panel[data-pending="true"] .create {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.empty {
+  color: var(--ink-soft);
+  font-weight: 550;
+  cursor: default;
+}
