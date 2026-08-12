@@ -57,17 +57,17 @@ the only way to get the design.
 
 Counts are of source files, excluding `.next` build output.
 
-| Control                                              | Sites  | Treatment                                                                                       |
-| ---------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
-| `<select>` — Category                                | 1      | New `Combobox`, with inline create                                                              |
-| `<select>` — Reading voice                           | 1      | New `Combobox`, search only                                                                     |
-| `<select>` — Visibility ×2, Section type, Text style | 4      | Existing `Select`                                                                               |
-| Category free-text on list rows                      | 1      | New `Combobox`, closing the typo hole                                                           |
-| `type="checkbox"`                                    | 19     | Branded `Checkbox`                                                                              |
-| `type="radio"`                                       | 2      | Branded `Radio`                                                                                 |
-| `type="file"`                                        | 3 of 6 | New `FileInput`; 3 in `asset-picker` are already hidden behind styled labels and need no change |
-| `type="date"` / `datetime-local"`                    | 4      | Existing `DateField`                                                                            |
-| Duplicated components                                | 9      | Re-export from shared, delete copies                                                            |
+| Control                                              | Sites   | Treatment                                                                           |
+| ---------------------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| `<select>` — Category                                | 1       | New `Combobox`, with inline create                                                  |
+| `<select>` — Reading voice                           | 1       | New `Combobox`, search only                                                         |
+| `<select>` — Visibility ×2, Section type, Text style | 4       | Existing `Select`                                                                   |
+| Category free-text on list rows                      | 1       | New `Combobox`, closing the typo hole                                               |
+| `type="checkbox"`                                    | 8 of 19 | Shared painting; the console's 11 were already painted by `admin-stage.css`         |
+| `type="radio"`                                       | 1 of 2  | Shared painting; the shop's variant tile already hides its own                      |
+| `type="file"`                                        | 0 of 6  | All six already avoid native chrome; a platform floor is added beneath them         |
+| `type="date"` / `datetime-local"`                    | 2 of 4  | Existing `DateField`; booking's two already route through it via its `Field` helper |
+| Duplicated components                                | 9       | Single implementation in shared, copies deleted                                     |
 
 `markdown-field.tsx`'s "Text style" is not a value picker — it applies a heading
 and resets itself to empty. It becomes a `Select` held at `value=""`, which
@@ -121,29 +121,42 @@ this. Rather than copy it, extract it to `use-popover-placement.ts` and have bot
 components consume it. This is the one piece of existing code the work
 restructures, and only because a second consumer now exists.
 
-### `Checkbox` and `Radio` (new, shared)
+### Checkboxes, radios and file inputs — a stylesheet, not components
 
-Thin wrappers over the native input that guarantee consistent markup and label
-association, with the visual work in CSS:
+This started as a plan for `Checkbox`, `Radio` and `FileInput` components.
+Reading the code first changed that, and the change is worth recording.
 
-```tsx
-<Checkbox checked={agreed} onChange={setAgreed}>
-  Email me about shows and releases.
-</Checkbox>
-```
+The console was already painting its checkboxes and radios in
+`admin-stage.css`: `appearance: none`, a stroked tick, a filled box. Eleven of
+the nineteen checkboxes were therefore already branded, and the public site's
+eight were not. A component would have been a second answer to a question the
+platform had answered — and adopting it would have meant editing nineteen call
+sites to reach a look eleven of them already had.
 
-Painted with `appearance: none`, the brand gradient on `:checked`, a stroked
-tick, `--focus` ring on `:focus-visible`, and `:disabled` at reduced opacity.
-`Radio` is the same control with a dot and a full border radius. Both honour
-`prefers-reduced-motion` by dropping the check transition.
+So the treatment moves to `shared/styles/controls.css` and both apps opt in by
+class: the console through its existing `.admin-stage` wrapper, the public site
+through `jk-controls` on its body. One definition, no call-site churn, and it
+covers controls added later without anyone remembering to.
 
-### `FileInput` (new, shared)
+Two details carry weight:
 
-A branded button (or drop target, where the current design already implies one)
-wrapping a visually hidden native input — the pattern `asset-picker` already
-uses successfully. It shows the chosen file name, an optional accept hint, and a
-pending state. Applied to the two `media-library` inputs and the one in
-`video-admin`.
+- The scope sits in `:where()`, which contributes no specificity, so each rule
+  weighs exactly what `.admin-stage input[type="checkbox"]` weighed before:
+  0-2-1. High enough to beat a generic `.x input` rule in a module, low enough
+  to keep losing to a rule written for a checkbox.
+- Margins are left to the call site. A consent checkbox beside a wrapped
+  paragraph is nudged onto the paragraph's first line, and claiming `margin`
+  centrally would have flattened that silently. The console keeps its own flat
+  margin locally.
+
+`data-bare` opts a control out, for pickers that put the input in the
+accessibility tree while a label does the showing — the shop's variant tiles.
+Painting a box onto an input shrunk to a pixel would undo the hiding.
+
+File inputs need nothing per site: all six already avoid native chrome, three
+behind styled labels, one behind the upload drop zone, two dressed by the media
+library. `controls.css` adds a floor beneath them so the next one added is
+branded by default; local treatments outweigh it and keep their own look.
 
 ## Consolidation
 
@@ -204,8 +217,10 @@ One branch, one commit per stage, so the history stays reviewable:
 2. Build `Combobox`; migrate Category (with inline create), the list-row
    category, and Reading voice.
 3. Migrate the four remaining native `<select>` to `Select`.
-4. Build `Checkbox` and `Radio`; migrate 21 sites.
-5. Build `FileInput`; migrate 3 sites; move the 4 date inputs to `DateField`.
+4. Move the checkbox and radio painting to `shared/styles/controls.css`; opt the
+   public site in.
+5. Add the file-input floor; move the campaign editor's two date inputs to
+   `DateField`.
 
 Then fast-forward `main` and push once.
 
