@@ -66,6 +66,26 @@ Set these in the production env group (never commit real secrets):
 3. Deploy the web app on Vercel and wait for `/api/health` = 200.
 4. Run smoke checks in [release-and-rollback.md](release-and-rollback.md).
 
+## Seeding
+
+Deploys apply **schema changes only**. `preDeployCommand` runs `joe-mongochange`; nothing runs `seedrun`. A new seed therefore reaches local machines and never reaches a deployed database — expect a collection that exists, has its indexes, and holds no documents.
+
+`seed.Run` refuses any environment outside local/development/test/preview/staging unless `SEED_ALLOW_PRODUCTION=yes`. Production content normally enters through the admin dashboard (see [0004](../decisions/0004-environment-and-data-isolation.md)); seeding it is reserved for structural records the dashboard expects to already exist, such as the video category taxonomy.
+
+When a production seed is genuinely required:
+
+1. Name the seed with `SEED_ONLY`. **Never run the bare registry against production** — it carries placeholder content, including a `placeholder-live-show` event that would publish to the live site.
+2. Run it against the production database with both opt-ins set:
+
+   ```
+   APP_ENV=production SEED_ALLOW_PRODUCTION=yes \
+     SEED_ONLY=202608111850_video_categories go run ./cmd/seedrun
+   ```
+
+3. Verify the intended documents landed and that no placeholder records came with them.
+
+Seeds are idempotent and claim-guarded in `seed_runs`, so a repeat run is a no-op; a seed whose source changed after being applied is refused rather than silently diverging.
+
 ## Fail-fast configuration
 
 Staging and production API processes refuse to start when required secrets are missing or isolation markers collide. See `apps/api/internal/platform/config`.
