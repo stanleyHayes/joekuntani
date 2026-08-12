@@ -1,0 +1,115 @@
+/*
+ * One checkbox and radio treatment for the whole platform.
+ *
+ * These are painted rather than replaced. `appearance: none` removes the
+ * browser's rendering completely, so what is left is entirely ours — the box,
+ * the tick, the fill, the focus ring. What is kept is everything the browser
+ * already gets right and a custom widget would have to rebuild by hand:
+ * focus, the space key, form participation, :checked and :disabled, label
+ * association, and the accessibility tree.
+ *
+ * Both apps opt in by class: the console through the `.admin-stage` wrapper it
+ * already has, the public site through `jk-controls` on its body.
+ *
+ * The scope sits in `:where()`, which contributes no specificity, so each rule
+ * weighs exactly what `.admin-stage input[type="checkbox"]` weighed when these
+ * rules lived in the console — 0-2-1. That number is load-bearing: it has to
+ * beat a generic `.x input` rule in a CSS module, and it has to keep losing to
+ * a rule written specifically for a checkbox.
+ *
+ * Margins are deliberately not set here. A consent checkbox beside a wrapped
+ * paragraph needs nudging onto the first line, and that is the call site's
+ * business; claiming the property here would flatten those adjustments
+ * silently. The console normalises its own in admin-stage.css.
+ */
+
+/*
+ * `data-bare` opts a control out. Some pickers put the input in the
+ * accessibility tree and keyboard order while a label does the showing — the
+ * shop's variant tiles work that way. Painting a box onto an input that has
+ * been deliberately shrunk to a pixel would undo the hiding and leave a stray
+ * control floating over the tile, so those inputs say so and are left alone.
+ */
+:where(.admin-stage, .jk-controls) input[type="checkbox"]:not([data-bare]),
+:where(.admin-stage, .jk-controls) input[type="radio"]:not([data-bare]) {
+  appearance: none;
+  display: grid;
+  place-content: center;
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  min-height: 0;
+  padding: 0;
+  border: 1.5px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+:where(.admin-stage, .jk-controls) input[type="checkbox"]:not([data-bare]) {
+  border-radius: 0.38rem;
+}
+
+:where(.admin-stage, .jk-controls) input[type="radio"]:not([data-bare]) {
+  border-radius: 50%;
+}
+
+/* Drawn from two borders rather than a glyph: a tick built this way scales
+   with the box and never depends on a font that may not be there. */
+:where(.admin-stage, .jk-controls)
+  input[type="checkbox"]:not([data-bare])::after {
+  content: "";
+  width: 0.55rem;
+  height: 0.3rem;
+  border: 0 solid var(--accent-contrast);
+  border-left-width: 2px;
+  border-bottom-width: 2px;
+  opacity: 0;
+  transform: rotate(-45deg) translate(1px, -1.5px);
+}
+
+:where(.admin-stage, .jk-controls) input[type="radio"]:not([data-bare])::after {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent-contrast);
+  opacity: 0;
+}
+
+:where(.admin-stage, .jk-controls) input[type="checkbox"]:not([data-bare]):checked,
+:where(.admin-stage, .jk-controls) input[type="radio"]:not([data-bare]):checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+:where(.admin-stage, .jk-controls)
+  input[type="checkbox"]:not([data-bare]):checked::after,
+:where(.admin-stage, .jk-controls)
+  input[type="radio"]:not([data-bare]):checked::after {
+  opacity: 1;
+}
+
+:where(.admin-stage, .jk-controls)
+  input[type="checkbox"]:not([data-bare]):disabled,
+:where(.admin-stage, .jk-controls) input[type="radio"]:not([data-bare]):disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+:where(.admin-stage, .jk-controls)
+  input[type="checkbox"]:not([data-bare]):focus-visible,
+:where(.admin-stage, .jk-controls)
+  input[type="radio"]:not([data-bare]):focus-visible {
+  outline: 2px solid var(--focus, var(--brand-k));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.admin-stage, .jk-controls) input[type="checkbox"]:not([data-bare]),
+  :where(.admin-stage, .jk-controls) input[type="radio"]:not([data-bare]) {
+    transition: none;
+  }
+}

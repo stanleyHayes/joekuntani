@@ -201,7 +201,10 @@ function VariantOption({
 }) {
   return (
     <label className={styles.variant} data-checked={checked}>
+      {/* The tile is the visible control, so this input stays hidden and opts
+          out of the platform's checkbox and radio painting. */}
       <input
+        data-bare=""
         type="radio"
         name="variant"
         value={variant.id}

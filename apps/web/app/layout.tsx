@@ -6,6 +6,7 @@ import { canonicalURL, jsonLd } from "../lib/seo";
 import { Providers } from "../components/providers";
 
 import "./globals.css";
+import "@joe-kuntani/shared/styles/controls.css";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -92,7 +93,9 @@ export default async function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
-      <body>
+      {/* Opts the public site into the shared checkbox and radio painting;
+          the console opts in through its own `.admin-stage` wrapper. */}
+      <body className="jk-controls">
         {website && settings?.brand?.name ? (
           <script
             type="application/ld+json"

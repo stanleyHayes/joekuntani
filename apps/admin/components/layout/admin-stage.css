@@ -168,70 +168,17 @@
   font-size: 0.92rem;
 }
 
-/* One checkbox and radio treatment for every admin surface. Specificity is
-   0-2-1 so it beats both the field rule above and any `.x input` module rule. */
+/* Checkbox and radio painting lives in @joe-kuntani/shared/styles/controls.css,
+   which the web app shares. The selector there keeps this file's 0-2-1
+   specificity, so it still beats the field rule above and any `.x input` rule
+   in a module.
+
+   The margin stays here. The shared sheet leaves it to the call site, because
+   a consent checkbox beside a wrapped paragraph needs nudging onto the first
+   line — but the console's own forms want it flat, as they always have. */
 .admin-stage input[type="checkbox"],
 .admin-stage input[type="radio"] {
-  appearance: none;
-  display: grid;
-  place-content: center;
-  flex: none;
-  width: 1.15rem;
-  height: 1.15rem;
-  min-height: 0;
   margin: 0;
-  padding: 0;
-  border: 1.5px solid color-mix(in srgb, var(--ink) 40%, transparent);
-  background: color-mix(in srgb, var(--surface) 96%, transparent);
-  cursor: pointer;
-  transition:
-    background-color 120ms ease,
-    border-color 120ms ease;
-}
-
-.admin-stage input[type="checkbox"] {
-  border-radius: 0.38rem;
-}
-
-.admin-stage input[type="radio"] {
-  border-radius: 50%;
-}
-
-.admin-stage input[type="checkbox"]::after {
-  content: "";
-  width: 0.55rem;
-  height: 0.3rem;
-  border: 0 solid var(--accent-contrast);
-  border-left-width: 2px;
-  border-bottom-width: 2px;
-  opacity: 0;
-  transform: rotate(-45deg) translate(1px, -1.5px);
-}
-
-.admin-stage input[type="radio"]::after {
-  content: "";
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: var(--accent-contrast);
-  opacity: 0;
-}
-
-.admin-stage input[type="checkbox"]:checked,
-.admin-stage input[type="radio"]:checked {
-  border-color: var(--accent);
-  background: var(--accent);
-}
-
-.admin-stage input[type="checkbox"]:checked::after,
-.admin-stage input[type="radio"]:checked::after {
-  opacity: 1;
-}
-
-.admin-stage input[type="checkbox"]:disabled,
-.admin-stage input[type="radio"]:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -240,10 +187,6 @@
   }
   .governance-page {
     animation: none;
-  }
-  .admin-stage input[type="checkbox"],
-  .admin-stage input[type="radio"] {
-    transition: none;
   }
 }
 @keyframes admin-route-fade {
