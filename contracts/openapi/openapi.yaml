@@ -4696,7 +4696,8 @@ components:
         height: { type: integer, minimum: 0 }
         # The shape to reserve, always present: the override when one is set,
         # otherwise the measured frame reduced, otherwise 16:9.
-        aspect_ratio: { type: string, pattern: "^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$" }
+        aspect_ratio:
+          { type: string, pattern: "^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$" }
         # The operator's override alone. Empty means "use what was measured".
         aspect_ratio_override:
           { type: string, pattern: "^$|^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$" }
@@ -4852,7 +4853,8 @@ components:
         duration_seconds: { type: integer, minimum: 0 }
         # The box the page reserves, so a portrait clip is not letterboxed into
         # a landscape frame. Always resolved; the negotiation stays server-side.
-        aspect_ratio: { type: string, pattern: "^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$" }
+        aspect_ratio:
+          { type: string, pattern: "^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$" }
         status: { type: string, const: ready }
         visibility: { type: string, enum: [public, unlisted] }
         is_published: { type: boolean, const: true }
