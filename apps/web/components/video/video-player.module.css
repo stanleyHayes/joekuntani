@@ -4,7 +4,11 @@
 .frame {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  /* The video's own shape, handed down from the record. Videos arrive from
+     phones, festival editors and broadcasters, and forcing all of them into a
+     landscape box letterboxed the portrait ones. 16 / 9 remains the fallback
+     for anything whose frame was never measured. */
+  aspect-ratio: var(--video-aspect, 16 / 9);
   overflow: hidden;
   border: 0;
   border-radius: 0.8rem;

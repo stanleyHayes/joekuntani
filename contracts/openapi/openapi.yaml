@@ -4668,6 +4668,7 @@ components:
           provider,
           thumbnail_url,
           duration_seconds,
+          aspect_ratio,
           status,
           visibility,
           is_published,
@@ -4690,6 +4691,15 @@ components:
         provider: { type: string, enum: [bunny, cloudinary, external] }
         thumbnail_url: { type: string, maxLength: 2048 }
         duration_seconds: { type: integer, minimum: 0 }
+        # Measured by the provider once encoding finishes; 0 until then.
+        width: { type: integer, minimum: 0 }
+        height: { type: integer, minimum: 0 }
+        # The shape to reserve, always present: the override when one is set,
+        # otherwise the measured frame reduced, otherwise 16:9.
+        aspect_ratio: { type: string, pattern: "^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$" }
+        # The operator's override alone. Empty means "use what was measured".
+        aspect_ratio_override:
+          { type: string, pattern: "^$|^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$" }
         status: { $ref: "#/components/schemas/VideoStatus" }
         visibility: { $ref: "#/components/schemas/VideoVisibility" }
         is_published: { type: boolean }
@@ -4746,6 +4756,9 @@ components:
             enum: [video/mp4, video/webm, video/quicktime, video/x-matroska],
           }
         bytes: { type: integer, format: int64, minimum: 1, maximum: 2147483648 }
+        # "" keeps the frame the provider measured; otherwise "W:H".
+        aspect_ratio:
+          { type: string, pattern: "^$|^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$" }
     VideoUpdateInput:
       type: object
       additionalProperties: false
@@ -4759,6 +4772,9 @@ components:
           { type: array, maxItems: 20, items: { type: string, maxLength: 60 } }
         visibility: { $ref: "#/components/schemas/VideoVisibility" }
         sort_order: { type: integer }
+        # "" keeps the frame the provider measured; otherwise "W:H".
+        aspect_ratio:
+          { type: string, pattern: "^$|^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$" }
         revision: { type: integer, format: int64, minimum: 1 }
     VideoPublicationInput:
       type: object
@@ -4816,6 +4832,7 @@ components:
           tags,
           thumbnail_url,
           duration_seconds,
+          aspect_ratio,
           status,
           visibility,
           is_published,
@@ -4833,6 +4850,9 @@ components:
           { type: array, maxItems: 20, items: { type: string, maxLength: 60 } }
         thumbnail_url: { type: string, format: uri, pattern: "^https://" }
         duration_seconds: { type: integer, minimum: 0 }
+        # The box the page reserves, so a portrait clip is not letterboxed into
+        # a landscape frame. Always resolved; the negotiation stays server-side.
+        aspect_ratio: { type: string, pattern: "^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$" }
         status: { type: string, const: ready }
         visibility: { type: string, enum: [public, unlisted] }
         is_published: { type: boolean, const: true }

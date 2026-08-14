@@ -38,6 +38,11 @@ type bunnyVideo struct {
 	Status         int    `json:"status"`
 	Length         int    `json:"length"`
 	ThumbnailFile  string `json:"thumbnailFileName"`
+	// Reported once encoding finishes, and zero before that. The frame is what
+	// tells the page how much room to reserve, so a portrait clip is not forced
+	// into a landscape box.
+	Width  int `json:"width"`
+	Height int `json:"height"`
 }
 
 func (provider *BunnyProvider) Create(ctx context.Context, title string) (ProviderVideo, error) {
@@ -84,7 +89,7 @@ func (provider *BunnyProvider) Playback(videoID string) PlaybackInfo {
 
 func (provider *BunnyProvider) mapVideo(value bunnyVideo) ProviderVideo {
 	playback := provider.Playback(value.GUID)
-	return ProviderVideo{ID: value.GUID, LibraryID: provider.config.LibraryID, Status: bunnyStatus(value.Status), DurationSeconds: value.Length, ThumbnailURL: playback.ThumbnailURL}
+	return ProviderVideo{ID: value.GUID, LibraryID: provider.config.LibraryID, Status: bunnyStatus(value.Status), DurationSeconds: value.Length, Width: value.Width, Height: value.Height, ThumbnailURL: playback.ThumbnailURL}
 }
 
 func bunnyStatus(status int) Status {

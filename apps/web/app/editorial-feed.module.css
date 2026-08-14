@@ -118,7 +118,9 @@
 .videoMedia {
   position: relative;
   overflow: hidden;
-  aspect-ratio: 16 / 9;
+  /* Matches the player it contains, so the card does not crop what the player
+     is about to letterbox into it. */
+  aspect-ratio: var(--video-aspect, 16 / 9);
   border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
   background: color-mix(in srgb, var(--ink) 8%, var(--surface));
 }

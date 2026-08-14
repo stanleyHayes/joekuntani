@@ -2876,6 +2876,10 @@ export interface components {
             provider: "bunny" | "cloudinary" | "external";
             thumbnail_url: string;
             duration_seconds: number;
+            width?: number;
+            height?: number;
+            aspect_ratio: string;
+            aspect_ratio_override?: string;
             status: components["schemas"]["VideoStatus"];
             visibility: components["schemas"]["VideoVisibility"];
             is_published: boolean;
@@ -2912,6 +2916,7 @@ export interface components {
             mime_type: "video/mp4" | "video/webm" | "video/quicktime" | "video/x-matroska";
             /** Format: int64 */
             bytes: number;
+            aspect_ratio?: string;
         };
         VideoUpdateInput: {
             title: string;
@@ -2920,6 +2925,7 @@ export interface components {
             tags: string[];
             visibility: components["schemas"]["VideoVisibility"];
             sort_order: number;
+            aspect_ratio?: string;
             /** Format: int64 */
             revision: number;
         };
@@ -2962,6 +2968,7 @@ export interface components {
             /** Format: uri */
             thumbnail_url: string;
             duration_seconds: number;
+            aspect_ratio: string;
             /** @constant */
             status: "ready";
             /** @enum {string} */

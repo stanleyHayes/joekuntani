@@ -159,13 +159,14 @@ func TestRegistryHasStableChecksum(t *testing.T) {
 	t.Parallel()
 
 	registry := Registry()
-	if len(registry) != 37 {
-		t.Fatalf("Registry() length = %d, want 37", len(registry))
+	if len(registry) != 38 {
+		t.Fatalf("Registry() length = %d, want 38", len(registry))
 	}
 	// The newest change must stay last: Apply runs the registry in order, and a
-	// change that evolves a collection has to follow the one that created it.
+	// change that evolves a collection has to follow the one that created it —
+	// here, the aspect-ratio fields follow the collection that holds them.
 	last := registry[len(registry)-1]
-	if last.Name != videoCategoriesChangeName || len(last.Checksum) != 64 || !reflect.DeepEqual(last.EvolvesCollections, []string{"video_categories"}) {
+	if last.Name != videoAspectRatioChangeName || len(last.Checksum) != 64 || !reflect.DeepEqual(last.EvolvesCollections, []string{"video_assets"}) {
 		t.Fatalf("unexpected final registry entry: %#v", last)
 	}
 	if registry[0].Name != bootstrapChangeName || len(registry[0].Checksum) != 64 {

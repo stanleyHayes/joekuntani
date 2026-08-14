@@ -3,6 +3,9 @@ package video
 import (
 	"context"
 	"errors"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -41,7 +44,14 @@ type Item struct {
 	ProviderVideoID, ProviderLibraryID               string
 	ThumbnailURL                                     string
 	DurationSeconds                                  int
-	Status                                           Status
+	// Reported by the provider once processing finishes. Zero until then, and
+	// zero for anything the provider never measured.
+	Width, Height int
+	// An operator's deliberate override, as "W:H". Empty means the measured
+	// shape is correct, which it almost always is — this exists for the clip
+	// that was letterboxed before it ever arrived.
+	AspectRatio string
+	Status      Status
 	Visibility                                       Visibility
 	Published                                        bool
 	PublishedAt                                      *time.Time
@@ -70,6 +80,10 @@ type CreateInput struct {
 	Visibility  Visibility `json:"visibility"`
 	Bytes       int64      `json:"bytes"`
 	SortOrder   int        `json:"sort_order"`
+	// Optional at upload: the frame is not measured until encoding finishes,
+	// so this is only for an operator who already knows the clip was delivered
+	// in the wrong shape.
+	AspectRatio string `json:"aspect_ratio"`
 }
 
 type UpdateInput struct {
@@ -79,7 +93,19 @@ type UpdateInput struct {
 	Tags        []string   `json:"tags"`
 	Visibility  Visibility `json:"visibility"`
 	SortOrder   int        `json:"sort_order"`
-	Revision    int64      `json:"revision"`
+	// "" restores the measured frame. Anything else must read "W:H".
+	AspectRatio string `json:"aspect_ratio"`
+	Revision    int64  `json:"revision"`
+}
+
+var aspectRatioPattern = regexp.MustCompile(`^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$`)
+
+// validAspectRatio accepts an empty override — which means "use what the
+// provider measured" — and otherwise insists on W:H with both sides positive.
+// A malformed value would reach the page as a broken layout rather than an
+// error, so it is refused at the edge.
+func validAspectRatio(value string) bool {
+	return value == "" || aspectRatioPattern.MatchString(value)
 }
 
 type Category struct {
@@ -103,7 +129,36 @@ type CategoryInput struct {
 type ProviderVideo struct {
 	ID, LibraryID, ThumbnailURL string
 	DurationSeconds             int
+	Width, Height               int
 	Status                      Status
+}
+
+// ResolvedAspectRatio is the shape the player should reserve, as "W:H".
+//
+// The override wins when an operator set one. Otherwise the measured frame is
+// reduced to its simplest terms, so a 1920×1080 upload reads "16:9" rather than
+// "1920:1080". Before the provider reports a size — and for anything it never
+// measured — this falls back to 16:9, which is what the page assumed for every
+// video before any of this existed.
+func (item Item) ResolvedAspectRatio() string {
+	if ratio := strings.TrimSpace(item.AspectRatio); ratio != "" {
+		return ratio
+	}
+	if item.Width > 0 && item.Height > 0 {
+		divisor := gcd(item.Width, item.Height)
+		return strconv.Itoa(item.Width/divisor) + ":" + strconv.Itoa(item.Height/divisor)
+	}
+	return "16:9"
+}
+
+func gcd(a, b int) int {
+	for b != 0 {
+		a, b = b, a%b
+	}
+	if a < 0 {
+		return -a
+	}
+	return a
 }
 
 type UploadAuthorization struct {

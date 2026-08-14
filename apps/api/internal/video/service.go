@@ -53,7 +53,7 @@ func (service *Service) CreateUpload(ctx context.Context, actor Actor, input Cre
 		ProviderVideoID: providerVideo.ID, ProviderLibraryID: providerVideo.LibraryID,
 		ThumbnailURL: providerVideo.ThumbnailURL, DurationSeconds: providerVideo.DurationSeconds,
 		Status: StatusUploading, Visibility: input.Visibility, SortOrder: input.SortOrder,
-		Filename: input.Filename, MIMEType: input.MIMEType, Bytes: input.Bytes,
+		Filename: input.Filename, MIMEType: input.MIMEType, Bytes: input.Bytes, AspectRatio: input.AspectRatio,
 		Revision: 1, CreatedBy: actor.ID, CreatedAt: now, UpdatedAt: now,
 	}
 	if err := service.repository.Create(ctx, item); err != nil {
@@ -77,6 +77,7 @@ func normalizeCreate(input CreateInput) CreateInput {
 	input.Filename = filepath.Base(strings.TrimSpace(input.Filename))
 	input.MIMEType = strings.ToLower(strings.TrimSpace(input.MIMEType))
 	input.Tags = normalizeTags(input.Tags)
+	input.AspectRatio = strings.TrimSpace(input.AspectRatio)
 	if input.Visibility == "" {
 		input.Visibility = VisibilityPrivate
 	}
@@ -84,7 +85,7 @@ func normalizeCreate(input CreateInput) CreateInput {
 }
 
 func (service *Service) validateCreate(input CreateInput) error {
-	if !service.config.Enabled || input.Title == "" || len(input.Title) > 180 || !slugPattern.MatchString(input.Slug) || len(input.Slug) > 180 || input.Filename == "." || input.Filename == "" || input.Bytes < 1 || input.Bytes > service.config.MaxBytes || !service.config.AllowedMIMETypes[input.MIMEType] || !validVisibility(input.Visibility) || len(input.Description) > 5000 || len(input.Category) > 100 || len(input.Tags) > 20 {
+	if !service.config.Enabled || input.Title == "" || len(input.Title) > 180 || !slugPattern.MatchString(input.Slug) || len(input.Slug) > 180 || input.Filename == "." || input.Filename == "" || input.Bytes < 1 || input.Bytes > service.config.MaxBytes || !service.config.AllowedMIMETypes[input.MIMEType] || !validVisibility(input.Visibility) || !validAspectRatio(input.AspectRatio) || len(input.Description) > 5000 || len(input.Category) > 100 || len(input.Tags) > 20 {
 		return ErrInvalid
 	}
 	extension := strings.ToLower(filepath.Ext(input.Filename))
@@ -211,10 +212,12 @@ func (service *Service) Update(ctx context.Context, actor Actor, publicID string
 	}
 	input.Title, input.Description, input.Category = strings.TrimSpace(input.Title), strings.TrimSpace(input.Description), strings.TrimSpace(input.Category)
 	input.Tags = normalizeTags(input.Tags)
-	if input.Revision < 1 || input.Title == "" || len(input.Title) > 180 || len(input.Description) > 5000 || len(input.Category) > 100 || len(input.Tags) > 20 || !validVisibility(input.Visibility) {
+	input.AspectRatio = strings.TrimSpace(input.AspectRatio)
+	if input.Revision < 1 || input.Title == "" || len(input.Title) > 180 || len(input.Description) > 5000 || len(input.Category) > 100 || len(input.Tags) > 20 || !validVisibility(input.Visibility) || !validAspectRatio(input.AspectRatio) {
 		return Item{}, ErrInvalid
 	}
 	item.Title, item.Description, item.Category, item.Tags, item.Visibility, item.SortOrder = input.Title, input.Description, input.Category, input.Tags, input.Visibility, input.SortOrder
+	item.AspectRatio = input.AspectRatio
 	item.UpdatedAt = service.now().UTC()
 	return service.repository.Update(ctx, item, input.Revision)
 }
@@ -231,7 +234,7 @@ func (service *Service) Synchronize(ctx context.Context, actor Actor, publicID s
 	if err != nil {
 		return Item{}, err
 	}
-	return service.applyProviderState(ctx, item, providerVideo.Status, providerVideo.DurationSeconds, providerVideo.ThumbnailURL)
+	return service.applyProviderState(ctx, item, providerVideo.Status, providerVideo.DurationSeconds, providerVideo.ThumbnailURL, providerVideo.Width, providerVideo.Height)
 }
 
 func (service *Service) Publish(ctx context.Context, actor Actor, publicID string, publish bool, revision int64) (Item, error) {
@@ -306,17 +309,23 @@ func (service *Service) ApplyWebhook(ctx context.Context, raw []byte, headers ma
 	if err != nil {
 		return err
 	}
-	_, err = service.applyProviderState(ctx, item, bunnyStatus(payload.Status), item.DurationSeconds, item.ThumbnailURL)
+	_, err = service.applyProviderState(ctx, item, bunnyStatus(payload.Status), item.DurationSeconds, item.ThumbnailURL, item.Width, item.Height)
 	return err
 }
 
-func (service *Service) applyProviderState(ctx context.Context, item Item, status Status, duration int, thumbnail string) (Item, error) {
+func (service *Service) applyProviderState(ctx context.Context, item Item, status Status, duration int, thumbnail string, width, height int) (Item, error) {
 	if item.Status == StatusDeleted || item.Status == StatusArchived {
 		return item, nil
 	}
 	item.Status, item.DurationSeconds, item.UpdatedAt = status, duration, service.now().UTC()
 	if thumbnail != "" {
 		item.ThumbnailURL = thumbnail
+	}
+	// Zero means the provider has not measured the frame yet, which is the
+	// normal state while a video is still encoding. Keeping the last known
+	// size stops a later callback erasing one we already recorded.
+	if width > 0 && height > 0 {
+		item.Width, item.Height = width, height
 	}
 	if status == StatusFailed {
 		item.Published, item.PublishedAt, item.FailureReason = false, nil, "provider processing failed"

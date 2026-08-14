@@ -7,6 +7,8 @@ export type PublicVideo = {
   tags: string[];
   thumbnail_url: string;
   duration_seconds: number;
+  /** "W:H", already resolved by the API. */
+  aspect_ratio: string;
   status: "ready";
   visibility: "public" | "unlisted";
   is_published: true;
@@ -21,6 +23,20 @@ export type PublicVideo = {
 
 const uuid =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+const ratioPattern = /^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$/;
+
+/**
+ * The CSS `aspect-ratio` value for a video, as "W / H".
+ *
+ * Anything unrecognised falls back to 16:9 rather than reaching the stylesheet:
+ * an invalid value there is silently ignored by the browser, which would
+ * collapse the reserved box to nothing and shift the whole page.
+ */
+export function aspectRatioStyle(value: string | undefined): string {
+  if (!value || !ratioPattern.test(value)) return "16 / 9";
+  return value.replace(":", " / ");
+}
 
 export async function getPublicVideo(
   id: string,
@@ -38,6 +54,39 @@ export async function getPublicVideo(
     return validPublicVideo(value) ? value : null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * The published video library.
+ *
+ * The videos page was built on CMS entries alone, so a video published in the
+ * admin video workspace appeared nowhere: it is a stream, and a stream only
+ * reached the page by being attached to a content entry somebody remembered to
+ * write. Reading the library directly makes publishing mean what it says.
+ *
+ * Unlisted videos are excluded here even though the API will serve one by id —
+ * that is what unlisted means: reachable by link, absent from the listing.
+ */
+export async function getPublicVideos(
+  fetcher: typeof fetch = fetch,
+): Promise<PublicVideo[]> {
+  const base = process.env.API_BASE_URL;
+  if (!base) return [];
+  try {
+    const response = await fetcher(`${base}/api/public/videos`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(2500),
+    });
+    if (!response.ok) return [];
+    const body = (await response.json()) as { items?: unknown[] };
+    if (!Array.isArray(body.items)) return [];
+    return body.items.filter(
+      (item): item is PublicVideo =>
+        validPublicVideo(item) && item.visibility === "public",
+    );
+  } catch {
+    return [];
   }
 }
 

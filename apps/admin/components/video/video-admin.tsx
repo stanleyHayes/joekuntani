@@ -38,6 +38,20 @@ const VISIBILITIES = [
   { value: "public", label: "Public" },
 ] as const;
 
+/**
+ * "Automatic" is the empty override, and it is the right answer almost always:
+ * Bunny measures the frame during encoding. The fixed shapes are here for the
+ * clip that arrived already letterboxed, where the measured frame is a lie.
+ */
+const ASPECT_RATIOS = [
+  { value: "", label: "Automatic" },
+  { value: "16:9", label: "16:9 landscape" },
+  { value: "9:16", label: "9:16 portrait" },
+  { value: "1:1", label: "1:1 square" },
+  { value: "4:5", label: "4:5 portrait" },
+  { value: "4:3", label: "4:3 classic" },
+] as const;
+
 export type VideoItem = {
   id: string;
   slug: string;
@@ -49,6 +63,12 @@ export type VideoItem = {
   thumbnail_url: string;
   duration_seconds: number;
   status: "uploading" | "processing" | "ready" | "failed" | "archived";
+  width?: number;
+  height?: number;
+  /** Resolved by the API: the override, else the measured frame, else 16:9. */
+  aspect_ratio?: string;
+  /** The override alone. Empty means "use what Bunny measured". */
+  aspect_ratio_override?: string;
   visibility: "public" | "private" | "unlisted";
   is_published: boolean;
   published_at?: string;
@@ -81,6 +101,7 @@ type Draft = {
   tags: string;
   visibility: VideoItem["visibility"];
   sortOrder: string;
+  aspectRatio: string;
 };
 
 type VideoCategory = {
@@ -110,6 +131,7 @@ const emptyDraft: Draft = {
   tags: "",
   visibility: "private",
   sortOrder: "0",
+  aspectRatio: "",
 };
 
 const emptyCategoryDraft: CategoryDraft = {
@@ -209,6 +231,7 @@ export function VideoAdmin() {
           tags: splitTags(draft.tags),
           visibility: draft.visibility,
           sort_order: Number(draft.sortOrder) || 0,
+          aspect_ratio: draft.aspectRatio,
           filename: file.name,
           mime_type: file.type,
           bytes: file.size,
@@ -295,6 +318,7 @@ export function VideoAdmin() {
             tags: item.tags,
             visibility: item.visibility,
             sort_order: item.sort_order,
+            aspect_ratio: item.aspect_ratio_override ?? "",
             revision: item.revision,
           }),
         },
@@ -698,6 +722,22 @@ export function VideoAdmin() {
                   required
                 />
               </div>
+              <div className={styles.visibilityField}>
+                <span>Aspect ratio</span>
+                <Select
+                  aria-label="Aspect ratio"
+                  options={ASPECT_RATIOS}
+                  value={draft.aspectRatio}
+                  onChange={(aspectRatio) =>
+                    setDraft({ ...draft, aspectRatio })
+                  }
+                  placeholder="Automatic"
+                />
+                <small>
+                  Left automatic, the shape is read from the video itself once
+                  Bunny finishes encoding it.
+                </small>
+              </div>
               <label>
                 Order
                 <input
@@ -867,6 +907,25 @@ export function VideoAdmin() {
                         })
                       }
                       required
+                    />
+                    {/* Here the measured frame is known, so "Automatic" can say
+                        what it resolved to rather than leaving the operator to
+                        guess what the page will reserve. */}
+                    <Select
+                      aria-label={`Aspect ratio for ${item.slug}`}
+                      options={ASPECT_RATIOS.map((option) =>
+                        option.value === "" && item.aspect_ratio
+                          ? {
+                              value: "",
+                              label: `Automatic (${item.aspect_ratio})`,
+                            }
+                          : option,
+                      )}
+                      value={item.aspect_ratio_override ?? ""}
+                      onChange={(aspect_ratio_override) =>
+                        edit(item.id, { aspect_ratio_override })
+                      }
+                      placeholder="Automatic"
                     />
                   </div>
                   <input

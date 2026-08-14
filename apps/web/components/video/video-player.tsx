@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Play } from "@phosphor-icons/react";
 
-import type { PublicVideo } from "./video-data";
+import { aspectRatioStyle, type PublicVideo } from "./video-data";
 import styles from "./video-player.module.css";
 
 export function VideoPlayer({ video }: { video: PublicVideo }) {
-  const [state, setState] = useState<"poster" | "loading" | "playing" | "error">(
-    "poster",
-  );
+  // Handed to CSS rather than applied here so the poster, the frame and the
+  // unavailable state all reserve the same box as the video they stand in for.
+  const shape = {
+    "--video-aspect": aspectRatioStyle(video.aspect_ratio),
+  } as CSSProperties;
+  const [state, setState] = useState<
+    "poster" | "loading" | "playing" | "error"
+  >("poster");
   const [posterFailed, setPosterFailed] = useState(false);
 
   useEffect(() => {
@@ -20,7 +25,7 @@ export function VideoPlayer({ video }: { video: PublicVideo }) {
 
   if (state === "error") {
     return (
-      <div className={styles.unavailable} role="alert">
+      <div className={styles.unavailable} role="alert" style={shape}>
         <p>This video could not be loaded.</p>
         <button type="button" onClick={() => setState("poster")}>
           Try again
@@ -31,7 +36,7 @@ export function VideoPlayer({ video }: { video: PublicVideo }) {
 
   if (state === "loading" || state === "playing") {
     return (
-      <div className={styles.player} data-state={state}>
+      <div className={styles.player} data-state={state} style={shape}>
         <iframe
           className={styles.frame}
           src={`${video.playback.embed_url}?autoplay=true`}
@@ -53,6 +58,7 @@ export function VideoPlayer({ video }: { video: PublicVideo }) {
   return (
     <button
       className={styles.poster}
+      style={shape}
       type="button"
       onClick={() => setState("loading")}
       aria-label={`Play ${video.title}`}

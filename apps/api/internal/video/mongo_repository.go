@@ -37,6 +37,9 @@ type videoDocument struct {
 	MIMEType          string        `bson:"mime_type"`
 	Bytes             int64         `bson:"bytes"`
 	FailureReason     string        `bson:"failure_reason"`
+	Width             int           `bson:"width"`
+	Height            int           `bson:"height"`
+	AspectRatio       string        `bson:"aspect_ratio"`
 	Revision          int64         `bson:"revision"`
 	CreatedBy         bson.ObjectID `bson:"created_by"`
 	CreatedAt         time.Time     `bson:"created_at"`
@@ -74,10 +77,10 @@ func documentFrom(item Item) (videoDocument, error) {
 	if err != nil {
 		return videoDocument{}, ErrInvalid
 	}
-	return videoDocument{PublicID: item.PublicID, Slug: item.Slug, Title: item.Title, Description: item.Description, Category: item.Category, Tags: item.Tags, Provider: item.Provider, ProviderVideoID: item.ProviderVideoID, ProviderLibraryID: item.ProviderLibraryID, ThumbnailURL: item.ThumbnailURL, DurationSeconds: item.DurationSeconds, Status: item.Status, Visibility: item.Visibility, Published: item.Published, PublishedAt: item.PublishedAt, SortOrder: item.SortOrder, Filename: item.Filename, MIMEType: item.MIMEType, Bytes: item.Bytes, FailureReason: item.FailureReason, Revision: item.Revision, CreatedBy: createdBy, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt}, nil
+	return videoDocument{PublicID: item.PublicID, Slug: item.Slug, Title: item.Title, Description: item.Description, Category: item.Category, Tags: item.Tags, Provider: item.Provider, ProviderVideoID: item.ProviderVideoID, ProviderLibraryID: item.ProviderLibraryID, ThumbnailURL: item.ThumbnailURL, DurationSeconds: item.DurationSeconds, Width: item.Width, Height: item.Height, AspectRatio: item.AspectRatio, Status: item.Status, Visibility: item.Visibility, Published: item.Published, PublishedAt: item.PublishedAt, SortOrder: item.SortOrder, Filename: item.Filename, MIMEType: item.MIMEType, Bytes: item.Bytes, FailureReason: item.FailureReason, Revision: item.Revision, CreatedBy: createdBy, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt}, nil
 }
 func (document videoDocument) item() Item {
-	return Item{ID: document.ID.Hex(), PublicID: document.PublicID, Slug: document.Slug, Title: document.Title, Description: document.Description, Category: document.Category, Tags: emptyStrings(document.Tags), Provider: document.Provider, ProviderVideoID: document.ProviderVideoID, ProviderLibraryID: document.ProviderLibraryID, ThumbnailURL: document.ThumbnailURL, DurationSeconds: document.DurationSeconds, Status: document.Status, Visibility: document.Visibility, Published: document.Published, PublishedAt: document.PublishedAt, SortOrder: document.SortOrder, Filename: document.Filename, MIMEType: document.MIMEType, Bytes: document.Bytes, FailureReason: document.FailureReason, Revision: document.Revision, CreatedBy: document.CreatedBy.Hex(), CreatedAt: document.CreatedAt, UpdatedAt: document.UpdatedAt}
+	return Item{ID: document.ID.Hex(), PublicID: document.PublicID, Slug: document.Slug, Title: document.Title, Description: document.Description, Category: document.Category, Tags: emptyStrings(document.Tags), Provider: document.Provider, ProviderVideoID: document.ProviderVideoID, ProviderLibraryID: document.ProviderLibraryID, ThumbnailURL: document.ThumbnailURL, DurationSeconds: document.DurationSeconds, Width: document.Width, Height: document.Height, AspectRatio: document.AspectRatio, Status: document.Status, Visibility: document.Visibility, Published: document.Published, PublishedAt: document.PublishedAt, SortOrder: document.SortOrder, Filename: document.Filename, MIMEType: document.MIMEType, Bytes: document.Bytes, FailureReason: document.FailureReason, Revision: document.Revision, CreatedBy: document.CreatedBy.Hex(), CreatedAt: document.CreatedAt, UpdatedAt: document.UpdatedAt}
 }
 
 func (repository *MongoRepository) Create(ctx context.Context, item Item) error {

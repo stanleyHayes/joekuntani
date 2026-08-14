@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { getPublicSettings } from "../../lib/settings";
 import { getPublicContent } from "../../components/content/data";
 import {
@@ -14,21 +15,43 @@ import {
 } from "../../lib/demo/content";
 import { contentCovers } from "../../lib/media";
 import { pageMetadata, unavailableMetadata } from "../../lib/seo";
-import { videosForContent } from "../../components/video/video-data";
+import {
+  aspectRatioStyle,
+  getPublicVideos,
+  videosForContent,
+  type PublicVideo,
+} from "../../components/video/video-data";
 import { VideoPlayer } from "../../components/video/video-player";
 import { VideoStructuredData } from "../../components/video/video-structured-data";
 import styles from "../editorial-feed.module.css";
 
 export const dynamic = "force-dynamic";
+
+/** One card, whether it came from a CMS entry or straight from the library. */
+type FeedEntry = {
+  key: string;
+  title: string;
+  category: string;
+  summary?: string;
+  href?: string;
+  cover?: string;
+  stream?: PublicVideo;
+};
 export async function generateMetadata() {
-  const items = await getPublicContent("video");
+  // Counts the library as well: a site whose videos are all published straight
+  // from the workspace has a real page, and marking it unavailable would keep
+  // it out of search results.
+  const [items, library] = await Promise.all([
+    getPublicContent("video"),
+    getPublicVideos(),
+  ]);
   const demo = demoContentEnabled();
   const input = {
     title: "Videos",
     description: "Approved video appearances and work.",
     path: "/media/videos",
   };
-  return items.length || demo
+  return items.length || library.length || demo
     ? pageMetadata(input)
     : unavailableMetadata(input.title, input.description);
 }
@@ -39,15 +62,18 @@ export default async function VideosPage({
 }) {
   const shellSettings = await getPublicSettings();
   const filters = await searchParams;
-  const [itemsRaw, allItemsRaw] = await Promise.all([
+  const [itemsRaw, allItemsRaw, libraryRaw] = await Promise.all([
     getPublicContent("video", filters),
     getPublicContent("video"),
+    getPublicVideos(),
   ]);
   const demo = demoContentEnabled();
-  const usingDemo = demo && itemsRaw.length === 0;
+  // A published video counts as real content: the fixtures are a fallback for
+  // an empty site, not something to show beside actual work.
+  const usingDemo = demo && itemsRaw.length === 0 && libraryRaw.length === 0;
   const items = itemsRaw.length
     ? itemsRaw
-    : demo
+    : demo && !libraryRaw.length
       ? demoVideos.filter((item) =>
           filters.category ? item.category === filters.category : true,
         )
@@ -56,11 +82,53 @@ export default async function VideosPage({
   // fallback for the fixture path.
   const covers = await contentCovers(items);
   const streams = await videosForContent(items);
+
+  // A content entry may already point at a library video through
+  // video_asset_id. That video is on the page as part of its entry, so it must
+  // not appear a second time on its own.
+  const claimed = new Set(Object.values(streams).map((video) => video.id));
+  const library = libraryRaw.filter(
+    (video) =>
+      !claimed.has(video.id) &&
+      (!filters.category || video.category === filters.category),
+  );
+
+  const entries: FeedEntry[] = [
+    ...items.map((item) => ({
+      key: `content:${item.id}`,
+      title: item.title,
+      category: item.category ?? "",
+      summary: item.summary,
+      href: item.external_url || item.embed_url,
+      cover:
+        covers[item.id] ??
+        (usingDemo && item.slug ? demoCovers[item.slug] : undefined),
+      stream: streams[item.id],
+    })),
+    ...library.map((video) => ({
+      key: `video:${video.id}`,
+      title: video.title,
+      category: video.category,
+      summary: video.description,
+      cover: video.thumbnail_url,
+      stream: video,
+    })),
+  ];
+
+  // Every playable video on the page, whichever source it came from — the
+  // structured data used to describe only the ones attached to CMS entries.
+  const structuredVideos = entries
+    .map((entry) => entry.stream)
+    .filter((video): video is PublicVideo => Boolean(video));
+
   const categories = [
     ...new Set(
-      (allItemsRaw.length ? allItemsRaw : demo ? demoVideos : [])
-        .map((item) => item.category)
-        .filter(Boolean),
+      [
+        ...(allItemsRaw.length ? allItemsRaw : demo ? demoVideos : []).map(
+          (item) => item.category,
+        ),
+        ...libraryRaw.map((video) => video.category),
+      ].filter(Boolean),
     ),
   ] as string[];
   return (
@@ -72,7 +140,7 @@ export default async function VideosPage({
       {usingDemo ? <DemoBanner /> : null}
       <VideoStructuredData
         canonicalPath="/media/videos"
-        videos={Object.values(streams)}
+        videos={structuredVideos}
       />
       <main id="main-content" className={styles.page}>
         <header className={`${styles.hero} shell-container`}>
@@ -123,19 +191,24 @@ export default async function VideosPage({
               </nav>
             ) : null}
           </div>
-          {items.length ? (
+          {entries.length ? (
             <ol className={styles.videoList}>
-              {items.map((item, index) => {
-                // Published records carry their own imagery; the demo map is
-                // only a fallback for the fixture path.
-                const cover =
-                  covers[item.id] ??
-                  (usingDemo && item.slug ? demoCovers[item.slug] : undefined);
-                const href = item.external_url || item.embed_url;
-                const stream = streams[item.id];
+              {entries.map((item, index) => {
+                const { cover, href, stream } = item;
                 return (
-                  <li className={styles.videoCard} key={item.id}>
-                    <div className={styles.videoMedia}>
+                  <li className={styles.videoCard} key={item.key}>
+                    <div
+                      className={styles.videoMedia}
+                      // The card reserves the video's own shape, so a portrait
+                      // clip is not cropped by the frame around it.
+                      style={
+                        {
+                          "--video-aspect": aspectRatioStyle(
+                            stream?.aspect_ratio,
+                          ),
+                        } as CSSProperties
+                      }
+                    >
                       {stream ? (
                         <VideoPlayer video={stream} />
                       ) : cover ? (

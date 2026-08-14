@@ -49,6 +49,10 @@ type itemResponse struct {
 	Provider        string        `json:"provider"`
 	ThumbnailURL    string        `json:"thumbnail_url"`
 	DurationSeconds int           `json:"duration_seconds"`
+	Width           int           `json:"width"`
+	Height          int           `json:"height"`
+	AspectRatio     string        `json:"aspect_ratio"`
+	AspectRatioSet  string        `json:"aspect_ratio_override"`
 	Status          Status        `json:"status"`
 	Visibility      Visibility    `json:"visibility"`
 	Published       bool          `json:"is_published"`
@@ -73,6 +77,7 @@ type publicVideoResponse struct {
 	Tags            []string     `json:"tags"`
 	ThumbnailURL    string       `json:"thumbnail_url"`
 	DurationSeconds int          `json:"duration_seconds"`
+	AspectRatio     string       `json:"aspect_ratio"`
 	Status          Status       `json:"status"`
 	Visibility      Visibility   `json:"visibility"`
 	Published       bool         `json:"is_published"`
@@ -104,11 +109,11 @@ func publicResponseFor(item Item, playback PlaybackInfo) publicVideoResponse {
 	if thumbnailURL == "" {
 		thumbnailURL = playback.ThumbnailURL
 	}
-	return publicVideoResponse{ID: item.PublicID, Slug: item.Slug, Title: item.Title, Description: item.Description, Category: item.Category, Tags: emptyStrings(item.Tags), ThumbnailURL: thumbnailURL, DurationSeconds: item.DurationSeconds, Status: item.Status, Visibility: item.Visibility, Published: item.Published, PublishedAt: item.PublishedAt, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt, Playback: playback}
+	return publicVideoResponse{ID: item.PublicID, Slug: item.Slug, Title: item.Title, Description: item.Description, Category: item.Category, Tags: emptyStrings(item.Tags), ThumbnailURL: thumbnailURL, DurationSeconds: item.DurationSeconds, AspectRatio: item.ResolvedAspectRatio(), Status: item.Status, Visibility: item.Visibility, Published: item.Published, PublishedAt: item.PublishedAt, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt, Playback: playback}
 }
 
 func responseFor(item Item, playback ...PlaybackInfo) itemResponse {
-	result := itemResponse{ID: item.PublicID, Slug: item.Slug, Title: item.Title, Description: item.Description, Category: item.Category, Tags: emptyStrings(item.Tags), Provider: item.Provider, ThumbnailURL: item.ThumbnailURL, DurationSeconds: item.DurationSeconds, Status: item.Status, Visibility: item.Visibility, Published: item.Published, PublishedAt: item.PublishedAt, SortOrder: item.SortOrder, Filename: item.Filename, MIMEType: item.MIMEType, Bytes: item.Bytes, FailureReason: item.FailureReason, Revision: item.Revision, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt}
+	result := itemResponse{ID: item.PublicID, Slug: item.Slug, Title: item.Title, Description: item.Description, Category: item.Category, Tags: emptyStrings(item.Tags), Provider: item.Provider, ThumbnailURL: item.ThumbnailURL, DurationSeconds: item.DurationSeconds, Width: item.Width, Height: item.Height, AspectRatio: item.ResolvedAspectRatio(), AspectRatioSet: item.AspectRatio, Status: item.Status, Visibility: item.Visibility, Published: item.Published, PublishedAt: item.PublishedAt, SortOrder: item.SortOrder, Filename: item.Filename, MIMEType: item.MIMEType, Bytes: item.Bytes, FailureReason: item.FailureReason, Revision: item.Revision, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt}
 	if len(playback) > 0 {
 		result.Playback = &playback[0]
 	}
