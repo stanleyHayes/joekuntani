@@ -197,15 +197,14 @@ describe("EventEditor", () => {
     fireEvent.change(screen.getByLabelText("Ends at"), {
       target: { value: "2026-09-01T21:00" },
     });
-    fireEvent.change(screen.getByRole("textbox", { name: "Venue" }), {
+    fireEvent.change(screen.getByRole("textbox", { name: "Venue name" }), {
       target: { value: "Approved venue" },
     });
     fireEvent.change(screen.getByRole("textbox", { name: "Address" }), {
       target: { value: "Approved address" },
     });
-    fireEvent.change(screen.getByRole("textbox", { name: "City" }), {
-      target: { value: "Accra" },
-    });
+    fireEvent.click(screen.getByRole("button", { name: "City" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Accra" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Refund policy" }), {
       target: { value: "Approved refunds" },
     });
@@ -263,6 +262,23 @@ describe("EventEditor", () => {
       screen.getByRole("textbox", { name: "Description" }),
     ).toBeInTheDocument();
     expect(fetchMock.mock.calls.at(-1)?.[0]).toBe("/api/admin/ai/assist");
+  });
+
+  it("uses guided location and timezone selectors instead of free text", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    render(<EventEditor eventID="new" />);
+
+    expect(screen.getByRole("button", { name: "Country" })).toHaveTextContent(
+      "Ghana",
+    );
+    expect(screen.getByRole("button", { name: "City" })).toHaveTextContent(
+      "Choose a city",
+    );
+    expect(screen.getByRole("button", { name: "Timezone" })).toHaveTextContent(
+      "Africa/Accra",
+    );
+    expect(screen.queryByRole("textbox", { name: "Country" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "City" })).toBeNull();
   });
 
   it("uses explicit server actions for published ticket pause and event cancellation", async () => {

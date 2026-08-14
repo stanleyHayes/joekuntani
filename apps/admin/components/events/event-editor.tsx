@@ -1,6 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import {
+  CheckCircleIcon,
+  WarningCircleIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 
 import { AiAssist } from "@joe-kuntani/shared/ui/ai-assist";
@@ -46,6 +51,13 @@ export function EventEditor({ eventID }: { eventID: string }) {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [customCity, setCustomCity] = useState(false);
+
+  useEffect(() => {
+    if (!message) return;
+    const timer = window.setTimeout(() => setMessage(""), 5200);
+    return () => window.clearTimeout(timer);
+  }, [message]);
 
   // Deferred by a zero-delay timer so the first fetch never resolves inside the
   // effect body — the same idiom the other admin workspaces use.
@@ -105,7 +117,13 @@ export function EventEditor({ eventID }: { eventID: string }) {
           body: JSON.stringify(draft),
         },
       );
-      if (!response.ok) throw new Error();
+      if (!response.ok)
+        throw new Error(
+          await problemMessage(
+            response,
+            "Review the highlighted event details and try again.",
+          ),
+        );
       const saved = (await response.json()) as EventRecord;
       // Saving stays here rather than returning to the list: ticket types and
       // publishing both need the id the server has just minted, and routing an
@@ -116,9 +134,11 @@ export function EventEditor({ eventID }: { eventID: string }) {
       setSelected(saved);
       setDraft(stripEvent(saved));
       setMessage("Event draft saved and audited.");
-    } catch {
+    } catch (cause) {
       setError(
-        "The event was not accepted. Review dates, policies and capacity.",
+        cause instanceof Error
+          ? cause.message
+          : "The event was not accepted. Review dates, policies and capacity.",
       );
     } finally {
       setPending(false);
@@ -134,17 +154,27 @@ export function EventEditor({ eventID }: { eventID: string }) {
         `/api/admin/events/${selected.id}/${action}`,
         { method: "POST", credentials: "include", headers: mutationHeaders() },
       );
-      if (!response.ok) throw new Error();
+      if (!response.ok)
+        throw new Error(
+          await problemMessage(
+            response,
+            action === "publish"
+              ? "Publish failed. Add valid ticket types and check capacity and dates."
+              : "Only a published event can be cancelled.",
+          ),
+        );
       const updated = (await response.json()) as EventRecord;
       setSelected(updated);
       setMessage(
         action === "publish" ? "Event published." : "Event cancelled.",
       );
-    } catch {
+    } catch (cause) {
       setError(
-        action === "publish"
-          ? "Publish failed. Add valid ticket types and check capacity and dates."
-          : "Only a published event can be cancelled.",
+        cause instanceof Error
+          ? cause.message
+          : action === "publish"
+            ? "Publish failed. Add valid ticket types and check capacity and dates."
+            : "Only a published event can be cancelled.",
       );
     } finally {
       setPending(false);
@@ -168,7 +198,13 @@ export function EventEditor({ eventID }: { eventID: string }) {
           body: JSON.stringify(ticketDraft),
         },
       );
-      if (!response.ok) throw new Error();
+      if (!response.ok)
+        throw new Error(
+          await problemMessage(
+            response,
+            "Check the ticket price, sales window and limits.",
+          ),
+        );
       const saved = (await response.json()) as Ticket;
       setTickets((current) =>
         selectedTicket
@@ -183,9 +219,11 @@ export function EventEditor({ eventID }: { eventID: string }) {
           ? "Ticket type updated and audited."
           : "Ticket type added and audited.",
       );
-    } catch {
+    } catch (cause) {
       setError(
-        "Ticket type was rejected. Check price, sales window and limits.",
+        cause instanceof Error
+          ? cause.message
+          : "Ticket type was rejected. Check price, sales window and limits.",
       );
     } finally {
       setPending(false);
@@ -248,13 +286,42 @@ export function EventEditor({ eventID }: { eventID: string }) {
         </div>
       </header>
 
-      <div aria-live="polite" className={styles.message}>
-        {message}
-      </div>
       {error ? (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
+        <div className={styles.error}>
+          <strong>We could not complete that action.</strong>
+          <span>{error}</span>
+        </div>
+      ) : null}
+
+      {message || error ? (
+        <aside
+          className={styles.snackbar}
+          data-tone={error ? "error" : "success"}
+          role={error ? "alert" : "status"}
+          aria-live={error ? "assertive" : "polite"}
+        >
+          <span className={styles.snackbarIcon} aria-hidden="true">
+            {error ? (
+              <WarningCircleIcon size={21} weight="fill" />
+            ) : (
+              <CheckCircleIcon size={21} weight="fill" />
+            )}
+          </span>
+          <div>
+            <strong>{error ? "Action needed" : "Done"}</strong>
+            <p>{error || message}</p>
+          </div>
+          <button
+            type="button"
+            aria-label="Dismiss message"
+            onClick={() => {
+              setError("");
+              setMessage("");
+            }}
+          >
+            <XIcon size={15} weight="bold" />
+          </button>
+        </aside>
       ) : null}
 
       <form className={styles.form} onSubmit={(event) => void save(event)}>
@@ -318,7 +385,160 @@ export function EventEditor({ eventID }: { eventID: string }) {
         </fieldset>
 
         <fieldset className={styles.group}>
-          <legend className={styles.legend}>Schedule</legend>
+          <legend className={styles.legend}>Venue</legend>
+          <div className={styles.grid}>
+            <Field label="Venue name">
+              <input
+                required
+                value={draft.venue.name}
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    venue: { ...draft.venue, name: event.target.value },
+                  })
+                }
+              />
+            </Field>
+            <Field label="Capacity">
+              <input
+                min={1}
+                required
+                type="number"
+                value={draft.capacity}
+                onChange={(event) =>
+                  setDraft({ ...draft, capacity: Number(event.target.value) })
+                }
+              />
+            </Field>
+            <Field label="Address">
+              <input
+                required
+                value={draft.venue.address}
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    venue: { ...draft.venue, address: event.target.value },
+                  })
+                }
+              />
+            </Field>
+            <Field label="City">
+              {customCity ? (
+                <div className={styles.customChoice}>
+                  <input
+                    aria-label="City"
+                    autoFocus
+                    required
+                    value={draft.venue.city}
+                    onChange={(event) =>
+                      setDraft({
+                        ...draft,
+                        venue: { ...draft.venue, city: event.target.value },
+                      })
+                    }
+                  />
+                  <button type="button" onClick={() => setCustomCity(false)}>
+                    Choose from list
+                  </button>
+                </div>
+              ) : (
+                <Select
+                  aria-label="City"
+                  required
+                  value={draft.venue.city}
+                  placeholder="Choose a city"
+                  options={[
+                    ...optionsWithCurrent(
+                      CITIES[draft.venue.country_code] ?? WORLD_CITIES,
+                      draft.venue.city,
+                    ),
+                    { value: "__other", label: "Another city…" },
+                  ]}
+                  onChange={(city) => {
+                    if (city === "__other") {
+                      setCustomCity(true);
+                      setDraft({
+                        ...draft,
+                        venue: { ...draft.venue, city: "" },
+                      });
+                      return;
+                    }
+                    setDraft({
+                      ...draft,
+                      venue: { ...draft.venue, city },
+                    });
+                  }}
+                />
+              )}
+            </Field>
+            <Field label="Country">
+              <Select
+                aria-label="Country"
+                required
+                value={draft.venue.country_code}
+                options={optionsWithCurrent(
+                  COUNTRIES,
+                  draft.venue.country_code,
+                )}
+                onChange={(country_code) => {
+                  setCustomCity(false);
+                  setDraft({
+                    ...draft,
+                    venue: {
+                      ...draft.venue,
+                      country_code,
+                      city: "",
+                    },
+                  });
+                }}
+              />
+            </Field>
+            <Field label="Map URL">
+              <input
+                maxLength={2048}
+                pattern="https://.*"
+                type="url"
+                value={draft.venue.map_url ?? ""}
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    venue: { ...draft.venue, map_url: event.target.value },
+                  })
+                }
+              />
+            </Field>
+          </div>
+          <Field
+            label="Venue accessibility"
+            assist={
+              <AiAssist
+                field="notes"
+                label="Venue accessibility"
+                value={draft.venue.accessibility ?? ""}
+                onApply={(accessibility) =>
+                  setDraft((current) => ({
+                    ...current,
+                    venue: { ...current.venue, accessibility },
+                  }))
+                }
+              />
+            }
+          >
+            <textarea
+              maxLength={2000}
+              value={draft.venue.accessibility ?? ""}
+              onChange={(event) =>
+                setDraft({
+                  ...draft,
+                  venue: { ...draft.venue, accessibility: event.target.value },
+                })
+              }
+            />
+          </Field>
+        </fieldset>
+
+        <fieldset className={styles.group}>
+          <legend className={styles.legend}>Date and time</legend>
           <div className={styles.grid}>
             <Field label="Starts at">
               <DateField
@@ -343,121 +563,36 @@ export function EventEditor({ eventID }: { eventID: string }) {
               />
             </Field>
             <Field label="Timezone">
-              <input
-                maxLength={500}
+              <Select
+                aria-label="Timezone"
                 required
                 value={draft.timezone}
-                onChange={(event) =>
-                  setDraft({ ...draft, timezone: event.target.value })
-                }
-              />
-            </Field>
-            <Field label="Capacity">
-              <input
-                maxLength={120}
-                min={1}
-                required
-                type="number"
-                value={draft.capacity}
-                onChange={(event) =>
-                  setDraft({ ...draft, capacity: Number(event.target.value) })
-                }
+                options={optionsWithCurrent(TIMEZONES, draft.timezone)}
+                onChange={(timezone) => setDraft({ ...draft, timezone })}
               />
             </Field>
           </div>
-        </fieldset>
-
-        <fieldset className={styles.group}>
-          <legend className={styles.legend}>Venue</legend>
-          <div className={styles.grid}>
-            <Field label="Venue">
-              <input
-                required
-                value={draft.venue.name}
-                onChange={(event) =>
-                  setDraft({
-                    ...draft,
-                    venue: { ...draft.venue, name: event.target.value },
-                  })
-                }
-              />
-            </Field>
-            <Field label="Address">
-              <input
-                required
-                value={draft.venue.address}
-                onChange={(event) =>
-                  setDraft({
-                    ...draft,
-                    venue: { ...draft.venue, address: event.target.value },
-                  })
-                }
-              />
-            </Field>
-            <Field label="City">
-              <input
-                required
-                value={draft.venue.city}
-                onChange={(event) =>
-                  setDraft({
-                    ...draft,
-                    venue: { ...draft.venue, city: event.target.value },
-                  })
-                }
-              />
-            </Field>
-            <Field label="Country code">
-              <input
-                aria-describedby="country-code-help"
-                maxLength={2}
-                pattern="[A-Za-z]{2}"
-                required
-                value={draft.venue.country_code}
-                onChange={(event) =>
-                  setDraft({
-                    ...draft,
-                    venue: {
-                      ...draft.venue,
-                      country_code: event.target.value.toUpperCase(),
-                    },
-                  })
-                }
-              />
-              <small id="country-code-help">Two-letter ISO country code.</small>
-            </Field>
-            <Field label="Map URL">
-              <input
-                maxLength={2048}
-                pattern="https://.*"
-                type="url"
-                value={draft.venue.map_url ?? ""}
-                onChange={(event) =>
-                  setDraft({
-                    ...draft,
-                    venue: { ...draft.venue, map_url: event.target.value },
-                  })
-                }
-              />
-            </Field>
-          </div>
-          <Field label="Venue accessibility">
-            <textarea
-              maxLength={2000}
-              value={draft.venue.accessibility ?? ""}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  venue: { ...draft.venue, accessibility: event.target.value },
-                })
-              }
-            />
-          </Field>
         </fieldset>
 
         <fieldset className={styles.group}>
           <legend className={styles.legend}>Policies</legend>
           <div className={styles.stack}>
-            <Field label="Refund policy">
+            <Field
+              label="Refund policy"
+              assist={
+                <AiAssist
+                  field="notes"
+                  label="Refund policy"
+                  value={draft.policies.refunds}
+                  onApply={(refunds) =>
+                    setDraft((current) => ({
+                      ...current,
+                      policies: { ...current.policies, refunds },
+                    }))
+                  }
+                />
+              }
+            >
               <textarea
                 maxLength={5000}
                 required
@@ -473,7 +608,22 @@ export function EventEditor({ eventID }: { eventID: string }) {
                 }
               />
             </Field>
-            <Field label="Entry policy">
+            <Field
+              label="Entry policy"
+              assist={
+                <AiAssist
+                  field="notes"
+                  label="Entry policy"
+                  value={draft.policies.entry}
+                  onApply={(entry) =>
+                    setDraft((current) => ({
+                      ...current,
+                      policies: { ...current.policies, entry },
+                    }))
+                  }
+                />
+              }
+            >
               <textarea
                 maxLength={5000}
                 required
@@ -486,7 +636,22 @@ export function EventEditor({ eventID }: { eventID: string }) {
                 }
               />
             </Field>
-            <Field label="Age guidance">
+            <Field
+              label="Age guidance"
+              assist={
+                <AiAssist
+                  field="notes"
+                  label="Age guidance"
+                  value={draft.policies.age_guidance ?? ""}
+                  onApply={(age_guidance) =>
+                    setDraft((current) => ({
+                      ...current,
+                      policies: { ...current.policies, age_guidance },
+                    }))
+                  }
+                />
+              }
+            >
               <textarea
                 maxLength={1000}
                 value={draft.policies.age_guidance ?? ""}
@@ -501,7 +666,22 @@ export function EventEditor({ eventID }: { eventID: string }) {
                 }
               />
             </Field>
-            <Field label="Policy accessibility">
+            <Field
+              label="Policy accessibility"
+              assist={
+                <AiAssist
+                  field="notes"
+                  label="Policy accessibility"
+                  value={draft.policies.accessibility ?? ""}
+                  onApply={(accessibility) =>
+                    setDraft((current) => ({
+                      ...current,
+                      policies: { ...current.policies, accessibility },
+                    }))
+                  }
+                />
+              }
+            >
               <textarea
                 maxLength={2000}
                 value={draft.policies.accessibility ?? ""}
@@ -724,7 +904,22 @@ export function EventEditor({ eventID }: { eventID: string }) {
                       }
                     />
                   </Field>
-                  <Field label="Ticket description">
+                  <Field
+                    label="Ticket description"
+                    assist={
+                      <AiAssist
+                        field="description"
+                        label="Ticket description"
+                        value={ticketDraft.description}
+                        onApply={(description) =>
+                          setTicketDraft((current) => ({
+                            ...current,
+                            description,
+                          }))
+                        }
+                      />
+                    }
+                  >
                     <textarea
                       maxLength={2000}
                       value={ticketDraft.description}
@@ -906,6 +1101,77 @@ function Field({
       {assist}
     </div>
   );
+}
+
+type Choice = { value: string; label: string };
+
+const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+const COUNTRIES: Choice[] =
+  "AD AE AF AG AI AL AM AO AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW"
+    .split(" ")
+    .map((code) => ({
+      value: code,
+      label: regionNames.of(code) ?? code,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+const CITY_NAMES: Record<string, string[]> = {
+  GH: ["Accra", "Kumasi", "Takoradi", "Cape Coast", "Tamale", "Tema", "Ho"],
+  NG: ["Lagos", "Abuja", "Port Harcourt", "Ibadan"],
+  CI: ["Abidjan", "Yamoussoukro"],
+  KE: ["Nairobi", "Mombasa"],
+  ZA: ["Johannesburg", "Cape Town", "Durban", "Pretoria"],
+  GB: ["London", "Manchester", "Birmingham", "Edinburgh"],
+  US: ["New York", "Los Angeles", "Chicago", "Atlanta", "Washington"],
+  CA: ["Toronto", "Vancouver", "Montreal"],
+  AE: ["Dubai", "Abu Dhabi"],
+};
+
+const CITIES = Object.fromEntries(
+  Object.entries(CITY_NAMES).map(([code, cities]) => [
+    code,
+    cities.map((city) => ({ value: city, label: city })),
+  ]),
+) as Record<string, Choice[]>;
+
+const WORLD_CITIES: Choice[] = [
+  "Abidjan",
+  "Accra",
+  "Amsterdam",
+  "Berlin",
+  "Dakar",
+  "Dubai",
+  "Lagos",
+  "London",
+  "Nairobi",
+  "New York",
+  "Paris",
+].map((city) => ({ value: city, label: city }));
+
+const TIMEZONES: Choice[] = Intl.supportedValuesOf("timeZone").map(
+  (timezone) => ({
+    value: timezone,
+    label: timezone.replaceAll("_", " "),
+  }),
+);
+
+function optionsWithCurrent(options: Choice[], current: string): Choice[] {
+  if (!current || options.some((option) => option.value === current))
+    return options;
+  return [{ value: current, label: current }, ...options];
+}
+
+async function problemMessage(response: Response, fallback: string) {
+  const problem = await response
+    .json()
+    .then(
+      (body: { detail?: unknown; title?: unknown }) =>
+        (typeof body.detail === "string" && body.detail) ||
+        (typeof body.title === "string" && body.title) ||
+        "",
+    )
+    .catch(() => "");
+  return problem || fallback;
 }
 
 function stripEvent(event: EventRecord): EventDraft {

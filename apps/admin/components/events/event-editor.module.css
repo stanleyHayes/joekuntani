@@ -93,6 +93,16 @@
   min-width: 0;
 }
 
+.customChoice {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+
+.customChoice button {
+  white-space: nowrap;
+}
+
 .check {
   display: flex;
   align-items: center;
@@ -183,6 +193,8 @@
 }
 
 .error {
+  display: grid;
+  gap: 0.15rem;
   margin: 0;
   padding: 0.7rem 0.95rem;
   border: 1px solid color-mix(in srgb, var(--warning) 45%, transparent);
@@ -190,6 +202,87 @@
   background: color-mix(in srgb, var(--warning) 10%, var(--surface));
   color: var(--warning);
   font-size: 0.85rem;
+}
+
+.error span {
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+}
+
+.snackbar {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: var(--layer-toast, 110);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.75rem;
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--brand-k) 38%, var(--ink) 12%);
+  border-radius: 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 20px 60px color-mix(in srgb, #071017 32%, transparent);
+  animation: snackbar-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.snackbar[data-tone="error"] {
+  border-color: color-mix(in srgb, var(--warning) 55%, var(--ink) 10%);
+}
+
+.snackbarIcon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--brand-k) 12%, transparent);
+  color: var(--brand-k);
+}
+
+.snackbar[data-tone="error"] .snackbarIcon {
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+  color: var(--warning);
+}
+
+.snackbar strong,
+.snackbar p {
+  margin: 0;
+}
+
+.snackbar strong {
+  font-size: 0.84rem;
+}
+
+.snackbar p {
+  margin-top: 0.2rem;
+  color: color-mix(in srgb, var(--ink) 68%, transparent);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.snackbar > button {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+@keyframes snackbar-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.8rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .ticketPanel {
@@ -228,4 +321,17 @@
   gap: 0.35rem;
   padding-top: 0.65rem;
   border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+@media (max-width: 46rem) {
+  .snackbar {
+    right: 0.75rem;
+    bottom: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snackbar {
+    animation: none;
+  }
 }
