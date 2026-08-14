@@ -25,6 +25,34 @@
   font-size: clamp(1.65rem, 4vw, 2.5rem);
   letter-spacing: -0.045em;
 }
+
+/* The count and the way to add to it, kept together at the end of the header. */
+.headerAside {
+  display: grid;
+  justify-items: end;
+  gap: 0.55rem;
+}
+
+.uploadCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control, 0.55rem);
+  background: linear-gradient(135deg, var(--brand-j), var(--brand-k));
+  color: var(--accent-contrast, #101014);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.uploadCta:hover {
+  filter: brightness(1.06);
+}
 .header > div > p:last-child {
   max-width: 44rem;
   margin-top: 0.45rem;
@@ -154,14 +182,26 @@
   color: var(--ink-soft);
   font-size: 0.83rem;
 }
+/* One field per row. Two columns meant a short field sat beside a tall one and
+   the row took the taller of the two, which is where the ragged edges and the
+   dead space beside the category field came from. In a dialog the form is
+   bounded anyway, so a single column reads as a sequence of decisions rather
+   than a wall. Fields that pair naturally — a picker and its create button —
+   share a row inside their own field instead. */
 .formGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.8rem;
   min-width: 0;
 }
+/* `align-content: start` is what keeps the row straight. A grid item stretches
+   to its row's height, and auto-sized rows inside then absorb the extra space —
+   so "Public slug", which carries a line of help text underneath, made its
+   neighbour "Title" taller and pushed its input out of line. Holding the rows
+   at their natural height lines every field in a row up on its top edge. */
 .formGrid label {
   display: grid;
+  align-content: start;
   gap: 0.35rem;
   min-width: 0;
   font-size: 0.75rem;
@@ -172,13 +212,33 @@
   font-size: 0.68rem;
   font-weight: 600;
 }
-.categoryField,
 .description {
   display: grid;
+  align-content: start;
   gap: 0.35rem;
   min-width: 0;
 }
-.categoryField > label,
+
+/* Choosing a category and creating one are the same decision, so they sit on
+   one row. Stacked, they made this field twice the height of every other field
+   in the grid, which is what left the ragged column and the empty space beside
+   it. `align-items: end` puts the button on the picker's baseline rather than
+   floating it against the label. */
+.categoryField {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  align-content: start;
+  gap: 0.35rem 0.6rem;
+  min-width: 0;
+}
+
+/* The inline-create row is a field and two buttons; crushed into the button
+   column it has nowhere to go, so it takes the full width while it is open. */
+.categoryField > .newCategory {
+  grid-column: 1 / -1;
+}
+
 .categoryField > .categoryPicker,
 .description > label {
   display: grid;
@@ -189,6 +249,7 @@
    default, now that the control is a picker rather than a native select. */
 .visibilityField {
   display: grid;
+  align-content: start;
   gap: 0.35rem;
   min-width: 0;
 }

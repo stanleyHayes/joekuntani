@@ -260,6 +260,9 @@ export function DateField({
         role="dialog"
         aria-label={ariaLabel || "Choose a date"}
         style={panelStyle}
+        /* Marks this as the innermost layer, so a surrounding dialog leaves
+           Escape alone while the calendar is open. */
+        data-popover-open="true"
       >
         <div className={styles.monthBar}>
           <button

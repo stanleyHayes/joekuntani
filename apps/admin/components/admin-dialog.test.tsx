@@ -25,6 +25,41 @@ describe("AdminDialog", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  // A picker inside a dialog renders its list into document.body, so its own
+  // Escape handling never reaches this dialog's listener. Without the guard,
+  // dismissing a dropdown threw away the form it was sitting in.
+  it("leaves Escape to an open popover inside it", () => {
+    const onClose = vi.fn();
+    render(
+      <AdminDialog title="Upload a video" onClose={onClose}>
+        <button type="button">Save</button>
+        <ul data-popover-open="true" role="listbox" />
+      </AdminDialog>,
+    );
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("closes on Escape again once the popover has gone", () => {
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <AdminDialog title="Upload a video" onClose={onClose}>
+        <ul data-popover-open="true" role="listbox" />
+      </AdminDialog>,
+    );
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).not.toHaveBeenCalled();
+
+    rerender(
+      <AdminDialog title="Upload a video" onClose={onClose}>
+        <span />
+      </AdminDialog>,
+    );
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
   it("traps keyboard focus and restores the previous control", () => {
     const onClose = vi.fn();
     const { rerender } = render(<button type="button">Launcher</button>);

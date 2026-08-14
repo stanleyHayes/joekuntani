@@ -81,6 +81,12 @@ const base: VideoItem = {
   },
 };
 
+// The upload form lives in a dialog now, so a test that fills it opens it the
+// way an operator does rather than reaching for fields that are not rendered.
+function openUpload() {
+  fireEvent.click(screen.getByRole("button", { name: "Upload a video" }));
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -257,6 +263,7 @@ it("creates a resumable upload, reports progress and synchronizes processing", a
   vi.stubGlobal("fetch", fetcher);
   render(<VideoAdmin />);
   await screen.findByText("Your video library is ready");
+  openUpload();
   fireEvent.change(screen.getByLabelText("Title"), {
     target: { value: "Live set" },
   });
@@ -429,9 +436,13 @@ it("handles an empty response and reports a failed manual reload", async () => {
   vi.stubGlobal("fetch", fetcher);
   render(<VideoAdmin />);
   expect(await screen.findByText("Your video library is ready")).toBeVisible();
-  expect(
-    screen.getByRole("link", { name: "Upload your first video" }),
-  ).toHaveAttribute("href", "#video-upload-title");
+  // The empty state opens the same dialog as the header button; it used to be
+  // an anchor into a form that was always on the page.
+  fireEvent.click(
+    screen.getByRole("button", { name: "Upload your first video" }),
+  );
+  expect(screen.getByRole("dialog", { name: "Upload a video" })).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Close dialog" }));
   fireEvent.click(screen.getByRole("button", { name: "Reload" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "video library could not be loaded",
@@ -474,6 +485,8 @@ it("loads seeded categories and creates a new category inline", async () => {
 
   // The picker holds its options until it is opened, so the seeded category is
   // proved by opening it rather than by reading the closed control.
+  await screen.findByRole("button", { name: "Upload a video" });
+  openUpload();
   const category = await screen.findByRole("button", { name: "Category" });
   fireEvent.click(category);
   expect(await screen.findByRole("option", { name: "Comedy" })).toBeVisible();
@@ -527,6 +540,8 @@ it("creates a category from the picker's own filter", async () => {
   );
   render(<VideoAdmin />);
 
+  await screen.findByRole("button", { name: "Upload a video" });
+  openUpload();
   const category = await screen.findByRole("button", { name: "Category" });
   fireEvent.click(category);
   await screen.findByRole("option", { name: "Comedy" });

@@ -166,6 +166,9 @@ export function Select({
         aria-labelledby={buttonId}
         style={listStyle}
         onKeyDown={onListKeyDown}
+        /* Marks this as the innermost layer, so a surrounding dialog leaves
+           Escape alone while the list is open. */
+        data-popover-open="true"
       >
         {placeholder && !required ? (
           <li

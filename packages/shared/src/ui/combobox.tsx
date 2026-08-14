@@ -221,6 +221,9 @@ export function Combobox({
         className={styles.panel}
         style={panelStyle}
         data-pending={createPending ? "true" : "false"}
+        /* Marks this as the innermost layer, so a surrounding dialog leaves
+           Escape alone while the list is open. */
+        data-popover-open="true"
       >
         <input
           ref={searchRef}

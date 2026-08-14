@@ -27,6 +27,7 @@ import {
   ButtonPending,
   formatAdminTimestamp,
 } from "../admin-feedback";
+import { AdminDialog } from "../admin-dialog";
 import { AssetUploadField } from "../media/asset-picker";
 import styles from "./video-admin.module.css";
 
@@ -123,6 +124,7 @@ export function VideoAdmin() {
   const [items, setItems] = useState<VideoItem[] | null>(null);
   const [draft, setDraft] = useState(emptyDraft);
   const [file, setFile] = useState<File | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
   const [pending, setPending] = useState("");
   const [message, setMessage] = useState("");
@@ -222,6 +224,10 @@ export function VideoAdmin() {
       setMessage("Upload complete. Bunny Stream is processing the video.");
       setDraft(emptyDraft);
       setFile(null);
+      // The new row is already in the library behind the dialog, and the
+      // confirmation reads on the page itself; leaving the form open would sit
+      // over the thing the operator just asked to see.
+      setUploadOpen(false);
       await sync(body.item.id);
     } catch {
       setError(
@@ -448,9 +454,19 @@ export function VideoAdmin() {
             videos or press.
           </p>
         </div>
-        <p className={styles.summary} aria-live="polite">
-          {items?.length ?? 0} videos, {processingCount} processing
-        </p>
+        <div className={styles.headerAside}>
+          <p className={styles.summary} aria-live="polite">
+            {items?.length ?? 0} videos, {processingCount} processing
+          </p>
+          <button
+            className={styles.uploadCta}
+            type="button"
+            onClick={() => setUploadOpen(true)}
+          >
+            <UploadSimple size={16} aria-hidden="true" />
+            Upload a video
+          </button>
+        </div>
       </header>
 
       {error ? (
@@ -561,214 +577,223 @@ export function VideoAdmin() {
         </div>
       </details>
 
-      <form className={styles.uploadPanel} id="video-upload" onSubmit={submit}>
-        <div className={styles.uploadHeading}>
-          <UploadSimple size={22} aria-hidden="true" />
-          <div>
-            <h3>Upload a video</h3>
-            <p>
-              The browser sends the file directly to Bunny using resumable TUS.
-            </p>
-          </div>
-        </div>
-        <div className={styles.formGrid}>
-          <label>
-            Title
-            <input
-              id="video-upload-title"
-              required
-              value={draft.title}
-              onChange={(event) => {
-                const title = event.target.value;
-                setDraft({ ...draft, title, slug: slugify(title) });
-              }}
-            />
-          </label>
-          <label>
-            Public slug
-            <input
-              aria-label="Public slug"
-              required
-              pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-              value={draft.slug}
-              readOnly
-              aria-describedby="video-slug-help"
-            />
-            <small id="video-slug-help">
-              Generated automatically from the title.
-            </small>
-          </label>
-          <div className={styles.categoryField}>
-            <div className={styles.categoryPicker}>
-              <span>Category</span>
-              <Combobox
-                aria-label="Category"
-                options={categoryOptions}
-                value={draft.category}
-                onChange={(category) => setDraft({ ...draft, category })}
-                onCreate={(title) => createCategory(title)}
-                createPending={categoryPending === "create"}
-                placeholder="Select a category"
-                searchPlaceholder="Search categories…"
-                emptyMessage="No category matches that."
-              />
-            </div>
-            {addingCategory ? (
-              <div className={styles.newCategory}>
+      {uploadOpen ? (
+        <AdminDialog
+          title="Upload a video"
+          description="The browser sends the file directly to Bunny using resumable TUS."
+          onClose={() => setUploadOpen(false)}
+          wide
+        >
+          <form
+            className={styles.uploadPanel}
+            id="video-upload"
+            onSubmit={submit}
+          >
+            <div className={styles.formGrid}>
+              <label>
+                Title
                 <input
-                  aria-label="New category name"
-                  autoFocus
-                  maxLength={100}
-                  placeholder="e.g. Behind the scenes"
-                  value={categoryDraft.title || newCategory}
-                  onChange={(event) =>
-                    setCategoryDraft({
-                      ...categoryDraft,
-                      title: event.target.value,
-                    })
-                  }
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      void createCategory();
-                    }
+                  id="video-upload-title"
+                  required
+                  value={draft.title}
+                  onChange={(event) => {
+                    const title = event.target.value;
+                    setDraft({ ...draft, title, slug: slugify(title) });
                   }}
                 />
-                <button type="button" onClick={() => void createCategory()}>
-                  Add
-                </button>
-                <button type="button" onClick={() => setAddingCategory(false)}>
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                className={styles.addCategory}
-                type="button"
-                onClick={() => setAddingCategory(true)}
-              >
-                <FolderSimplePlus size={15} aria-hidden="true" /> Create
-                category
-              </button>
-            )}
-          </div>
-          <label>
-            Tags
-            <input
-              value={draft.tags}
-              onChange={(event) =>
-                setDraft({ ...draft, tags: event.target.value })
-              }
-              placeholder="interview, live set"
-            />
-          </label>
-          <div className={styles.visibilityField}>
-            <span>Visibility</span>
-            <Select
-              aria-label="Visibility"
-              options={VISIBILITIES}
-              value={draft.visibility}
-              onChange={(visibility) =>
-                setDraft({
-                  ...draft,
-                  visibility: visibility as Draft["visibility"],
-                })
-              }
-              required
-            />
-          </div>
-          <label>
-            Order
-            <input
-              inputMode="numeric"
-              value={draft.sortOrder}
-              onChange={(event) =>
-                setDraft({ ...draft, sortOrder: event.target.value })
-              }
-            />
-          </label>
-          <div className={styles.description}>
-            <label>
-              Description
-              <textarea
-                value={draft.description}
-                onChange={(event) =>
-                  setDraft({ ...draft, description: event.target.value })
-                }
-              />
-            </label>
-            <AiAssist
-              field="description"
-              label="Video description"
-              value={draft.description}
-              onApply={(description) => setDraft({ ...draft, description })}
-            />
-          </div>
-          <div className={styles.file}>
-            <div className={styles.fileHeading}>
-              <span id="video-file-label">Video file</span>
-              <span data-selected={file ? "true" : "false"}>
-                {file ? "Ready to upload" : "Required"}
-              </span>
-            </div>
-            <label
-              className={styles.filePicker}
-              data-disabled={pending ? "true" : "false"}
-              data-selected={file ? "true" : "false"}
-              htmlFor="video-file"
-            >
-              <input
-                required
-                accept="video/mp4,video/webm,video/quicktime,video/x-matroska,.mp4,.webm,.mov,.mkv"
-                aria-labelledby="video-file-label"
-                disabled={Boolean(pending)}
-                id="video-file"
-                type="file"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-              />
-              <span className={styles.fileIcon} aria-hidden="true">
-                <UploadSimple size={24} weight="bold" />
-              </span>
-              <span className={styles.fileCopy}>
-                <strong>{file ? file.name : "Select a video file"}</strong>
-                <small>
-                  {file
-                    ? `${formatBytes(file.size)} · ${file.type || "Video file"}`
-                    : "MP4, WebM, MOV or MKV"}
+              </label>
+              <label>
+                Public slug
+                <input
+                  aria-label="Public slug"
+                  required
+                  pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                  value={draft.slug}
+                  readOnly
+                  aria-describedby="video-slug-help"
+                />
+                <small id="video-slug-help">
+                  Generated automatically from the title.
                 </small>
-              </span>
-              <span className={styles.fileAction} aria-hidden="true">
-                {file ? "Replace" : "Browse"}
-              </span>
-            </label>
-          </div>
-        </div>
-        {progress !== null ? (
-          <div
-            className={styles.progress}
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={progress}
-          >
-            <span style={{ transform: `scaleX(${progress / 100})` }} />
-          </div>
-        ) : null}
-        <button
-          className={styles.primary}
-          disabled={!file || Boolean(pending)}
-          type="submit"
-        >
-          {pending === "upload" ? (
-            <>
-              <ButtonPending label={`Uploading ${progress ?? 0}%`} />
-              Uploading {progress ?? 0}%
-            </>
-          ) : (
-            "Start resumable upload"
-          )}
-        </button>
-      </form>
+              </label>
+              <div className={styles.categoryField}>
+                <div className={styles.categoryPicker}>
+                  <span>Category</span>
+                  <Combobox
+                    aria-label="Category"
+                    options={categoryOptions}
+                    value={draft.category}
+                    onChange={(category) => setDraft({ ...draft, category })}
+                    onCreate={(title) => createCategory(title)}
+                    createPending={categoryPending === "create"}
+                    placeholder="Select a category"
+                    searchPlaceholder="Search categories…"
+                    emptyMessage="No category matches that."
+                  />
+                </div>
+                {addingCategory ? (
+                  <div className={styles.newCategory}>
+                    <input
+                      aria-label="New category name"
+                      autoFocus
+                      maxLength={100}
+                      placeholder="e.g. Behind the scenes"
+                      value={categoryDraft.title || newCategory}
+                      onChange={(event) =>
+                        setCategoryDraft({
+                          ...categoryDraft,
+                          title: event.target.value,
+                        })
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          void createCategory();
+                        }
+                      }}
+                    />
+                    <button type="button" onClick={() => void createCategory()}>
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAddingCategory(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className={styles.addCategory}
+                    type="button"
+                    onClick={() => setAddingCategory(true)}
+                  >
+                    <FolderSimplePlus size={15} aria-hidden="true" /> Create
+                    category
+                  </button>
+                )}
+              </div>
+              <label>
+                Tags
+                <input
+                  value={draft.tags}
+                  onChange={(event) =>
+                    setDraft({ ...draft, tags: event.target.value })
+                  }
+                  placeholder="interview, live set"
+                />
+              </label>
+              <div className={styles.visibilityField}>
+                <span>Visibility</span>
+                <Select
+                  aria-label="Visibility"
+                  options={VISIBILITIES}
+                  value={draft.visibility}
+                  onChange={(visibility) =>
+                    setDraft({
+                      ...draft,
+                      visibility: visibility as Draft["visibility"],
+                    })
+                  }
+                  required
+                />
+              </div>
+              <label>
+                Order
+                <input
+                  inputMode="numeric"
+                  value={draft.sortOrder}
+                  onChange={(event) =>
+                    setDraft({ ...draft, sortOrder: event.target.value })
+                  }
+                />
+              </label>
+              <div className={styles.description}>
+                <label>
+                  Description
+                  <textarea
+                    value={draft.description}
+                    onChange={(event) =>
+                      setDraft({ ...draft, description: event.target.value })
+                    }
+                  />
+                </label>
+                <AiAssist
+                  field="description"
+                  label="Video description"
+                  value={draft.description}
+                  onApply={(description) => setDraft({ ...draft, description })}
+                />
+              </div>
+              <div className={styles.file}>
+                <div className={styles.fileHeading}>
+                  <span id="video-file-label">Video file</span>
+                  <span data-selected={file ? "true" : "false"}>
+                    {file ? "Ready to upload" : "Required"}
+                  </span>
+                </div>
+                <label
+                  className={styles.filePicker}
+                  data-disabled={pending ? "true" : "false"}
+                  data-selected={file ? "true" : "false"}
+                  htmlFor="video-file"
+                >
+                  <input
+                    required
+                    accept="video/mp4,video/webm,video/quicktime,video/x-matroska,.mp4,.webm,.mov,.mkv"
+                    aria-labelledby="video-file-label"
+                    disabled={Boolean(pending)}
+                    id="video-file"
+                    type="file"
+                    onChange={(event) =>
+                      setFile(event.target.files?.[0] ?? null)
+                    }
+                  />
+                  <span className={styles.fileIcon} aria-hidden="true">
+                    <UploadSimple size={24} weight="bold" />
+                  </span>
+                  <span className={styles.fileCopy}>
+                    <strong>{file ? file.name : "Select a video file"}</strong>
+                    <small>
+                      {file
+                        ? `${formatBytes(file.size)} · ${file.type || "Video file"}`
+                        : "MP4, WebM, MOV or MKV"}
+                    </small>
+                  </span>
+                  <span className={styles.fileAction} aria-hidden="true">
+                    {file ? "Replace" : "Browse"}
+                  </span>
+                </label>
+              </div>
+            </div>
+            {progress !== null ? (
+              <div
+                className={styles.progress}
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progress}
+              >
+                <span style={{ transform: `scaleX(${progress / 100})` }} />
+              </div>
+            ) : null}
+            <button
+              className={styles.primary}
+              disabled={!file || Boolean(pending)}
+              type="submit"
+            >
+              {pending === "upload" ? (
+                <>
+                  <ButtonPending label={`Uploading ${progress ?? 0}%`} />
+                  Uploading {progress ?? 0}%
+                </>
+              ) : (
+                "Start resumable upload"
+              )}
+            </button>
+          </form>
+        </AdminDialog>
+      ) : null}
 
       <section aria-labelledby="video-library-title">
         <div className={styles.libraryHeading}>
@@ -945,7 +970,9 @@ export function VideoAdmin() {
                 publish it when the stream is ready.
               </p>
             </div>
-            <a href="#video-upload-title">Upload your first video</a>
+            <button type="button" onClick={() => setUploadOpen(true)}>
+              Upload your first video
+            </button>
             <ol aria-label="Video publishing steps">
               <li>Choose a category</li>
               <li>Upload to Bunny</li>

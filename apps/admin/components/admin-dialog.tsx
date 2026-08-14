@@ -45,7 +45,14 @@ export function AdminDialog({
     dialog?.focus();
 
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") close();
+      // Escape belongs to the innermost open layer. A picker inside a dialog
+      // renders its popover into document.body, so its own Escape handling
+      // never reaches this listener's node — without this check, dismissing a
+      // category dropdown also threw away the form it was sitting in.
+      if (event.key === "Escape") {
+        if (!document.querySelector('[data-popover-open="true"]')) close();
+        return;
+      }
       if (event.key !== "Tab" || !dialog) return;
 
       const focusable = Array.from(
