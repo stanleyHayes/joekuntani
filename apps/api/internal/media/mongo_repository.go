@@ -189,6 +189,27 @@ func (r *MongoRepository) List(ctx context.Context) ([]Asset, error) {
 	}
 	return assets, nil
 }
+
+// ListPublicReadyByFolder serves the unauthenticated gallery: only ready images
+// in one folder, newest first, hard-capped so the response stays bounded. The
+// filter runs in the query itself so nothing else ever leaves the database.
+func (r *MongoRepository) ListPublicReadyByFolder(ctx context.Context, folder string, limit int64) ([]Asset, error) {
+	filter := bson.M{"status": StatusReady, "folder": folder, "mime_type": bson.M{"$regex": "^image/"}}
+	cursor, err := r.database.Collection("media_assets").Find(ctx, filter, options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}}).SetLimit(limit))
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+	var docs []assetDocument
+	if err = cursor.All(ctx, &docs); err != nil {
+		return nil, err
+	}
+	assets := make([]Asset, len(docs))
+	for i, doc := range docs {
+		assets[i] = assetFromDocument(doc)
+	}
+	return assets, nil
+}
 func (r *MongoRepository) UpdateMetadata(ctx context.Context, id, alt string, tags, transforms []string, at time.Time, event AuditEvent) (Asset, error) {
 	var result Asset
 	err := r.transaction(ctx, func(tx context.Context) error {

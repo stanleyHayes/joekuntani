@@ -36,13 +36,21 @@ const NAV_GROUPS: readonly {
   {
     label: "Media",
     href: "/media",
-    hrefs: ["/media/videos", "/media/press", "/videos", "/press"],
+    hrefs: [
+      "/media/videos",
+      "/media/press",
+      "/media/gallery",
+      "/videos",
+      "/press",
+      "/gallery",
+    ],
   },
 ];
 
 const MEDIA_CANONICAL: Record<string, string> = {
   "/videos": "/media/videos",
   "/press": "/media/press",
+  "/gallery": "/media/gallery",
 };
 
 /** Stable DOM id fragment from an href, for aria-labelledby/-describedby. */

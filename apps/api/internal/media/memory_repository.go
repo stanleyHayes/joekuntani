@@ -3,6 +3,7 @@ package media
 import (
 	"context"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -144,6 +145,21 @@ func (r *MemoryRepository) List(_ context.Context) ([]Asset, error) {
 		}
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].CreatedAt.After(out[j].CreatedAt) })
+	return out, nil
+}
+func (r *MemoryRepository) ListPublicReadyByFolder(_ context.Context, folder string, limit int64) ([]Asset, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	out := []Asset{}
+	for _, a := range r.assets {
+		if a.Status == StatusReady && a.Folder == folder && strings.HasPrefix(a.MIMEType, "image/") {
+			out = append(out, cloneAsset(a))
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].CreatedAt.After(out[j].CreatedAt) })
+	if int64(len(out)) > limit {
+		out = out[:limit]
+	}
 	return out, nil
 }
 func (r *MemoryRepository) UpdateMetadata(_ context.Context, id, alt string, tags, transforms []string, at time.Time, e AuditEvent) (Asset, error) {

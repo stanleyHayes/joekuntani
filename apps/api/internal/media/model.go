@@ -97,6 +97,7 @@ type Repository interface {
 	MarkFailed(context.Context, string, time.Time, AuditEvent) error
 	Get(context.Context, string) (Asset, error)
 	List(context.Context) ([]Asset, error)
+	ListPublicReadyByFolder(context.Context, string, int64) ([]Asset, error)
 	UpdateMetadata(context.Context, string, string, []string, []string, time.Time, AuditEvent) (Asset, error)
 	References(context.Context, string) ([]UsageReference, error)
 	AddReference(context.Context, UsageReference, AuditEvent) error

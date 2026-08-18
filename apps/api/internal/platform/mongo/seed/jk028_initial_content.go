@@ -71,6 +71,7 @@ func settingsValues() bson.M {
 			bson.M{"label": "Events", "href": "/events"},
 			bson.M{"label": "Videos", "href": "/videos"},
 			bson.M{"label": "Press", "href": "/press"},
+			bson.M{"label": "Gallery", "href": "/media/gallery"},
 			bson.M{"label": "Shop", "href": "/shop"},
 			bson.M{"label": "About", "href": "/about"},
 		},

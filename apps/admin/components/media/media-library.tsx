@@ -445,6 +445,7 @@ export function MediaLibrary({
                   options={[
                     { value: "content", label: "Content" },
                     { value: "press", label: "Press" },
+                    { value: "gallery", label: "Gallery" },
                     { value: "documents", label: "Documents" },
                   ]}
                   aria-label="Media folder"
@@ -491,7 +492,7 @@ export function MediaLibrary({
           />
         </label>
         <div className={styles.folderTabs} aria-label="Filter by folder">
-          {["all", "content", "press", "documents"].map((folder) => (
+          {["all", "content", "press", "gallery", "documents"].map((folder) => (
             <button
               key={folder}
               type="button"

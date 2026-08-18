@@ -1173,6 +1173,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/public/media/gallery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List ready gallery images newest first */
+        get: operations["listPublicGallery"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/public/content/{kind}": {
         parameters: {
             query?: never;
@@ -3160,6 +3177,17 @@ export interface components {
         };
         ServiceList: {
             items: components["schemas"]["Service"][];
+        };
+        PublicGalleryAsset: {
+            /** Format: uuid */
+            asset_id: string;
+            public_url: string;
+            alt_text: string;
+            width: number;
+            height: number;
+            tags: string[];
+            /** Format: date-time */
+            created_at: string;
         };
         MediaAsset: {
             /** Format: uuid */
@@ -5498,6 +5526,30 @@ export interface operations {
             400: components["responses"]["Problem"];
             401: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+        };
+    };
+    listPublicGallery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ready gallery images only; drafts, documents and other folders are never listed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        assets: components["schemas"]["PublicGalleryAsset"][];
+                    };
+                };
+            };
+            400: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
         };
     };
     listPublishedContent: {

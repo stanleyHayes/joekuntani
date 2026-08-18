@@ -1,0 +1,22 @@
+.galleryHero h1 {
+  max-width: 11ch;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.item {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+.item img {
+  display: block;
+  width: 100%;
+  height: auto;
+}

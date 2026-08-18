@@ -169,6 +169,10 @@ it("gives every Media dropdown item a title, description and icon", () => {
   expect(press).toHaveAttribute("href", "/media/press");
   expect(press).toHaveTextContent("Interviews, features and coverage.");
 
+  const gallery = within(menu).getByRole("link", { name: "Gallery" });
+  expect(gallery).toHaveAttribute("href", "/media/gallery");
+  expect(gallery).toHaveTextContent("Photography from shows and shoots.");
+
   // Decoration must not leak into what a screen reader announces.
   expect(videos).toHaveAccessibleName("Videos");
   expect(menu.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(

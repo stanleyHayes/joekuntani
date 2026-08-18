@@ -56,6 +56,48 @@ func (handler *HTTPHandler) PublicAssetHandler() http.Handler {
 	return http.HandlerFunc(handler.publicAsset)
 }
 
+// PublicGalleryHandler serves the ready gallery images to an unauthenticated
+// reader.
+func (handler *HTTPHandler) PublicGalleryHandler() http.Handler {
+	return http.HandlerFunc(handler.publicGallery)
+}
+
+// publicGalleryAsset is the per-item projection of the public gallery. Like
+// publicAssetResponse it carries only what the public site needs to render an
+// image — no folder, storage key, byte size, uploader or reference counts.
+type publicGalleryAsset struct {
+	AssetID   string   `json:"asset_id"`
+	PublicURL string   `json:"public_url"`
+	AltText   string   `json:"alt_text"`
+	Width     int      `json:"width"`
+	Height    int      `json:"height"`
+	Tags      []string `json:"tags"`
+	CreatedAt string   `json:"created_at"`
+}
+
+func (handler *HTTPHandler) publicGallery(response http.ResponseWriter, request *http.Request) {
+	assets, err := handler.service.PublicGallery(request.Context())
+	if err != nil {
+		// A listing has no "not found" to hide behind; fail closed with a
+		// generic unavailable rather than leaking what went wrong.
+		mediaProblem(response, http.StatusServiceUnavailable, "Media temporarily unavailable")
+		return
+	}
+	result := make([]publicGalleryAsset, len(assets))
+	for i, asset := range assets {
+		tags := asset.Tags
+		if tags == nil {
+			tags = []string{}
+		}
+		result[i] = publicGalleryAsset{
+			AssetID: asset.PublicID, PublicURL: asset.PublicURL, AltText: asset.AltText,
+			Width: asset.Width, Height: asset.Height, Tags: tags,
+			CreatedAt: asset.CreatedAt.UTC().Format(time.RFC3339),
+		}
+	}
+	mediaJSON(response, http.StatusOK, map[string]any{"assets": result})
+}
+
 // publicAssetResponse is deliberately narrower than the admin projection. The
 // public site needs to know where the file is, what type it is and whether it
 // is usable; it has no business seeing folders, byte sizes, uploader or

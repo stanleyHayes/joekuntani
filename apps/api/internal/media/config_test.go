@@ -48,7 +48,7 @@ func TestPolicyAllowsEveryFolderTheConsolePostsFrom(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, folder := range []string{"content", "press", "documents", "brand", "events", "merch"} {
+	for _, folder := range []string{"content", "press", "documents", "brand", "events", "merch", "gallery"} {
 		if !config.Policy.Folders[folder] {
 			t.Fatalf("uploads from the %q surface are rejected by the policy", folder)
 		}

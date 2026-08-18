@@ -3,6 +3,7 @@ import {
   FilmSlateIcon,
   GuitarIcon,
   HouseIcon,
+  ImagesIcon,
   MicrophoneStageIcon,
   NewspaperClippingIcon,
   SparkleIcon,
@@ -25,6 +26,7 @@ const ICONS: Record<NavIconName, Icon> = {
   services: SparkleIcon,
   videos: FilmSlateIcon,
   press: NewspaperClippingIcon,
+  gallery: ImagesIcon,
   events: CalendarDotsIcon,
   shop: TShirtIcon,
 };

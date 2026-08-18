@@ -1945,6 +1945,28 @@ paths:
         "400": { $ref: "#/components/responses/Problem" }
         "401": { $ref: "#/components/responses/Problem" }
         "409": { $ref: "#/components/responses/Problem" }
+  /api/public/media/gallery:
+    get:
+      operationId: listPublicGallery
+      summary: List ready gallery images newest first
+      tags: [Media]
+      responses:
+        "200":
+          description: Ready gallery images only; drafts, documents and other folders are never listed
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [assets]
+                properties:
+                  assets:
+                    {
+                      type: array,
+                      items: { $ref: "#/components/schemas/PublicGalleryAsset" },
+                    }
+        "400": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
   /api/public/content/{kind}:
     get:
       operationId: listPublishedContent
@@ -5186,6 +5208,19 @@ components:
       required: [items]
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/Service" } }
+    PublicGalleryAsset:
+      type: object
+      additionalProperties: false
+      required: [asset_id, public_url, alt_text, width, height, tags, created_at]
+      properties:
+        asset_id: { type: string, format: uuid }
+        public_url: { type: string, maxLength: 2048 }
+        alt_text: { type: string, minLength: 8, maxLength: 500 }
+        width: { type: integer, minimum: 0 }
+        height: { type: integer, minimum: 0 }
+        tags:
+          { type: array, maxItems: 50, items: { type: string, maxLength: 80 } }
+        created_at: { type: string, format: date-time }
     MediaAsset:
       type: object
       additionalProperties: false

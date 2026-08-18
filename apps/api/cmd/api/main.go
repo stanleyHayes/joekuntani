@@ -567,6 +567,7 @@ func main() {
 			AdminMediaDelete:          authHandler.Protect(auth.PermissionContentEdit, true, mediaHandler.DeleteHandler()),
 			MediaCallback:             mediaHandler.CallbackHandler(),
 			PublicMediaAsset:          mediaHandler.PublicAssetHandler(),
+			PublicMediaGallery:        mediaHandler.PublicGalleryHandler(),
 			PublicServicesList:        servicesHandler.PublicListHandler(),
 			PublicServicesDetail:      servicesHandler.PublicDetailHandler(),
 			PublicEnquirySubmit:       enquiryHandler.SubmitHandler(),

@@ -12,6 +12,7 @@ import {
 } from "../components/public-info/data";
 import { getPublicServices } from "../components/services/data";
 import { getPublicEvents } from "../components/events/data";
+import { publicGallery } from "../lib/media";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [
@@ -26,6 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     privacy,
     terms,
     mediaKit,
+    gallery,
   ] = await Promise.all([
     getPublicSettings(),
     Promise.all(
@@ -42,6 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getLegalSurface("privacy"),
     getLegalSurface("terms"),
     getMediaKit(),
+    publicGallery(),
   ]);
   const base = settings?.seo.canonical_base;
   if (!canonicalURL("/", base)) return [];
@@ -52,6 +55,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (work.length) availableRoutes.push("/work");
   if (videos.length) availableRoutes.push("/videos");
   if (press.length) availableRoutes.push("/press");
+  if (gallery.length) availableRoutes.push("/media/gallery");
   if (events.state === "ready" && events.data.length)
     availableRoutes.push("/events");
   if (pages[0]) availableRoutes.push("/");

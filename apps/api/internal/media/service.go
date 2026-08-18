@@ -234,6 +234,34 @@ func (service *Service) PublicAsset(ctx context.Context, id string) (Asset, erro
 	}
 	return asset, nil
 }
+
+// galleryFolder is the one policy folder the unauthenticated gallery may list.
+// publicGalleryLimit caps the response so a large folder cannot make the
+// payload unbounded.
+const (
+	galleryFolder      = "gallery"
+	publicGalleryLimit = 100
+)
+
+// PublicGallery lists the ready images in the gallery folder for an
+// unauthenticated reader, newest first. The repository query itself is the
+// security boundary — folder, ready status and image MIME are all filter
+// conditions, so drafts, documents and every other folder never leave the
+// database — and the status re-check below keeps that posture even if a
+// repository implementation drifts.
+func (service *Service) PublicGallery(ctx context.Context) ([]Asset, error) {
+	assets, err := service.repository.ListPublicReadyByFolder(ctx, path.Join(service.policy.FolderPrefix, galleryFolder), publicGalleryLimit)
+	if err != nil {
+		return nil, err
+	}
+	ready := make([]Asset, 0, len(assets))
+	for _, asset := range assets {
+		if asset.Status == StatusReady && strings.HasPrefix(asset.MIMEType, "image/") {
+			ready = append(ready, asset)
+		}
+	}
+	return ready, nil
+}
 func (service *Service) List(ctx context.Context, actor Actor) ([]Asset, error) {
 	if !actor.CanEditContent {
 		return nil, ErrForbidden

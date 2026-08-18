@@ -60,6 +60,7 @@ type Options struct {
 	PublicContentList         http.Handler
 	PublicContentDetail       http.Handler
 	PublicMediaAsset          http.Handler
+	PublicMediaGallery        http.Handler
 	AdminContentList          http.Handler
 	AdminContentCreate        http.Handler
 	AdminContentPreview       http.Handler
@@ -207,6 +208,11 @@ func NewHandler(options ...Options) http.Handler {
 	// social card resolved to nothing.
 	if configuration.PublicMediaAsset != nil {
 		router.Method(http.MethodGet, "/api/public/media/assets/{assetID}", configuration.PublicMediaAsset)
+	}
+	// The gallery page needs the ready gallery images without a session, same
+	// fail-closed posture as the single-asset route above.
+	if configuration.PublicMediaGallery != nil {
+		router.Method(http.MethodGet, "/api/public/media/gallery", configuration.PublicMediaGallery)
 	}
 	if configuration.AdminContentList != nil {
 		router.Method(http.MethodGet, "/api/admin/content/{kind}", configuration.AdminContentList)

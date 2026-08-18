@@ -10,6 +10,7 @@ export type NavIcon =
   | "services"
   | "videos"
   | "press"
+  | "gallery"
   | "events"
   | "shop";
 
@@ -60,6 +61,12 @@ export const fallbackNavigation: readonly NavItem[] = [
     label: "Press",
     icon: "press",
     description: "Interviews, features and coverage.",
+  },
+  {
+    href: "/media/gallery",
+    label: "Gallery",
+    icon: "gallery",
+    description: "Photography from shows and shoots.",
   },
   {
     href: "/events",
@@ -128,6 +135,14 @@ export const navMetadataByHref: Record<
   "/media/press": {
     description: "Interviews, features and coverage.",
     icon: "press",
+  },
+  "/gallery": {
+    description: "Photography from shows and shoots.",
+    icon: "gallery",
+  },
+  "/media/gallery": {
+    description: "Photography from shows and shoots.",
+    icon: "gallery",
   },
   "/events": { description: "Upcoming dates and tickets.", icon: "events" },
   "/shop": {

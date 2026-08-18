@@ -99,3 +99,47 @@ export function eventCovers(
     events.map((event) => ({ key: event.id, assetID: event.banner_asset_id })),
   );
 }
+
+export type PublicGalleryAsset = {
+  asset_id: string;
+  public_url: string;
+  alt_text?: string;
+  width?: number;
+  height?: number;
+  tags?: string[];
+  created_at?: string;
+};
+
+/**
+ * Fetches the published gallery: every `ready` image in the gallery folder.
+ *
+ * Same fail-closed contract as `publicImageURL` — an unreachable API, an
+ * unexpected payload, or any URL that is not credential-free HTTPS yields an
+ * empty list, and the page renders its empty state rather than a broken grid.
+ */
+export async function publicGallery(): Promise<PublicGalleryAsset[]> {
+  const base = process.env.API_BASE_URL;
+  if (!base) return [];
+  try {
+    const response = await fetch(`${base}/api/public/media/gallery`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(2000),
+    });
+    if (!response.ok) return [];
+    const payload = (await response.json()) as {
+      assets?: PublicGalleryAsset[];
+    };
+    return (payload.assets ?? []).filter((asset) => {
+      try {
+        const url = new URL(asset.public_url);
+        return (
+          url.protocol === "https:" && !url.username && !url.password
+        );
+      } catch {
+        return false;
+      }
+    });
+  } catch {
+    return [];
+  }
+}
