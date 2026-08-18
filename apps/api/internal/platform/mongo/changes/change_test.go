@@ -169,6 +169,13 @@ func TestRegistryHasStableChecksum(t *testing.T) {
 	if last.Name != videoAspectRatioChangeName || len(last.Checksum) != 64 || !reflect.DeepEqual(last.EvolvesCollections, []string{"video_assets"}) {
 		t.Fatalf("unexpected final registry entry: %#v", last)
 	}
+	// The aspect-ratio change evolves video_assets, so it must supersede the
+	// change that still verifies that collection's original validator — without
+	// it, the next deploy re-verifies vid001 against the evolved validator and
+	// fails on the drift this change itself introduced.
+	if !reflect.DeepEqual(last.Supersedes, []string{videoInfrastructureChangeName}) {
+		t.Fatalf("final registry entry must supersede vid001, got %#v", last.Supersedes)
+	}
 	if registry[0].Name != bootstrapChangeName || len(registry[0].Checksum) != 64 {
 		t.Fatalf("unexpected registry entry: name=%q checksum=%q", registry[0].Name, registry[0].Checksum)
 	}

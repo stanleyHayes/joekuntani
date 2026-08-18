@@ -26,6 +26,12 @@ func videoAspectRatioChange() Change {
 	}
 	return Change{
 		Name: videoAspectRatioChangeName, Checksum: checksum,
+		// This change evolves video_assets, which vid001 still verifies from its
+		// original definition. Without the supersede the runner re-verifies the
+		// already-applied vid001 against the evolved live validator on the next
+		// deploy and fails on drift it created itself. The checksum predates this
+		// metadata and is recorded in production, so it must stay as it was.
+		Supersedes:         []string{videoInfrastructureChangeName},
 		EvolvesCollections: []string{"video_assets"},
 		Apply: func(ctx context.Context, database *mongo.Database) error {
 			return schema.Apply(ctx, database, collections)
@@ -42,7 +48,7 @@ func videoAspectRatioCollections() []schema.Collection {
 		"public_id": schema.PublicIDField(), "slug": bson.M{"bsonType": "string", "minLength": 1, "maxLength": 180}, "title": bson.M{"bsonType": "string", "minLength": 1, "maxLength": 180}, "description": bson.M{"bsonType": "string", "maxLength": 5000}, "category": bson.M{"bsonType": "string", "maxLength": 100}, "tags": bson.M{"bsonType": "array", "maxItems": 20, "items": bson.M{"bsonType": "string", "minLength": 1, "maxLength": 60}},
 		"provider": bson.M{"bsonType": "string", "enum": bson.A{"bunny", "cloudinary", "external"}}, "provider_video_id": stringField, "provider_library_id": stringField, "thumbnail_url": stringField, "duration_seconds": intField,
 		// Zero until the provider reports a frame, so no minimum beyond sanity.
-		"width": bson.M{"bsonType": bson.A{"int", "long"}, "minimum": 0, "maximum": 100000},
+		"width":  bson.M{"bsonType": bson.A{"int", "long"}, "minimum": 0, "maximum": 100000},
 		"height": bson.M{"bsonType": bson.A{"int", "long"}, "minimum": 0, "maximum": 100000},
 		// "" or "W:H". Anything else is a typo, and a typo here reaches the
 		// page as a broken layout rather than an error.
