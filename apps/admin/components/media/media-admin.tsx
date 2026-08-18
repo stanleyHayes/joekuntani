@@ -87,7 +87,7 @@ export async function requestUpload(input: {
   const body = (await response.json()) as UploadResponse;
   if (response.status === 503 && body.asset)
     return { ...mapAsset(body.asset), status: "draft" };
-  if (!response.ok || !body.upload) throw new Error();
+  if (!response.ok || !body.upload) throw await apiError(response, body);
   try {
     const reply = await sendToProvider(body.upload, input.file, input.tags);
     // Confirm from the provider's own signed reply rather than waiting for its
@@ -138,7 +138,7 @@ export async function retryUpload(id: string, file: File): Promise<MediaAsset> {
     { method: "POST" },
   );
   const body = (await response.json()) as UploadResponse;
-  if (!response.ok || !body.upload) throw new Error();
+  if (!response.ok || !body.upload) throw await apiError(response, body);
   await sendToProvider(body.upload, file, body.asset.tags ?? []);
   return mapAsset(body.asset);
 }
@@ -154,14 +154,14 @@ export async function saveMetadata(
       transformations: input.transformations,
     }),
   });
-  if (!response.ok) throw new Error();
+  if (!response.ok) throw await apiError(response);
   return mapAsset((await response.json()) as SafeAsset);
 }
 export async function deleteAsset(id: string) {
   const response = await api(`/api/admin/media/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
-  if (!response.ok) throw new Error();
+  if (!response.ok) throw await apiError(response);
 }
 async function api(url: string, init: RequestInit) {
   return fetch(url, {
@@ -173,6 +173,29 @@ async function api(url: string, init: RequestInit) {
       ...init.headers,
     },
   });
+}
+
+/**
+ * Turns a failed API call into an Error worth showing. The API answers
+ * failures with an application/problem+json document whose title says what was
+ * rejected; a bare `new Error()` is what left the upload dialog silent.
+ * `parsed` is the already-read body when the caller has one, so the response
+ * is never consumed twice.
+ */
+async function apiError(response: Response, parsed?: unknown): Promise<Error> {
+  const titleOf = (body: unknown) => {
+    const title = (body as { title?: unknown } | null)?.title;
+    return typeof title === "string" && title ? title : "";
+  };
+  const known = titleOf(parsed);
+  if (known) return new Error(known);
+  try {
+    const body = titleOf(await response.json());
+    if (body) return new Error(body);
+  } catch {
+    // Not a problem document — fall through to the generic message.
+  }
+  return new Error(`The request was rejected (${response.status}).`);
 }
 async function sendToProvider(
   signed: SignedUpload,

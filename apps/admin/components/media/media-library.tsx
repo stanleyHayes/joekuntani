@@ -89,6 +89,10 @@ export function MediaLibrary({
   const [deletingID, setDeletingID] = useState("");
   const [retryFile, setRetryFile] = useState<File | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
+  // Upload feedback lives inside the dialog: the page-level notice renders
+  // behind the open dialog, so a failure the operator needs to act on was
+  // invisible until the dialog closed.
+  const [uploadError, setUploadError] = useState("");
   // Deletion removes the file from the provider as well as the record, so it
   // asks first. Held as the asset rather than a boolean because the card
   // buttons can delete something other than the currently-selected asset.
@@ -169,6 +173,7 @@ export function MediaLibrary({
     const file =
       fileInput instanceof HTMLInputElement ? fileInput.files?.[0] : undefined;
     const altText = String(data.get("altText") ?? "").trim();
+    setUploadError("");
     if (
       !file ||
       file.size === 0 ||
@@ -176,13 +181,13 @@ export function MediaLibrary({
       file.size > maxBytes ||
       altText.length < 8
     ) {
-      setNotice(
+      setUploadError(
         "Choose an approved file under 10 MB and provide descriptive alternative text.",
       );
       return;
     }
     if (!onUpload) {
-      setNotice(
+      setUploadError(
         "The media provider is unavailable. Your form values are preserved; try again later.",
       );
       return;
@@ -205,9 +210,11 @@ export function MediaLibrary({
       form.reset();
       setChosen(null);
       setUploadOpen(false);
-    } catch {
-      setNotice(
-        "Upload is temporarily unavailable. Your draft metadata has not been discarded.",
+    } catch (error) {
+      setUploadError(
+        error instanceof Error && error.message
+          ? error.message
+          : "Upload is temporarily unavailable. Your draft metadata has not been discarded.",
       );
     } finally {
       setBusy(false);
@@ -325,7 +332,10 @@ export function MediaLibrary({
             className={`primary ${styles.uploadToggle}`}
             aria-expanded={uploadOpen}
             aria-controls="media-upload-panel"
-            onClick={() => setUploadOpen((current) => !current)}
+            onClick={() => {
+              setUploadError("");
+              setUploadOpen((current) => !current);
+            }}
           >
             {uploadOpen ? <X size={17} /> : <UploadSimple size={17} />}
             {uploadOpen ? "Close upload" : "Upload asset"}
@@ -382,7 +392,10 @@ export function MediaLibrary({
         <AdminDialog
           title="Upload asset"
           description="Add an approved image or document to the media library."
-          onClose={() => setUploadOpen(false)}
+          onClose={() => {
+            setUploadError("");
+            setUploadOpen(false);
+          }}
           wide
         >
           <form
@@ -463,6 +476,11 @@ export function MediaLibrary({
               </label>
             </div>
             <div className={styles.uploadFooter}>
+              {uploadError ? (
+                <p className={styles.uploadError} role="alert">
+                  {uploadError}
+                </p>
+              ) : null}
               <button
                 type="submit"
                 className={styles.primaryAction}

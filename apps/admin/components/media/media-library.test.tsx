@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { vi } from "vitest";
 
 import { MediaAsset, MediaLibrary } from "./media-library";
@@ -83,7 +83,9 @@ describe("MediaLibrary", () => {
         .closest("form")!,
     );
     expect(upload).not.toHaveBeenCalled();
-    expect(await screen.findByRole("status")).toHaveTextContent(
+    // Validation feedback must land inside the open dialog, not in the page
+    // notice behind it.
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       "approved file",
     );
   });
@@ -146,9 +148,13 @@ describe("MediaLibrary", () => {
         .getByRole("button", { name: "Request secure upload" })
         .closest("form")!,
     );
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "provider is unavailable",
-    );
+    // The dialog stays open and carries the reason — a page-level notice
+    // renders behind it and was never seen.
+    expect(
+      within(screen.getByRole("dialog", { name: "Upload asset" })).getByRole(
+        "alert",
+      ),
+    ).toHaveTextContent("provider is unavailable");
     rerender(
       <MediaLibrary
         key="provider-retry"
@@ -168,10 +174,13 @@ describe("MediaLibrary", () => {
         .getByRole("button", { name: "Request secure upload" })
         .closest("form")!,
     );
+    // A rejected upload shows the rejection's own message, not a generic one.
     await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent(
-        "temporarily unavailable",
-      ),
+      expect(
+        within(screen.getByRole("dialog", { name: "Upload asset" })).getByRole(
+          "alert",
+        ),
+      ).toHaveTextContent("offline"),
     );
   });
   it("saves edited metadata", async () => {
