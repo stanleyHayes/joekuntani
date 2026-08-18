@@ -140,6 +140,62 @@ describe("PublicShell", () => {
   });
 });
 
+it("keeps Gallery in the Media dropdown and mobile menu when old settings omit it", () => {
+  render(
+    <PublicShell
+      settings={{
+        navigation: [
+          { href: "/media/videos", label: "Videos" },
+          { href: "/media/press", label: "Press" },
+        ],
+        footer: [],
+        ctas: [],
+        contact: { public_email: "", phone: "", location: "" },
+        social: [],
+        brand: {
+          name: "Joe Kuntani",
+          tagline: "",
+          logo_asset_id: "",
+          favicon_asset_id: "",
+        },
+        seo: {
+          title_template: "",
+          default_title: "",
+          description: "",
+          canonical_base: "",
+          social_image_asset_id: "",
+        },
+        consent: {
+          version: "v1",
+          privacy_label: "",
+          marketing_label: "",
+          privacy_url: "/privacy",
+        },
+      }}
+      footerCta={{
+        description: "Provide the details the team needs.",
+        href: "/book",
+        label: "Make an enquiry",
+        title: "Planning a booking?",
+      }}
+    >
+      <main id="main-content" />
+    </PublicShell>,
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: /Media/ }));
+  const dropdown = screen.getByRole("list", { name: "Media" });
+  expect(
+    within(dropdown).getByRole("link", { name: "Gallery" }),
+  ).toHaveAttribute("href", "/media/gallery");
+
+  fireEvent.click(screen.getByRole("button", { name: "Open menu" }));
+  const drawer = screen.getByRole("dialog", { name: "Menu" });
+  expect(
+    within(drawer).getByRole("link", { name: "Gallery" }),
+  ).toHaveAttribute("href", "/media/gallery");
+});
+
 // The Media dropdown showed two bare titles. Each item now carries its title,
 // a line saying what is behind it, and an icon — and the panel a watermark.
 // The icon and watermark are decoration, so they must stay out of the

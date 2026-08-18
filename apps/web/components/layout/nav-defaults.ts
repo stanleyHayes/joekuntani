@@ -96,6 +96,41 @@ export function withShopNavigation(navigation: readonly NavItem[]): NavItem[] {
     : [...navigation, SHOP_NAVIGATION];
 }
 
+export const GALLERY_NAVIGATION: NavItem = {
+  href: "/media/gallery",
+  label: "Gallery",
+  icon: "gallery",
+  description: "Photography from shows and shoots.",
+};
+
+const MEDIA_HREFS = ["/media/videos", "/media/press", "/videos", "/press"];
+
+/**
+ * The gallery must sit with its Media siblings even when old CMS settings
+ * predate it. Inserts after the last media link so the dropdown and the mobile
+ * drawer pick it up; appended when no media links are present.
+ */
+export function withGalleryNavigation(
+  navigation: readonly NavItem[],
+): NavItem[] {
+  if (
+    navigation.some((item) =>
+      [GALLERY_NAVIGATION.href, "/gallery"].includes(item.href),
+    )
+  ) {
+    return [...navigation];
+  }
+  const lastMediaIndex = navigation.findLastIndex((item) =>
+    MEDIA_HREFS.includes(item.href),
+  );
+  if (lastMediaIndex === -1) return [...navigation, GALLERY_NAVIGATION];
+  return [
+    ...navigation.slice(0, lastMediaIndex + 1),
+    GALLERY_NAVIGATION,
+    ...navigation.slice(lastMediaIndex + 1),
+  ];
+}
+
 /**
  * Copy for links that arrive from settings without any of their own.
  *

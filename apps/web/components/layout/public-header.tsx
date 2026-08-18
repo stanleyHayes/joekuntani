@@ -17,6 +17,7 @@ import { MobileMenu } from "./mobile-menu";
 import {
   fallbackNavigation,
   withShopNavigation,
+  withGalleryNavigation,
   withNavMetadata,
   type NavItem,
 } from "./nav-defaults";
@@ -410,20 +411,24 @@ export function PublicHeader({
 }: PublicHeaderProps) {
   const safeBrandName = brandName || "Joe Kuntani";
   const safeCTA = cta || { href: "/book", label: "Make an enquiry" };
-  const navigationWithShop = withShopNavigation(navigation);
-  const navigationWithBooking = navigationWithShop.some(
+  const navigationWithExtras = withGalleryNavigation(
+    withShopNavigation(navigation),
+  );
+  const navigationWithBooking = navigationWithExtras.some(
     (item) => item.href === safeCTA.href,
   )
-    ? navigationWithShop.map((item) =>
+    ? navigationWithExtras.map((item) =>
         item.href === safeCTA.href ? { ...item, label: "Book" } : item,
       )
     : [
-        ...navigationWithShop.slice(
+        ...navigationWithExtras.slice(
           0,
-          Math.ceil(navigationWithShop.length / 2),
+          Math.ceil(navigationWithExtras.length / 2),
         ),
         { href: safeCTA.href, label: "Book" },
-        ...navigationWithShop.slice(Math.ceil(navigationWithShop.length / 2)),
+        ...navigationWithExtras.slice(
+          Math.ceil(navigationWithExtras.length / 2),
+        ),
       ];
   const grouped = groupNavigation(navigationWithBooking);
   const bookingItem = grouped.find((item) => item.label === "Book");
