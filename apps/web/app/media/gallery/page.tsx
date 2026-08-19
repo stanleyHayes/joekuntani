@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { PublicShell } from "../../../components/layout/public-shell";
 import {
   ContentEmpty,
@@ -55,19 +56,36 @@ export default async function GalleryPage() {
           </div>
           {assets.length ? (
             <ul className={styles.grid} aria-label="Gallery images">
-              {assets.map((asset) => (
-                <li className={styles.item} key={asset.asset_id}>
-                  {/* CMS-hosted URLs cannot go through next/image. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={asset.public_url}
-                    alt={asset.alt_text ?? ""}
-                    width={asset.width}
-                    height={asset.height}
-                    loading="lazy"
-                  />
-                </li>
-              ))}
+              {assets.map((asset) => {
+                const ratio =
+                  asset.width && asset.height
+                    ? asset.width / asset.height
+                    : 4 / 5;
+                return (
+                  <li
+                    className={styles.item}
+                    key={asset.asset_id}
+                    style={
+                      { "--ratio": ratio.toFixed(4) } as CSSProperties
+                    }
+                  >
+                    {/* CMS-hosted URLs cannot go through next/image. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={asset.public_url}
+                      alt={asset.alt_text ?? ""}
+                      width={asset.width}
+                      height={asset.height}
+                      loading="lazy"
+                    />
+                    {asset.alt_text ? (
+                      <p className={styles.caption} aria-hidden="true">
+                        {asset.alt_text}
+                      </p>
+                    ) : null}
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <ContentEmpty label="Gallery" />

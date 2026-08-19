@@ -1,22 +1,72 @@
 .galleryHero h1 {
   max-width: 11ch;
 }
+/* Justified mosaic: every row settles on one shared height and each image
+   keeps its own aspect ratio, so nothing is letterboxed into a card or
+   cropped to fit. --ratio comes from the asset's intrinsic dimensions. */
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-  gap: clamp(0.75rem, 2vw, 1.5rem);
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(0.5rem, 1.4vw, 1rem);
   margin: 0;
   padding: 0;
   list-style: none;
 }
+/* Spacer absorbs the last row's free space so a short final row keeps its
+   natural height instead of stretching edge to edge. */
+.grid::after {
+  content: "";
+  flex-grow: 999999;
+}
 .item {
+  --row: clamp(12rem, 24vw, 19rem);
+  position: relative;
+  flex-grow: calc(var(--ratio, 0.8) * 100000);
+  flex-basis: calc(var(--ratio, 0.8) * var(--row));
+  aspect-ratio: var(--ratio, 0.8);
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  background: var(--surface);
+  border-radius: calc(var(--radius-panel) - 0.25rem);
+  background: color-mix(in srgb, var(--ink) 8%, var(--surface));
 }
 .item img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+  transition:
+    transform 650ms cubic-bezier(0.23, 1, 0.32, 1),
+    filter 250ms ease;
+}
+.item:hover img {
+  transform: scale(1.04);
+}
+.caption {
+  position: absolute;
+  inset: auto 0 0 0;
+  margin: 0;
+  padding: 2.5rem 1rem 0.8rem;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.72));
+  color: #f5f4f0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  opacity: 0;
+  transform: translateY(0.5rem);
+  transition:
+    opacity 250ms ease,
+    transform 350ms cubic-bezier(0.23, 1, 0.32, 1);
+  pointer-events: none;
+}
+.item:hover .caption {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .item img,
+  .caption {
+    transition: none;
+  }
+  .item:hover img {
+    transform: none;
+  }
 }
