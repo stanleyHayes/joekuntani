@@ -1,10 +1,51 @@
 import { cache } from "react";
 
 type PublicMediaAsset = {
+  id?: string;
   status?: string;
   mime_type?: string;
   public_url?: string;
+  alt_text?: string;
+  width?: number;
+  height?: number;
 };
+
+export type ResolvedPublicImage = {
+  id: string;
+  url: string;
+  alt: string;
+  width?: number;
+  height?: number;
+};
+
+export const publicImage = cache(
+  async (assetID: string): Promise<ResolvedPublicImage | undefined> => {
+    const base = process.env.API_BASE_URL;
+    if (!base || !assetID) return undefined;
+    try {
+      const response = await fetch(
+        `${base}/api/public/media/assets/${encodeURIComponent(assetID)}`,
+        { cache: "no-store", signal: AbortSignal.timeout(2000) },
+      );
+      if (!response.ok) return undefined;
+      const asset = (await response.json()) as PublicMediaAsset;
+      if (asset.status !== "ready" || !asset.mime_type?.startsWith("image/"))
+        return undefined;
+      const url = new URL(asset.public_url ?? "");
+      if (url.protocol !== "https:" || url.username || url.password)
+        return undefined;
+      return {
+        id: asset.id || assetID,
+        url: url.toString(),
+        alt: asset.alt_text?.trim() || "Portfolio image",
+        width: asset.width,
+        height: asset.height,
+      };
+    } catch {
+      return undefined;
+    }
+  },
+);
 
 /**
  * Resolves an approved media asset id to a safe public image URL.
@@ -20,26 +61,14 @@ type PublicMediaAsset = {
  */
 export const publicImageURL = cache(
   async (assetID: string): Promise<string | undefined> => {
-    const base = process.env.API_BASE_URL;
-    if (!base || !assetID) return undefined;
-    try {
-      const response = await fetch(
-        `${base}/api/public/media/assets/${encodeURIComponent(assetID)}`,
-        { cache: "no-store", signal: AbortSignal.timeout(2000) },
-      );
-      if (!response.ok) return undefined;
-      const asset = (await response.json()) as PublicMediaAsset;
-      if (asset.status !== "ready" || !asset.mime_type?.startsWith("image/"))
-        return undefined;
-      const url = new URL(asset.public_url ?? "");
-      return url.protocol === "https:" && !url.username && !url.password
-        ? url.toString()
-        : undefined;
-    } catch {
-      return undefined;
-    }
+    return (await publicImage(assetID))?.url;
   },
 );
+
+export async function publicImages(assetIDs: string[]) {
+  const images = await Promise.all(assetIDs.map((assetID) => publicImage(assetID)));
+  return images.filter((image): image is ResolvedPublicImage => Boolean(image));
+}
 
 /**
  * Resolves the cover image for a list of records, keyed by slug.

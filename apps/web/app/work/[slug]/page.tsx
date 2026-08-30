@@ -12,7 +12,7 @@ import {
   demoWork,
 } from "../../../lib/demo/content";
 import { canonicalURL, contentMetadata, jsonLd } from "../../../lib/seo";
-import { publicImageURL } from "../../../lib/media";
+import { publicImages } from "../../../lib/media";
 import { getPublicSettings } from "../../../lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -46,10 +46,8 @@ export default async function WorkDetailPage({ params }: Props) {
   const item = cmsItem || demoItem;
   if (!item) notFound();
   const usingDemo = Boolean(demoItem);
-  // The record's own first gallery image, falling back to the demo cover.
-  const cover =
-    (await publicImageURL(item.gallery_asset_ids?.[0] ?? "")) ??
-    (demoItem ? demoCovers[slug] : undefined);
+  const gallery = await publicImages(item.gallery_asset_ids ?? []);
+  const cover = gallery[0]?.url ?? (demoItem ? demoCovers[slug] : undefined);
   const url = canonicalURL(
     item.seo.canonical_url || `/work/${slug}`,
     settings?.seo.canonical_base,
@@ -99,7 +97,7 @@ export default async function WorkDetailPage({ params }: Props) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={cover}
-              alt={`Visual placeholder for ${item.title}. Replace via CMS.`}
+              alt={gallery[0]?.alt || `Visual for ${item.title}`}
               width={1600}
               height={1000}
             />
@@ -110,6 +108,33 @@ export default async function WorkDetailPage({ params }: Props) {
               <span>{usingDemo ? "Demo media" : "Project archive"}</span>
             </figcaption>
           </figure>
+        ) : null}
+        {gallery.length > 1 ? (
+          <section
+            className={`${styles.detailGallery} shell-container`}
+            aria-labelledby="project-gallery"
+          >
+            <div className={styles.detailGalleryHeading}>
+              <span>Archive</span>
+              <h2 id="project-gallery">Project gallery</h2>
+              <p>{gallery.length} images from the original project.</p>
+            </div>
+            <div className={styles.detailGalleryGrid}>
+              {gallery.slice(1).map((image, index) => (
+                <figure key={image.id}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={image.url}
+                    alt={image.alt}
+                    width={image.width || 1200}
+                    height={image.height || 900}
+                    loading="lazy"
+                  />
+                  <figcaption>{String(index + 2).padStart(2, "0")}</figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
         ) : null}
         <section className={`${styles.detailNarrative} shell-container`}>
           <div>

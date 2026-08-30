@@ -180,6 +180,57 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+.detailGallery {
+  padding-block: clamp(3rem, 8vw, 7rem);
+  border-bottom: 1px solid var(--line);
+}
+.detailGalleryHeading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(12rem, 0.35fr);
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: clamp(2rem, 5vw, 4rem);
+}
+.detailGalleryHeading > span,
+.detailGalleryGrid figcaption {
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.detailGalleryHeading h2 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 5rem);
+  letter-spacing: -0.06em;
+}
+.detailGalleryHeading p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+.detailGalleryGrid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 2rem);
+}
+.detailGalleryGrid figure {
+  grid-column: span 6;
+  margin: 0;
+}
+.detailGalleryGrid figure:nth-child(3n) {
+  grid-column: 3 / span 8;
+}
+.detailGalleryGrid img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  background: var(--surface-muted);
+}
+.detailGalleryGrid figcaption {
+  padding-top: 0.65rem;
+}
 .detailNarrative,
 .detailResults {
   display: grid;
@@ -242,5 +293,15 @@
   }
   .workDetailHero {
     min-height: auto;
+  }
+  .detailGalleryHeading {
+    grid-template-columns: auto 1fr;
+  }
+  .detailGalleryHeading p {
+    grid-column: 2;
+  }
+  .detailGalleryGrid figure,
+  .detailGalleryGrid figure:nth-child(3n) {
+    grid-column: 1 / -1;
   }
 }
