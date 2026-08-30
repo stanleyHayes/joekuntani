@@ -22,3 +22,18 @@ Observations captured during task-oriented work.
 **Suggested improvement:** Require an explicit source inventory, page-to-gallery image mapping, content coverage matrix, minimum narrative depth, rendered gallery verification, and a user-visible disclosure whenever source assets cannot be uploaded before a source-derived portfolio item may be marked complete.
 
 **Principle:** Completion for source-derived publishing must verify fidelity and coverage, not merely that the destination record exists and loads.
+
+### Observation 2: Narrative media must follow the story structure
+
+**Status:** OPEN
+**Date:** 2026-08-30
+**Session context:** Correcting a source-based portfolio import after a complete image gallery still felt visually disconnected from the long-form story.
+**Skill:** design-taste-frontend
+**Type:** open-source
+**Phase/Area:** Portfolio content architecture and verification
+
+**Issue:** A technically complete gallery can still be the wrong presentation when images illustrate distinct chapters. Separating all media from one long narrative forces readers to mentally reconstruct the relationship between each image and the source material.
+
+**Suggested improvement:** Add a source-to-section mapping gate for editorial portfolio work. When source pages contain distinct topics, create ordered text-and-image blocks, verify every image is paired with its relevant chapter, and test the composed sequence at desktop and mobile widths.
+
+**Principle:** Completeness is structural as well as numerical; media should appear where it carries meaning in the narrative.
