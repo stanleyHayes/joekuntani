@@ -66,7 +66,9 @@ export const publicImageURL = cache(
 );
 
 export async function publicImages(assetIDs: string[]) {
-  const images = await Promise.all(assetIDs.map((assetID) => publicImage(assetID)));
+  const images = await Promise.all(
+    assetIDs.map((assetID) => publicImage(assetID)),
+  );
   return images.filter((image): image is ResolvedPublicImage => Boolean(image));
 }
 
@@ -161,9 +163,7 @@ export async function publicGallery(): Promise<PublicGalleryAsset[]> {
     return (payload.assets ?? []).filter((asset) => {
       try {
         const url = new URL(asset.public_url);
-        return (
-          url.protocol === "https:" && !url.username && !url.password
-        );
+        return url.protocol === "https:" && !url.username && !url.password;
       } catch {
         return false;
       }
