@@ -83,6 +83,26 @@ paths:
         "403": { $ref: "#/components/responses/Problem" }
         "422": { $ref: "#/components/responses/Problem" }
         "503": { $ref: "#/components/responses/Problem" }
+  /api/admin/videos/links:
+    post:
+      operationId: createSocialVideoLink
+      summary: Add a public social-media video link to the library
+      tags: [Video]
+      security: [{ staffSession: [], csrfToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VideoLinkInput" }
+      responses:
+        "201":
+          description: Social video link added and ready for review
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VideoAsset" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
   /api/admin/video-categories:
     get:
       operationId: listVideoCategories
@@ -1963,7 +1983,8 @@ paths:
                   assets:
                     {
                       type: array,
-                      items: { $ref: "#/components/schemas/PublicGalleryAsset" },
+                      items:
+                        { $ref: "#/components/schemas/PublicGalleryAsset" },
                     }
         "400": { $ref: "#/components/responses/Problem" }
         "503": { $ref: "#/components/responses/Problem" }
@@ -4674,8 +4695,8 @@ components:
       required: [embed_url, hls_url, thumbnail_url]
       properties:
         embed_url: { type: string, format: uri, pattern: "^https://" }
-        hls_url: { type: string, format: uri, pattern: "^https://" }
-        thumbnail_url: { type: string, format: uri, pattern: "^https://" }
+        hls_url: { type: string, pattern: "^$|^https://" }
+        thumbnail_url: { type: string, pattern: "^$|^https://" }
     VideoAsset:
       type: object
       additionalProperties: false
@@ -4688,6 +4709,8 @@ components:
           category,
           tags,
           provider,
+          platform,
+          source_url,
           thumbnail_url,
           duration_seconds,
           aspect_ratio,
@@ -4711,6 +4734,12 @@ components:
         tags:
           { type: array, maxItems: 20, items: { type: string, maxLength: 60 } }
         provider: { type: string, enum: [bunny, cloudinary, external] }
+        platform:
+          {
+            type: string,
+            enum: ["", youtube, instagram, tiktok, facebook, vimeo],
+          }
+        source_url: { type: string, maxLength: 2048, pattern: "^$|^https://" }
         thumbnail_url: { type: string, maxLength: 2048 }
         duration_seconds: { type: integer, minimum: 0 }
         # Measured by the provider once encoding finishes; 0 until then.
@@ -4729,12 +4758,8 @@ components:
         published_at: { type: string, format: date-time }
         sort_order: { type: integer }
         filename: { type: string }
-        mime_type:
-          {
-            type: string,
-            enum: [video/mp4, video/webm, video/quicktime, video/x-matroska],
-          }
-        bytes: { type: integer, format: int64, minimum: 1 }
+        mime_type: { type: string }
+        bytes: { type: integer, format: int64, minimum: 0 }
         failure_reason: { type: string }
         revision: { type: integer, format: int64, minimum: 1 }
         created_at: { type: string, format: date-time }
@@ -4799,6 +4824,33 @@ components:
         aspect_ratio:
           { type: string, pattern: "^$|^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$" }
         revision: { type: integer, format: int64, minimum: 1 }
+    VideoLinkInput:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          title,
+          slug,
+          description,
+          category,
+          tags,
+          visibility,
+          sort_order,
+          source_url,
+        ]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 180 }
+        slug: { type: string, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+        description: { type: string, maxLength: 5000 }
+        category: { type: string, maxLength: 100 }
+        tags:
+          { type: array, maxItems: 20, items: { type: string, maxLength: 60 } }
+        visibility: { $ref: "#/components/schemas/VideoVisibility" }
+        sort_order: { type: integer }
+        source_url:
+          { type: string, format: uri, pattern: "^https://", maxLength: 2048 }
+        aspect_ratio:
+          { type: string, pattern: "^$|^[1-9][0-9]{0,4}:[1-9][0-9]{0,4}$" }
     VideoPublicationInput:
       type: object
       additionalProperties: false
@@ -4853,6 +4905,8 @@ components:
           description,
           category,
           tags,
+          platform,
+          source_url,
           thumbnail_url,
           duration_seconds,
           aspect_ratio,
@@ -4871,7 +4925,13 @@ components:
         category: { type: string, maxLength: 100 }
         tags:
           { type: array, maxItems: 20, items: { type: string, maxLength: 60 } }
-        thumbnail_url: { type: string, format: uri, pattern: "^https://" }
+        platform:
+          {
+            type: string,
+            enum: ["", youtube, instagram, tiktok, facebook, vimeo],
+          }
+        source_url: { type: string, maxLength: 2048, pattern: "^$|^https://" }
+        thumbnail_url: { type: string, pattern: "^$|^https://" }
         duration_seconds: { type: integer, minimum: 0 }
         # The box the page reserves, so a portrait clip is not letterboxed into
         # a landscape frame. Always resolved; the negotiation stays server-side.
@@ -5211,7 +5271,8 @@ components:
     PublicGalleryAsset:
       type: object
       additionalProperties: false
-      required: [asset_id, public_url, alt_text, width, height, tags, created_at]
+      required:
+        [asset_id, public_url, alt_text, width, height, tags, created_at]
       properties:
         asset_id: { type: string, format: uuid }
         public_url: { type: string, maxLength: 2048 }

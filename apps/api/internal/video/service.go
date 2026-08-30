@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -67,6 +68,121 @@ func (service *Service) CreateUpload(ctx context.Context, actor Actor, input Cre
 		return item, UploadAuthorization{}, err
 	}
 	return item, authorization, nil
+}
+
+// CreateLink records a video already published on a social platform. It is
+// ready immediately because there is no local upload or encoding bill to wait
+// for; publication is still a separate, audited operator decision.
+func (service *Service) CreateLink(ctx context.Context, actor Actor, input CreateLinkInput) (Item, PlaybackInfo, error) {
+	if !actor.CanManage || actor.ID == "" {
+		return Item{}, PlaybackInfo{}, ErrForbidden
+	}
+	input.Title = strings.TrimSpace(input.Title)
+	input.Slug = strings.ToLower(strings.TrimSpace(input.Slug))
+	input.Description = strings.TrimSpace(input.Description)
+	input.Category = strings.TrimSpace(input.Category)
+	input.SourceURL = strings.TrimSpace(input.SourceURL)
+	input.Tags = normalizeTags(input.Tags)
+	input.AspectRatio = strings.TrimSpace(input.AspectRatio)
+	if input.Visibility == "" {
+		input.Visibility = VisibilityPrivate
+	}
+	platform, sourceID, sourceURL, playback, defaultRatio, err := socialVideo(input.SourceURL)
+	if err != nil || input.Title == "" || len(input.Title) > 180 || !slugPattern.MatchString(input.Slug) || len(input.Slug) > 180 || len(input.Description) > 5000 || len(input.Category) > 100 || len(input.Tags) > 20 || !validVisibility(input.Visibility) || !validAspectRatio(input.AspectRatio) {
+		return Item{}, PlaybackInfo{}, ErrInvalid
+	}
+	if input.AspectRatio == "" {
+		input.AspectRatio = defaultRatio
+	}
+	now := service.now().UTC()
+	item := Item{
+		PublicID: newPublicID(), Slug: input.Slug, Title: input.Title,
+		Description: input.Description, Category: input.Category, Tags: input.Tags,
+		Provider: "external", Platform: platform, SourceURL: sourceURL,
+		ProviderVideoID: platform + ":" + sourceID, ThumbnailURL: playback.ThumbnailURL,
+		AspectRatio: input.AspectRatio, Status: StatusReady, Visibility: input.Visibility,
+		SortOrder: input.SortOrder, Revision: 1, CreatedBy: actor.ID,
+		CreatedAt: now, UpdatedAt: now,
+	}
+	if err := service.repository.Create(ctx, item); err != nil {
+		return Item{}, PlaybackInfo{}, err
+	}
+	return item, playback, nil
+}
+
+func socialVideo(raw string) (platform, sourceID, sourceURL string, playback PlaybackInfo, ratio string, err error) {
+	parsed, parseErr := url.Parse(strings.TrimSpace(raw))
+	if parseErr != nil || parsed.Scheme != "https" || parsed.User != nil {
+		err = ErrInvalid
+		return
+	}
+	host := strings.TrimPrefix(strings.ToLower(parsed.Hostname()), "www.")
+	segments := strings.FieldsFunc(strings.Trim(parsed.Path, "/"), func(r rune) bool { return r == '/' })
+	sourceURL = parsed.String()
+	switch {
+	case host == "youtu.be" && len(segments) > 0:
+		platform, sourceID, ratio = "youtube", segments[0], "16:9"
+	case (host == "youtube.com" || host == "m.youtube.com"):
+		if len(segments) >= 2 && (segments[0] == "shorts" || segments[0] == "embed") {
+			sourceID = segments[1]
+		} else {
+			sourceID = parsed.Query().Get("v")
+		}
+		platform, ratio = "youtube", "16:9"
+		if len(segments) >= 2 && segments[0] == "shorts" {
+			ratio = "9:16"
+		}
+	case host == "tiktok.com" || strings.HasSuffix(host, ".tiktok.com"):
+		match := regexp.MustCompile(`/video/([0-9]+)`).FindStringSubmatch(parsed.Path)
+		if len(match) == 2 {
+			platform, sourceID, ratio = "tiktok", match[1], "9:16"
+		}
+	case host == "instagram.com" && len(segments) >= 2 && (segments[0] == "reel" || segments[0] == "p" || segments[0] == "tv"):
+		platform, sourceID, ratio = "instagram", segments[1], "1:1"
+		if segments[0] == "reel" {
+			ratio = "9:16"
+		}
+		playback.EmbedURL = "https://www.instagram.com/" + segments[0] + "/" + sourceID + "/embed"
+	case (host == "facebook.com" || host == "fb.watch"):
+		platform, ratio = "facebook", "16:9"
+		if len(segments) >= 2 && segments[0] == "reel" {
+			sourceID, ratio = segments[1], "9:16"
+		} else {
+			sourceID = parsed.Query().Get("v")
+			if sourceID == "" && len(segments) > 0 {
+				sourceID = segments[len(segments)-1]
+			}
+		}
+		playback.EmbedURL = "https://www.facebook.com/plugins/video.php?href=" + url.QueryEscape(sourceURL)
+	case host == "vimeo.com" && len(segments) > 0:
+		platform, sourceID, ratio = "vimeo", segments[len(segments)-1], "16:9"
+	}
+	if platform == "" || sourceID == "" || !regexp.MustCompile(`^[A-Za-z0-9_-]+$`).MatchString(sourceID) {
+		err = ErrInvalid
+		return
+	}
+	if playback.EmbedURL == "" {
+		switch platform {
+		case "youtube":
+			playback.EmbedURL = "https://www.youtube-nocookie.com/embed/" + sourceID
+			playback.ThumbnailURL = "https://i.ytimg.com/vi/" + sourceID + "/hqdefault.jpg"
+		case "tiktok":
+			playback.EmbedURL = "https://www.tiktok.com/player/v1/" + sourceID
+		case "vimeo":
+			playback.EmbedURL = "https://player.vimeo.com/video/" + sourceID
+		}
+	}
+	return
+}
+
+func (service *Service) playbackFor(item Item) PlaybackInfo {
+	if item.Provider == "external" && item.SourceURL != "" {
+		_, _, _, playback, _, err := socialVideo(item.SourceURL)
+		if err == nil {
+			return playback
+		}
+	}
+	return service.provider.Playback(item.ProviderVideoID)
 }
 
 func normalizeCreate(input CreateInput) CreateInput {
@@ -133,7 +249,7 @@ func (service *Service) Public(ctx context.Context, publicID string) (Item, Play
 	if err != nil || item.Status != StatusReady || !item.Published || item.Visibility == VisibilityPrivate {
 		return Item{}, PlaybackInfo{}, ErrNotFound
 	}
-	return item, service.provider.Playback(item.ProviderVideoID), nil
+	return item, service.playbackFor(item), nil
 }
 
 func (service *Service) ListCategories(ctx context.Context, actor Actor) ([]Category, error) {

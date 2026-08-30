@@ -41,6 +41,8 @@ type Item struct {
 	ID, PublicID, Slug, Title, Description, Category string
 	Tags                                             []string
 	Provider                                         string
+	Platform                                         string
+	SourceURL                                        string
 	ProviderVideoID, ProviderLibraryID               string
 	ThumbnailURL                                     string
 	DurationSeconds                                  int
@@ -50,18 +52,18 @@ type Item struct {
 	// An operator's deliberate override, as "W:H". Empty means the measured
 	// shape is correct, which it almost always is — this exists for the clip
 	// that was letterboxed before it ever arrived.
-	AspectRatio string
-	Status      Status
-	Visibility                                       Visibility
-	Published                                        bool
-	PublishedAt                                      *time.Time
-	SortOrder                                        int
-	Filename, MIMEType                               string
-	Bytes                                            int64
-	FailureReason                                    string
-	Revision                                         int64
-	CreatedBy                                        string
-	CreatedAt, UpdatedAt                             time.Time
+	AspectRatio          string
+	Status               Status
+	Visibility           Visibility
+	Published            bool
+	PublishedAt          *time.Time
+	SortOrder            int
+	Filename, MIMEType   string
+	Bytes                int64
+	FailureReason        string
+	Revision             int64
+	CreatedBy            string
+	CreatedAt, UpdatedAt time.Time
 }
 
 type Actor struct {
@@ -84,6 +86,18 @@ type CreateInput struct {
 	// so this is only for an operator who already knows the clip was delivered
 	// in the wrong shape.
 	AspectRatio string `json:"aspect_ratio"`
+}
+
+type CreateLinkInput struct {
+	Title       string     `json:"title"`
+	Slug        string     `json:"slug"`
+	Description string     `json:"description"`
+	Category    string     `json:"category"`
+	SourceURL   string     `json:"source_url"`
+	Tags        []string   `json:"tags"`
+	Visibility  Visibility `json:"visibility"`
+	SortOrder   int        `json:"sort_order"`
+	AspectRatio string     `json:"aspect_ratio"`
 }
 
 type UpdateInput struct {

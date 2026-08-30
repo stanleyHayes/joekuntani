@@ -37,3 +37,18 @@ Observations captured during task-oriented work.
 **Suggested improvement:** Add a source-to-section mapping gate for editorial portfolio work. When source pages contain distinct topics, create ordered text-and-image blocks, verify every image is paired with its relevant chapter, and test the composed sequence at desktop and mobile widths.
 
 **Principle:** Completeness is structural as well as numerical; media should appear where it carries meaning in the narrative.
+
+### Observation 3: Provider retirement should preserve old playback
+
+**Status:** OPEN
+**Date:** 2026-08-30
+**Session context:** Replacing paid video ingestion with social-link aggregation while an existing hosted library remains published.
+**Skill:** design-taste-frontend
+**Type:** open-source
+**Phase/Area:** Migration architecture and interface copy
+
+**Issue:** Replacing a media provider is both a data migration and a product-language change. Removing the old playback path would break published work, while leaving upload-oriented controls and copy would imply a cost-bearing workflow that is no longer intended.
+
+**Suggested improvement:** Treat provider changes as additive migrations: preserve read/playback compatibility for existing records, route new writes through the replacement model, and audit admin actions, empty states, public labels, schemas, and tests for provider-specific assumptions.
+
+**Principle:** Retire the write path first; preserve the read path until legacy content has been deliberately migrated.

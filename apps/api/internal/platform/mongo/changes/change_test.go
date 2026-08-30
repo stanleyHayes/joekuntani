@@ -159,22 +159,18 @@ func TestRegistryHasStableChecksum(t *testing.T) {
 	t.Parallel()
 
 	registry := Registry()
-	if len(registry) != 38 {
-		t.Fatalf("Registry() length = %d, want 38", len(registry))
+	if len(registry) != 39 {
+		t.Fatalf("Registry() length = %d, want 39", len(registry))
 	}
 	// The newest change must stay last: Apply runs the registry in order, and a
 	// change that evolves a collection has to follow the one that created it —
-	// here, the aspect-ratio fields follow the collection that holds them.
+	// here, social-link fields follow the collection that holds them.
 	last := registry[len(registry)-1]
-	if last.Name != videoAspectRatioChangeName || len(last.Checksum) != 64 || !reflect.DeepEqual(last.EvolvesCollections, []string{"video_assets"}) {
+	if last.Name != socialVideoLinksChangeName || len(last.Checksum) != 64 || !reflect.DeepEqual(last.EvolvesCollections, []string{"video_assets"}) {
 		t.Fatalf("unexpected final registry entry: %#v", last)
 	}
-	// The aspect-ratio change evolves video_assets, so it must supersede the
-	// change that still verifies that collection's original validator — without
-	// it, the next deploy re-verifies vid001 against the evolved validator and
-	// fails on the drift this change itself introduced.
-	if !reflect.DeepEqual(last.Supersedes, []string{videoInfrastructureChangeName}) {
-		t.Fatalf("final registry entry must supersede vid001, got %#v", last.Supersedes)
+	if !reflect.DeepEqual(last.Supersedes, []string{videoInfrastructureChangeName, videoAspectRatioChangeName}) {
+		t.Fatalf("final registry entry must supersede prior video validators, got %#v", last.Supersedes)
 	}
 	if registry[0].Name != bootstrapChangeName || len(registry[0].Checksum) != 64 {
 		t.Fatalf("unexpected registry entry: name=%q checksum=%q", registry[0].Name, registry[0].Checksum)

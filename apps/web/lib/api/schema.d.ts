@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/videos/links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a public social-media video link to the library */
+        post: operations["createSocialVideoLink"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/video-categories": {
         parameters: {
             query?: never;
@@ -2876,9 +2893,7 @@ export interface components {
         VideoPlayback: {
             /** Format: uri */
             embed_url: string;
-            /** Format: uri */
             hls_url: string;
-            /** Format: uri */
             thumbnail_url: string;
         };
         VideoAsset: {
@@ -2891,6 +2906,9 @@ export interface components {
             tags: string[];
             /** @enum {string} */
             provider: "bunny" | "cloudinary" | "external";
+            /** @enum {string} */
+            platform: "" | "youtube" | "instagram" | "tiktok" | "facebook" | "vimeo";
+            source_url: string;
             thumbnail_url: string;
             duration_seconds: number;
             width?: number;
@@ -2904,8 +2922,7 @@ export interface components {
             published_at?: string;
             sort_order: number;
             filename: string;
-            /** @enum {string} */
-            mime_type: "video/mp4" | "video/webm" | "video/quicktime" | "video/x-matroska";
+            mime_type: string;
             /** Format: int64 */
             bytes: number;
             failure_reason?: string;
@@ -2946,6 +2963,18 @@ export interface components {
             /** Format: int64 */
             revision: number;
         };
+        VideoLinkInput: {
+            title: string;
+            slug: string;
+            description: string;
+            category: string;
+            tags: string[];
+            visibility: components["schemas"]["VideoVisibility"];
+            sort_order: number;
+            /** Format: uri */
+            source_url: string;
+            aspect_ratio?: string;
+        };
         VideoPublicationInput: {
             published: boolean;
             /** Format: int64 */
@@ -2982,7 +3011,9 @@ export interface components {
             description: string;
             category: string;
             tags: string[];
-            /** Format: uri */
+            /** @enum {string} */
+            platform: "" | "youtube" | "instagram" | "tiktok" | "facebook" | "vimeo";
+            source_url: string;
             thumbnail_url: string;
             duration_seconds: number;
             aspect_ratio: string;
@@ -3538,6 +3569,33 @@ export interface operations {
             403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
             503: components["responses"]["Problem"];
+        };
+    };
+    createSocialVideoLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VideoLinkInput"];
+            };
+        };
+        responses: {
+            /** @description Social video link added and ready for review */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoAsset"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     listVideoCategories: {

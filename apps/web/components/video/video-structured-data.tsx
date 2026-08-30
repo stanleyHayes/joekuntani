@@ -15,13 +15,15 @@ export function VideoStructuredData({
       "@id": `https://joekuntani.com${canonicalPath}#${video.id}`,
       name: video.title,
       description: video.description || video.title,
-      thumbnailUrl: [video.thumbnail_url],
+      ...(video.thumbnail_url ? { thumbnailUrl: [video.thumbnail_url] } : {}),
       uploadDate: video.created_at,
       ...(video.duration_seconds > 0
         ? { duration: isoDuration(video.duration_seconds) }
         : {}),
       embedUrl: video.playback.embed_url,
-      contentUrl: video.playback.hls_url,
+      ...(video.source_url || video.playback.hls_url
+        ? { contentUrl: video.source_url || video.playback.hls_url }
+        : {}),
     })),
   };
   return (

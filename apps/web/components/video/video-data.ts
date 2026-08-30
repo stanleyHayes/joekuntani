@@ -5,6 +5,8 @@ export type PublicVideo = {
   description: string;
   category: string;
   tags: string[];
+  platform: VideoPlatform;
+  source_url: string;
   thumbnail_url: string;
   duration_seconds: number;
   /** "W:H", already resolved by the API. */
@@ -20,6 +22,42 @@ export type PublicVideo = {
     thumbnail_url: string;
   };
 };
+
+export type VideoPlatform =
+  | "youtube"
+  | "instagram"
+  | "tiktok"
+  | "facebook"
+  | "vimeo"
+  | "hosted"
+  | "other"
+  | "";
+
+export function socialPlatform(value: string | undefined): VideoPlatform {
+  if (!value) return "other";
+  try {
+    const host = new URL(value).hostname.toLowerCase().replace(/^www\./, "");
+    if (
+      host === "youtu.be" ||
+      host.endsWith(".youtube.com") ||
+      host === "youtube.com"
+    )
+      return "youtube";
+    if (host === "tiktok.com" || host.endsWith(".tiktok.com")) return "tiktok";
+    if (host === "instagram.com" || host.endsWith(".instagram.com"))
+      return "instagram";
+    if (
+      host === "facebook.com" ||
+      host.endsWith(".facebook.com") ||
+      host === "fb.watch"
+    )
+      return "facebook";
+    if (host === "vimeo.com" || host.endsWith(".vimeo.com")) return "vimeo";
+  } catch {
+    return "other";
+  }
+  return "other";
+}
 
 const uuid =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -124,11 +162,16 @@ function validPublicVideo(value: unknown): value is PublicVideo {
     (item.visibility === "public" || item.visibility === "unlisted") &&
     typeof item.title === "string" &&
     Array.isArray(item.tags) &&
-    safeURL(item.thumbnail_url) &&
-    safeURL(item.playback.thumbnail_url) &&
+    optionalSafeURL(item.thumbnail_url) &&
+    optionalSafeURL(item.playback.thumbnail_url) &&
     safeEmbed(item.playback.embed_url) &&
-    safeURL(item.playback.hls_url)
+    optionalSafeURL(item.playback.hls_url) &&
+    (item.source_url === undefined || optionalSafeURL(item.source_url))
   );
+}
+
+function optionalSafeURL(value: unknown): value is string {
+  return value === "" || safeURL(value);
 }
 
 function safeURL(value: unknown): value is string {
@@ -142,7 +185,14 @@ function safeURL(value: unknown): value is string {
 }
 
 function safeEmbed(value: unknown): value is string {
-  return (
-    safeURL(value) && new URL(value).hostname === "iframe.mediadelivery.net"
-  );
+  if (!safeURL(value)) return false;
+  return new Set([
+    "iframe.mediadelivery.net",
+    "www.youtube-nocookie.com",
+    "www.youtube.com",
+    "www.tiktok.com",
+    "www.instagram.com",
+    "www.facebook.com",
+    "player.vimeo.com",
+  ]).has(new URL(value).hostname.toLowerCase());
 }

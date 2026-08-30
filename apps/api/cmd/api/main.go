@@ -594,6 +594,7 @@ func main() {
 			AdminContentPublish:       authHandler.Protect(auth.PermissionContentEdit, true, contentHandler.AdminPublicationHandler()),
 			AdminVideosList:           authHandler.Protect(auth.PermissionContentEdit, false, videoHandler.AdminList()),
 			AdminVideosCreateUpload:   authHandler.Protect(auth.PermissionContentEdit, true, videoHandler.AdminCreateUpload()),
+			AdminVideosCreateLink:     authHandler.Protect(auth.PermissionContentEdit, true, videoHandler.AdminCreateLink()),
 			AdminVideosItem:           authHandler.Protect(auth.PermissionContentEdit, true, videoHandler.AdminItem()),
 			AdminVideosPublish:        authHandler.Protect(auth.PermissionContentEdit, true, videoHandler.AdminPublish()),
 			AdminVideosSync:           authHandler.Protect(auth.PermissionContentEdit, true, videoHandler.AdminSync()),

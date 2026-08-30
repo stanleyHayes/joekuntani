@@ -70,6 +70,7 @@ type Options struct {
 	AdminContentPublish       http.Handler
 	AdminVideosList           http.Handler
 	AdminVideosCreateUpload   http.Handler
+	AdminVideosCreateLink     http.Handler
 	AdminVideosItem           http.Handler
 	AdminVideosPublish        http.Handler
 	AdminVideosSync           http.Handler
@@ -240,6 +241,9 @@ func NewHandler(options ...Options) http.Handler {
 	}
 	if configuration.AdminVideosCreateUpload != nil {
 		router.Method(http.MethodPost, "/api/admin/videos/uploads", configuration.AdminVideosCreateUpload)
+	}
+	if configuration.AdminVideosCreateLink != nil {
+		router.Method(http.MethodPost, "/api/admin/videos/links", configuration.AdminVideosCreateLink)
 	}
 	if configuration.AdminVideosItem != nil {
 		router.Method(http.MethodPatch, "/api/admin/videos/{videoID}", configuration.AdminVideosItem)

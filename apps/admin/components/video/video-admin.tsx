@@ -1,6 +1,5 @@
 "use client";
 
-import { Upload } from "tus-js-client";
 import {
   useCallback,
   useEffect,
@@ -14,8 +13,8 @@ import {
   ArrowClockwise,
   FilmStrip,
   FolderSimplePlus,
+  LinkSimple,
   Trash,
-  UploadSimple,
 } from "@phosphor-icons/react";
 import { AiAssist } from "@joe-kuntani/shared/ui/ai-assist";
 import { Combobox } from "@joe-kuntani/shared/ui/combobox";
@@ -60,6 +59,8 @@ export type VideoItem = {
   category: string;
   tags: string[];
   provider: string;
+  platform: "youtube" | "instagram" | "tiktok" | "facebook" | "vimeo" | "";
+  source_url: string;
   thumbnail_url: string;
   duration_seconds: number;
   status: "uploading" | "processing" | "ready" | "failed" | "archived";
@@ -83,16 +84,6 @@ export type VideoItem = {
   playback?: { embed_url: string; hls_url: string; thumbnail_url: string };
 };
 
-type UploadAuthorization = {
-  endpoint: string;
-  signature: string;
-  expiration_time: number;
-  library_id: string;
-  video_id: string;
-  filename: string;
-  mime_type: string;
-};
-
 type Draft = {
   title: string;
   slug: string;
@@ -102,6 +93,7 @@ type Draft = {
   visibility: VideoItem["visibility"];
   sortOrder: string;
   aspectRatio: string;
+  sourceURL: string;
 };
 
 type VideoCategory = {
@@ -132,6 +124,7 @@ const emptyDraft: Draft = {
   visibility: "private",
   sortOrder: "0",
   aspectRatio: "",
+  sourceURL: "",
 };
 
 const emptyCategoryDraft: CategoryDraft = {
@@ -145,9 +138,7 @@ const emptyCategoryDraft: CategoryDraft = {
 export function VideoAdmin() {
   const [items, setItems] = useState<VideoItem[] | null>(null);
   const [draft, setDraft] = useState(emptyDraft);
-  const [file, setFile] = useState<File | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [progress, setProgress] = useState<number | null>(null);
   const [pending, setPending] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -215,13 +206,12 @@ export function VideoAdmin() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!file || pending) return;
-    setPending("upload");
+    if (!draft.sourceURL.trim() || pending) return;
+    setPending("link");
     setError("");
     setMessage("");
-    setProgress(0);
     try {
-      const response = await api("/api/admin/videos/uploads", {
+      const response = await api("/api/admin/videos/links", {
         method: "POST",
         body: JSON.stringify({
           title: draft.title,
@@ -232,33 +222,23 @@ export function VideoAdmin() {
           visibility: draft.visibility,
           sort_order: Number(draft.sortOrder) || 0,
           aspect_ratio: draft.aspectRatio,
-          filename: file.name,
-          mime_type: file.type,
-          bytes: file.size,
+          source_url: draft.sourceURL,
         }),
       });
-      const body = (await response.json()) as {
-        item?: VideoItem;
-        upload?: UploadAuthorization;
-      };
-      if (!response.ok || !body.item || !body.upload) throw new Error();
-      setItems((current) => uniqueItems([body.item!, ...(current ?? [])]));
-      await uploadToBunny(file, body.upload, body.item.title, setProgress);
-      setMessage("Upload complete. Bunny Stream is processing the video.");
+      const item = (await response.json()) as VideoItem;
+      if (!response.ok || !item.id) throw new Error();
+      setItems((current) => uniqueItems([item, ...(current ?? [])]));
+      setMessage(
+        `${platformName(item.platform)} link added. Review it, then publish when ready.`,
+      );
       setDraft(emptyDraft);
-      setFile(null);
-      // The new row is already in the library behind the dialog, and the
-      // confirmation reads on the page itself; leaving the form open would sit
-      // over the thing the operator just asked to see.
       setUploadOpen(false);
-      await sync(body.item.id);
     } catch {
       setError(
-        "The upload could not be completed. The saved record remains visible for recovery.",
+        "That social link could not be added. Use a public YouTube, TikTok, Instagram, Facebook or Vimeo video URL.",
       );
     } finally {
       setPending("");
-      setProgress(null);
     }
   }
 
@@ -336,7 +316,9 @@ export function VideoAdmin() {
   async function remove(item: VideoItem) {
     if (
       !window.confirm(
-        `Delete “${item.title}” from Bunny Stream and this library?`,
+        item.provider === "external"
+          ? `Remove “${item.title}” from this library? The original social post will not be changed.`
+          : `Delete “${item.title}” from Bunny Stream and this library?`,
       )
     )
       return;
@@ -352,7 +334,9 @@ export function VideoAdmin() {
         (current) => current?.filter((video) => video.id !== item.id) ?? [],
       );
       setMessage(
-        "Video deleted from Bunny Stream and removed from the library.",
+        item.provider === "external"
+          ? "Social video removed from the library."
+          : "Video deleted from Bunny Stream and removed from the library.",
       );
     } catch {
       setError("The video could not be deleted. Nothing was removed locally.");
@@ -471,11 +455,11 @@ export function VideoAdmin() {
     <div className={styles.workspace}>
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Bunny Stream</p>
-          <h2>Video infrastructure</h2>
+          <p className={styles.eyebrow}>Social video library</p>
+          <h2>Publish videos without hosting them</h2>
           <p>
-            Upload once, monitor processing, then publish the ready stream to
-            videos or press.
+            Paste a public social-media link, add its context, then publish it
+            to the website. The original platform handles storage and playback.
           </p>
         </div>
         <div className={styles.headerAside}>
@@ -487,8 +471,8 @@ export function VideoAdmin() {
             type="button"
             onClick={() => setUploadOpen(true)}
           >
-            <UploadSimple size={16} aria-hidden="true" />
-            Upload a video
+            <LinkSimple size={16} aria-hidden="true" />
+            Add social video
           </button>
         </div>
       </header>
@@ -603,8 +587,8 @@ export function VideoAdmin() {
 
       {uploadOpen ? (
         <AdminDialog
-          title="Upload a video"
-          description="The browser sends the file directly to Bunny using resumable TUS."
+          title="Add a social video"
+          description="Paste a public video link. Its platform and player are detected automatically."
           onClose={() => setUploadOpen(false)}
           wide
         >
@@ -614,6 +598,22 @@ export function VideoAdmin() {
             onSubmit={submit}
           >
             <div className={styles.formGrid}>
+              <label>
+                Social video URL
+                <input
+                  type="url"
+                  inputMode="url"
+                  required
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={draft.sourceURL}
+                  onChange={(event) =>
+                    setDraft({ ...draft, sourceURL: event.target.value })
+                  }
+                />
+                <small>
+                  YouTube, TikTok, Instagram, Facebook and Vimeo are supported.
+                </small>
+              </label>
               <label>
                 Title
                 <input
@@ -734,8 +734,8 @@ export function VideoAdmin() {
                   placeholder="Automatic"
                 />
                 <small>
-                  Left automatic, the shape is read from the video itself once
-                  Bunny finishes encoding it.
+                  Automatic uses the platform’s usual shape, including portrait
+                  video for TikTok, Reels and Shorts.
                 </small>
               </div>
               <label>
@@ -765,70 +765,19 @@ export function VideoAdmin() {
                   onApply={(description) => setDraft({ ...draft, description })}
                 />
               </div>
-              <div className={styles.file}>
-                <div className={styles.fileHeading}>
-                  <span id="video-file-label">Video file</span>
-                  <span data-selected={file ? "true" : "false"}>
-                    {file ? "Ready to upload" : "Required"}
-                  </span>
-                </div>
-                <label
-                  className={styles.filePicker}
-                  data-disabled={pending ? "true" : "false"}
-                  data-selected={file ? "true" : "false"}
-                  htmlFor="video-file"
-                >
-                  <input
-                    required
-                    accept="video/mp4,video/webm,video/quicktime,video/x-matroska,.mp4,.webm,.mov,.mkv"
-                    aria-labelledby="video-file-label"
-                    disabled={Boolean(pending)}
-                    id="video-file"
-                    type="file"
-                    onChange={(event) =>
-                      setFile(event.target.files?.[0] ?? null)
-                    }
-                  />
-                  <span className={styles.fileIcon} aria-hidden="true">
-                    <UploadSimple size={24} weight="bold" />
-                  </span>
-                  <span className={styles.fileCopy}>
-                    <strong>{file ? file.name : "Select a video file"}</strong>
-                    <small>
-                      {file
-                        ? `${formatBytes(file.size)} · ${file.type || "Video file"}`
-                        : "MP4, WebM, MOV or MKV"}
-                    </small>
-                  </span>
-                  <span className={styles.fileAction} aria-hidden="true">
-                    {file ? "Replace" : "Browse"}
-                  </span>
-                </label>
-              </div>
             </div>
-            {progress !== null ? (
-              <div
-                className={styles.progress}
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={progress}
-              >
-                <span style={{ transform: `scaleX(${progress / 100})` }} />
-              </div>
-            ) : null}
             <button
               className={styles.primary}
-              disabled={!file || Boolean(pending)}
+              disabled={!draft.sourceURL.trim() || Boolean(pending)}
               type="submit"
             >
-              {pending === "upload" ? (
+              {pending === "link" ? (
                 <>
-                  <ButtonPending label={`Uploading ${progress ?? 0}%`} />
-                  Uploading {progress ?? 0}%
+                  <ButtonPending label="Adding social video" />
+                  Adding video
                 </>
               ) : (
-                "Start resumable upload"
+                "Add to library"
               )}
             </button>
           </form>
@@ -937,8 +886,10 @@ export function VideoAdmin() {
                     placeholder="Tags"
                   />
                   <p className={styles.meta}>
-                    {item.provider} · {formatBytes(item.bytes)} · revision{" "}
-                    {item.revision}
+                    {item.provider === "external"
+                      ? platformName(item.platform)
+                      : `${item.provider} · ${formatBytes(item.bytes)}`}{" "}
+                    · revision {item.revision}
                   </p>
                   <p className={styles.meta}>
                     Created {formatAdminTimestamp(item.created_at)}
@@ -948,6 +899,16 @@ export function VideoAdmin() {
                   </p>
                   {item.failure_reason ? (
                     <p className={styles.failure}>{item.failure_reason}</p>
+                  ) : null}
+                  {item.source_url ? (
+                    <a
+                      className={styles.sourceLink}
+                      href={item.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open original {platformName(item.platform)} post
+                    </a>
                   ) : null}
                   {item.status === "ready" && item.playback?.embed_url ? (
                     <iframe
@@ -970,21 +931,23 @@ export function VideoAdmin() {
                         pendingLabel="Saving"
                       />
                     </button>
-                    <button
-                      disabled={Boolean(pending)}
-                      type="button"
-                      onClick={() => void sync(item.id)}
-                    >
-                      <ActionLabel
-                        pending={pending === `sync:${item.id}`}
-                        label={
-                          item.status === "failed"
-                            ? "Retry status check"
-                            : "Check processing"
-                        }
-                        pendingLabel="Checking"
-                      />
-                    </button>
+                    {item.provider !== "external" ? (
+                      <button
+                        disabled={Boolean(pending)}
+                        type="button"
+                        onClick={() => void sync(item.id)}
+                      >
+                        <ActionLabel
+                          pending={pending === `sync:${item.id}`}
+                          label={
+                            item.status === "failed"
+                              ? "Retry status check"
+                              : "Check processing"
+                          }
+                          pendingLabel="Checking"
+                        />
+                      </button>
+                    ) : null}
                     <button
                       disabled={
                         Boolean(pending) ||
@@ -1025,16 +988,16 @@ export function VideoAdmin() {
             <div>
               <h4>Your video library is ready</h4>
               <p>
-                Add the first video, follow its processing status here, then
-                publish it when the stream is ready.
+                Add the first public social-media video link, review its
+                details, then publish it to the website.
               </p>
             </div>
             <button type="button" onClick={() => setUploadOpen(true)}>
-              Upload your first video
+              Add your first video
             </button>
             <ol aria-label="Video publishing steps">
               <li>Choose a category</li>
-              <li>Upload to Bunny</li>
+              <li>Paste its social link</li>
               <li>Review and publish</li>
             </ol>
           </div>
@@ -1130,40 +1093,14 @@ function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
-export function uploadToBunny(
-  file: File,
-  authorization: UploadAuthorization,
-  title: string,
-  onProgress: (progress: number) => void,
-) {
-  return new Promise<void>((resolve, reject) => {
-    const upload = new Upload(file, {
-      endpoint: authorization.endpoint,
-      retryDelays: [0, 1000, 3000, 5000],
-      chunkSize: 10 * 1024 * 1024,
-      metadata: {
-        filename: authorization.filename,
-        filetype: authorization.mime_type,
-        title,
-      },
-      headers: {
-        AuthorizationSignature: authorization.signature,
-        AuthorizationExpire: String(authorization.expiration_time),
-        LibraryId: authorization.library_id,
-        VideoId: authorization.video_id,
-      },
-      removeFingerprintOnSuccess: true,
-      onError: reject,
-      onProgress: (uploaded, total) =>
-        onProgress(total ? Math.round((uploaded / total) * 100) : 0),
-      onSuccess: () => resolve(),
-    });
-    void upload
-      .findPreviousUploads()
-      .then((previous) => {
-        if (previous[0]) upload.resumeFromPreviousUpload(previous[0]);
-        upload.start();
-      })
-      .catch(reject);
-  });
+function platformName(platform: VideoItem["platform"]) {
+  const names: Record<VideoItem["platform"], string> = {
+    youtube: "YouTube",
+    instagram: "Instagram",
+    tiktok: "TikTok",
+    facebook: "Facebook",
+    vimeo: "Vimeo",
+    "": "Social video",
+  };
+  return names[platform] ?? "Social video";
 }

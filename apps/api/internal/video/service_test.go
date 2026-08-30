@@ -52,6 +52,46 @@ func validInput() CreateInput {
 	return CreateInput{Title: "Live set", Slug: "live-set", Filename: "live-set.mp4", MIMEType: "video/mp4", Bytes: 900, Visibility: VisibilityPublic}
 }
 
+func TestCreateSocialVideoLinkIsReadyWithoutProviderUpload(t *testing.T) {
+	service, _, provider := testService(t)
+	item, playback, err := service.CreateLink(t.Context(), admin(), CreateLinkInput{
+		Title: "A musical joke", Slug: "a-musical-joke", Category: "Live comedy",
+		SourceURL: "https://www.youtube.com/watch?v=abc_123-X", Visibility: VisibilityPublic,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if item.Provider != "external" || item.Platform != "youtube" || item.Status != StatusReady || item.AspectRatio != "16:9" || item.ProviderVideoID != "youtube:abc_123-X" {
+		t.Fatalf("item=%+v", item)
+	}
+	if playback.EmbedURL != "https://www.youtube-nocookie.com/embed/abc_123-X" || playback.ThumbnailURL == "" {
+		t.Fatalf("playback=%+v", playback)
+	}
+	if provider.deleted {
+		t.Fatal("social links must not touch the hosted-video provider")
+	}
+}
+
+func TestSocialVideoRecognisesSupportedPlatformsAndRejectsUnsafeURLs(t *testing.T) {
+	tests := []struct{ raw, platform, ratio string }{
+		{"https://www.tiktok.com/@joe/video/7412345678901234567", "tiktok", "9:16"},
+		{"https://www.instagram.com/reel/CODE_123/", "instagram", "9:16"},
+		{"https://www.facebook.com/reel/123456789", "facebook", "9:16"},
+		{"https://vimeo.com/123456789", "vimeo", "16:9"},
+	}
+	for _, test := range tests {
+		platform, _, _, playback, ratio, err := socialVideo(test.raw)
+		if err != nil || platform != test.platform || ratio != test.ratio || playback.EmbedURL == "" {
+			t.Fatalf("raw=%s platform=%s ratio=%s playback=%+v err=%v", test.raw, platform, ratio, playback, err)
+		}
+	}
+	for _, raw := range []string{"http://youtube.com/watch?v=bad", "https://evil.example/video/123", "https://user:pass@vimeo.com/123"} {
+		if _, _, _, _, _, err := socialVideo(raw); !errors.Is(err, ErrInvalid) {
+			t.Fatalf("raw=%s err=%v", raw, err)
+		}
+	}
+}
+
 func TestCreateUploadValidatesBeforeCallingProvider(t *testing.T) {
 	service, _, provider := testService(t)
 	input := validInput()

@@ -16,6 +16,7 @@ export function VideoPlayer({ video }: { video: PublicVideo }) {
     "poster" | "loading" | "playing" | "error"
   >("poster");
   const [posterFailed, setPosterFailed] = useState(false);
+  const poster = video.thumbnail_url || video.playback.thumbnail_url;
 
   useEffect(() => {
     if (state !== "loading") return;
@@ -39,9 +40,9 @@ export function VideoPlayer({ video }: { video: PublicVideo }) {
       <div className={styles.player} data-state={state} style={shape}>
         <iframe
           className={styles.frame}
-          src={`${video.playback.embed_url}?autoplay=true`}
+          src={withAutoplay(video.playback.embed_url)}
           title={video.title}
-          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; clipboard-write; web-share"
           allowFullScreen
           onLoad={() => setState("playing")}
           onError={() => setState("error")}
@@ -63,16 +64,15 @@ export function VideoPlayer({ video }: { video: PublicVideo }) {
       onClick={() => setState("loading")}
       aria-label={`Play ${video.title}`}
     >
-      {/* Bunny's poster loads without preloading the player. */}
-      {posterFailed ? (
+      {posterFailed || !poster ? (
         <span className={styles.posterFallback} aria-hidden="true">
-          JK
+          {platformMark(video.platform)}
         </span>
       ) : (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={video.thumbnail_url || video.playback.thumbnail_url}
+            src={poster}
             alt=""
             width={1280}
             height={720}
@@ -86,4 +86,21 @@ export function VideoPlayer({ video }: { video: PublicVideo }) {
       </span>
     </button>
   );
+}
+
+function withAutoplay(value: string) {
+  const url = new URL(value);
+  url.searchParams.set("autoplay", "1");
+  return url.toString();
+}
+
+function platformMark(platform: PublicVideo["platform"]) {
+  const marks: Record<string, string> = {
+    youtube: "YT",
+    instagram: "IG",
+    tiktok: "TT",
+    facebook: "FB",
+    vimeo: "V",
+  };
+  return marks[platform] ?? "JK";
 }

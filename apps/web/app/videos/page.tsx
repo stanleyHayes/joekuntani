@@ -18,8 +18,10 @@ import { pageMetadata, unavailableMetadata } from "../../lib/seo";
 import {
   aspectRatioStyle,
   getPublicVideos,
+  socialPlatform,
   videosForContent,
   type PublicVideo,
+  type VideoPlatform,
 } from "../../components/video/video-data";
 import { VideoPlayer } from "../../components/video/video-player";
 import { VideoStructuredData } from "../../components/video/video-structured-data";
@@ -36,6 +38,28 @@ type FeedEntry = {
   href?: string;
   cover?: string;
   stream?: PublicVideo;
+  platform: VideoPlatform;
+};
+
+const PLATFORM_ORDER: VideoPlatform[] = [
+  "youtube",
+  "tiktok",
+  "instagram",
+  "facebook",
+  "vimeo",
+  "hosted",
+  "other",
+];
+
+const PLATFORM_NAMES: Record<VideoPlatform, string> = {
+  youtube: "YouTube",
+  tiktok: "TikTok",
+  instagram: "Instagram",
+  facebook: "Facebook",
+  vimeo: "Vimeo",
+  hosted: "Hosted archive",
+  other: "More videos",
+  "": "More videos",
 };
 export async function generateMetadata() {
   // Counts the library as well: a site whose videos are all published straight
@@ -104,6 +128,9 @@ export default async function VideosPage({
         covers[item.id] ??
         (usingDemo && item.slug ? demoCovers[item.slug] : undefined),
       stream: streams[item.id],
+      platform:
+        streams[item.id]?.platform ||
+        socialPlatform(item.external_url || item.embed_url),
     })),
     ...library.map((video) => ({
       key: `video:${video.id}`,
@@ -112,8 +139,15 @@ export default async function VideosPage({
       summary: video.description,
       cover: video.thumbnail_url,
       stream: video,
+      platform:
+        video.platform ||
+        (video.source_url ? socialPlatform(video.source_url) : "hosted"),
     })),
   ];
+  const platformGroups = PLATFORM_ORDER.map((platform) => ({
+    platform,
+    items: entries.filter((entry) => (entry.platform || "other") === platform),
+  })).filter((group) => group.items.length);
 
   // Every playable video on the page, whichever source it came from — the
   // structured data used to describe only the ones attached to CMS entries.
@@ -145,14 +179,14 @@ export default async function VideosPage({
       <main id="main-content" className={styles.page}>
         <header className={`${styles.hero} shell-container`}>
           <p className={styles.kicker}>
-            {usingDemo ? "Videos · demo" : "Videos"}
+            {usingDemo ? "Videos · demo" : "Social video library"}
           </p>
           <div className={styles.heroGrid}>
-            <h1>Watch Joe work the room.</h1>
+            <h1>Watch Joe across every platform.</h1>
             <p className={styles.intro}>
               {usingDemo
-                ? "Demo reels and interview cuts for visual review. Verified external links publish through the CMS."
-                : "Only approved videos from verified external sources appear here."}
+                ? "Demo reels and interview cuts for visual review."
+                : "A curated collection from YouTube, TikTok, Instagram and other channels—organised so every story is easy to find."}
             </p>
           </div>
         </header>
@@ -163,8 +197,7 @@ export default async function VideosPage({
         >
           <div className={styles.feedHead}>
             <div>
-              <span>01</span>
-              <h2 id="video-list">Selected cuts</h2>
+              <h2 id="video-list">Browse by platform</h2>
             </div>
             {categories.length ? (
               <nav
@@ -191,73 +224,93 @@ export default async function VideosPage({
               </nav>
             ) : null}
           </div>
-          {entries.length ? (
-            <ol className={styles.videoList}>
-              {entries.map((item, index) => {
-                const { cover, href, stream } = item;
-                return (
-                  <li className={styles.videoCard} key={item.key}>
-                    <div
-                      className={styles.videoMedia}
-                      // The card reserves the video's own shape, so a portrait
-                      // clip is not cropped by the frame around it.
-                      style={
-                        {
-                          "--video-aspect": aspectRatioStyle(
-                            stream?.aspect_ratio,
-                          ),
-                        } as CSSProperties
-                      }
-                    >
-                      {stream ? (
-                        <VideoPlayer video={stream} />
-                      ) : cover ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={cover} alt="" width={1600} height={1000} />
-                      ) : (
-                        <div
-                          className={styles.mediaFallback}
-                          aria-hidden="true"
-                        >
-                          JK
-                        </div>
-                      )}
-                      {!stream ? (
-                        <span className={styles.play} aria-hidden="true">
-                          ▶
-                        </span>
-                      ) : null}
-                      <span className={styles.index}>
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                    </div>
-                    <div className={styles.videoCopy}>
-                      <p>{item.category || "Video"}</p>
-                      <h3>{item.title}</h3>
-                      {item.summary ? <span>{item.summary}</span> : null}
-                      {stream ? (
-                        <span className={styles.pendingSource}>
-                          Bunny adaptive stream
-                        </span>
-                      ) : href ? (
-                        <a
-                          href={href}
-                          rel="noopener noreferrer"
-                          target="_blank"
-                          aria-label={`Watch video: ${item.title}`}
-                        >
-                          Watch video <span aria-hidden="true">↗</span>
-                        </a>
-                      ) : (
-                        <span className={styles.pendingSource}>
-                          Source awaiting approval
-                        </span>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
+          {platformGroups.length ? (
+            <div className={styles.platformGroups}>
+              {platformGroups.map((group) => (
+                <section className={styles.platformGroup} key={group.platform}>
+                  <div className={styles.platformHeading}>
+                    <h3>{PLATFORM_NAMES[group.platform]}</h3>
+                    <span>
+                      {group.items.length}{" "}
+                      {group.items.length === 1 ? "video" : "videos"}
+                    </span>
+                  </div>
+                  <ol className={styles.videoList}>
+                    {group.items.map((item, index) => {
+                      const { cover, href, stream } = item;
+                      return (
+                        <li className={styles.videoCard} key={item.key}>
+                          <div
+                            className={styles.videoMedia}
+                            // The card reserves the video's own shape, so a portrait
+                            // clip is not cropped by the frame around it.
+                            style={
+                              {
+                                "--video-aspect": aspectRatioStyle(
+                                  stream?.aspect_ratio,
+                                ),
+                              } as CSSProperties
+                            }
+                          >
+                            {stream ? (
+                              <VideoPlayer video={stream} />
+                            ) : cover ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={cover}
+                                alt=""
+                                width={1600}
+                                height={1000}
+                              />
+                            ) : (
+                              <div
+                                className={styles.mediaFallback}
+                                aria-hidden="true"
+                              >
+                                JK
+                              </div>
+                            )}
+                            {!stream ? (
+                              <span className={styles.play} aria-hidden="true">
+                                ▶
+                              </span>
+                            ) : null}
+                            <span className={styles.index}>
+                              {String(index + 1).padStart(2, "0")}
+                            </span>
+                          </div>
+                          <div className={styles.videoCopy}>
+                            <p>
+                              {item.category || PLATFORM_NAMES[item.platform]}
+                            </p>
+                            <h3>{item.title}</h3>
+                            {item.summary ? <span>{item.summary}</span> : null}
+                            {stream ? (
+                              <span className={styles.pendingSource}>
+                                {PLATFORM_NAMES[item.platform]}
+                              </span>
+                            ) : href ? (
+                              <a
+                                href={href}
+                                rel="noopener noreferrer"
+                                target="_blank"
+                                aria-label={`Watch video: ${item.title}`}
+                              >
+                                Watch video <span aria-hidden="true">↗</span>
+                              </a>
+                            ) : (
+                              <span className={styles.pendingSource}>
+                                Source awaiting approval
+                              </span>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </section>
+              ))}
+            </div>
           ) : (
             <ContentEmpty label="Video content" />
           )}

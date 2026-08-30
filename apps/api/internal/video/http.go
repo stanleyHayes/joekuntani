@@ -29,6 +29,9 @@ func (handler *HTTPHandler) AdminList() http.Handler { return http.HandlerFunc(h
 func (handler *HTTPHandler) AdminCreateUpload() http.Handler {
 	return http.HandlerFunc(handler.createUpload)
 }
+func (handler *HTTPHandler) AdminCreateLink() http.Handler {
+	return http.HandlerFunc(handler.createLink)
+}
 func (handler *HTTPHandler) AdminItem() http.Handler    { return http.HandlerFunc(handler.item) }
 func (handler *HTTPHandler) AdminPublish() http.Handler { return http.HandlerFunc(handler.publish) }
 func (handler *HTTPHandler) AdminSync() http.Handler    { return http.HandlerFunc(handler.sync) }
@@ -47,6 +50,8 @@ type itemResponse struct {
 	Category        string        `json:"category"`
 	Tags            []string      `json:"tags"`
 	Provider        string        `json:"provider"`
+	Platform        string        `json:"platform"`
+	SourceURL       string        `json:"source_url"`
 	ThumbnailURL    string        `json:"thumbnail_url"`
 	DurationSeconds int           `json:"duration_seconds"`
 	Width           int           `json:"width"`
@@ -74,6 +79,8 @@ type publicVideoResponse struct {
 	Title           string       `json:"title"`
 	Description     string       `json:"description"`
 	Category        string       `json:"category"`
+	Platform        string       `json:"platform"`
+	SourceURL       string       `json:"source_url"`
 	Tags            []string     `json:"tags"`
 	ThumbnailURL    string       `json:"thumbnail_url"`
 	DurationSeconds int          `json:"duration_seconds"`
@@ -109,15 +116,32 @@ func publicResponseFor(item Item, playback PlaybackInfo) publicVideoResponse {
 	if thumbnailURL == "" {
 		thumbnailURL = playback.ThumbnailURL
 	}
-	return publicVideoResponse{ID: item.PublicID, Slug: item.Slug, Title: item.Title, Description: item.Description, Category: item.Category, Tags: emptyStrings(item.Tags), ThumbnailURL: thumbnailURL, DurationSeconds: item.DurationSeconds, AspectRatio: item.ResolvedAspectRatio(), Status: item.Status, Visibility: item.Visibility, Published: item.Published, PublishedAt: item.PublishedAt, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt, Playback: playback}
+	return publicVideoResponse{ID: item.PublicID, Slug: item.Slug, Title: item.Title, Description: item.Description, Category: item.Category, Platform: item.Platform, SourceURL: item.SourceURL, Tags: emptyStrings(item.Tags), ThumbnailURL: thumbnailURL, DurationSeconds: item.DurationSeconds, AspectRatio: item.ResolvedAspectRatio(), Status: item.Status, Visibility: item.Visibility, Published: item.Published, PublishedAt: item.PublishedAt, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt, Playback: playback}
 }
 
 func responseFor(item Item, playback ...PlaybackInfo) itemResponse {
-	result := itemResponse{ID: item.PublicID, Slug: item.Slug, Title: item.Title, Description: item.Description, Category: item.Category, Tags: emptyStrings(item.Tags), Provider: item.Provider, ThumbnailURL: item.ThumbnailURL, DurationSeconds: item.DurationSeconds, Width: item.Width, Height: item.Height, AspectRatio: item.ResolvedAspectRatio(), AspectRatioSet: item.AspectRatio, Status: item.Status, Visibility: item.Visibility, Published: item.Published, PublishedAt: item.PublishedAt, SortOrder: item.SortOrder, Filename: item.Filename, MIMEType: item.MIMEType, Bytes: item.Bytes, FailureReason: item.FailureReason, Revision: item.Revision, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt}
+	result := itemResponse{ID: item.PublicID, Slug: item.Slug, Title: item.Title, Description: item.Description, Category: item.Category, Tags: emptyStrings(item.Tags), Provider: item.Provider, Platform: item.Platform, SourceURL: item.SourceURL, ThumbnailURL: item.ThumbnailURL, DurationSeconds: item.DurationSeconds, Width: item.Width, Height: item.Height, AspectRatio: item.ResolvedAspectRatio(), AspectRatioSet: item.AspectRatio, Status: item.Status, Visibility: item.Visibility, Published: item.Published, PublishedAt: item.PublishedAt, SortOrder: item.SortOrder, Filename: item.Filename, MIMEType: item.MIMEType, Bytes: item.Bytes, FailureReason: item.FailureReason, Revision: item.Revision, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt}
 	if len(playback) > 0 {
 		result.Playback = &playback[0]
 	}
 	return result
+}
+
+func (handler *HTTPHandler) createLink(response http.ResponseWriter, request *http.Request) {
+	actor, ok := handler.resolve(response, request)
+	if !ok {
+		return
+	}
+	var input CreateLinkInput
+	if !decode(response, request, &input) {
+		return
+	}
+	item, playback, err := handler.service.CreateLink(request.Context(), actor, input)
+	if err != nil {
+		writeError(response, err)
+		return
+	}
+	writeJSON(response, http.StatusCreated, responseFor(item, playback))
 }
 
 func (handler *HTTPHandler) resolve(response http.ResponseWriter, request *http.Request) (Actor, bool) {
@@ -140,7 +164,7 @@ func (handler *HTTPHandler) list(response http.ResponseWriter, request *http.Req
 	}
 	result := make([]itemResponse, len(items))
 	for i, item := range items {
-		result[i] = responseFor(item, handler.service.provider.Playback(item.ProviderVideoID))
+		result[i] = responseFor(item, handler.service.playbackFor(item))
 	}
 	writeJSON(response, http.StatusOK, map[string]any{"items": result})
 }
@@ -152,7 +176,7 @@ func (handler *HTTPHandler) publicList(response http.ResponseWriter, request *ht
 	}
 	result := make([]publicVideoResponse, len(items))
 	for i, item := range items {
-		playback := handler.service.provider.Playback(item.ProviderVideoID)
+		playback := handler.service.playbackFor(item)
 		result[i] = publicResponseFor(item, playback)
 	}
 	writeJSON(response, http.StatusOK, map[string]any{"items": result})
@@ -179,7 +203,7 @@ func (handler *HTTPHandler) createUpload(response http.ResponseWriter, request *
 		writeError(response, err)
 		return
 	}
-	writeJSON(response, http.StatusCreated, map[string]any{"item": responseFor(item, handler.service.provider.Playback(item.ProviderVideoID)), "upload": authorization})
+	writeJSON(response, http.StatusCreated, map[string]any{"item": responseFor(item, handler.service.playbackFor(item)), "upload": authorization})
 }
 func (handler *HTTPHandler) item(response http.ResponseWriter, request *http.Request) {
 	actor, ok := handler.resolve(response, request)
@@ -198,7 +222,7 @@ func (handler *HTTPHandler) item(response http.ResponseWriter, request *http.Req
 			writeError(response, err)
 			return
 		}
-		writeJSON(response, http.StatusOK, responseFor(item, handler.service.provider.Playback(item.ProviderVideoID)))
+		writeJSON(response, http.StatusOK, responseFor(item, handler.service.playbackFor(item)))
 	case http.MethodDelete:
 		revision, err := strconv.ParseInt(request.URL.Query().Get("revision"), 10, 64)
 		if err != nil {
@@ -231,7 +255,7 @@ func (handler *HTTPHandler) publish(response http.ResponseWriter, request *http.
 		writeError(response, err)
 		return
 	}
-	writeJSON(response, http.StatusOK, responseFor(item, handler.service.provider.Playback(item.ProviderVideoID)))
+	writeJSON(response, http.StatusOK, responseFor(item, handler.service.playbackFor(item)))
 }
 func (handler *HTTPHandler) sync(response http.ResponseWriter, request *http.Request) {
 	actor, ok := handler.resolve(response, request)
@@ -243,7 +267,7 @@ func (handler *HTTPHandler) sync(response http.ResponseWriter, request *http.Req
 		writeError(response, err)
 		return
 	}
-	writeJSON(response, http.StatusOK, responseFor(item, handler.service.provider.Playback(item.ProviderVideoID)))
+	writeJSON(response, http.StatusOK, responseFor(item, handler.service.playbackFor(item)))
 }
 func (handler *HTTPHandler) categories(response http.ResponseWriter, request *http.Request) {
 	actor, ok := handler.resolve(response, request)
