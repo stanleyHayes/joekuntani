@@ -2,6 +2,7 @@ import { Markdown } from "@joe-kuntani/shared/ui/markdown";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getPublicContentBySlug } from "../../../components/content/data";
+import { ContentSections } from "../../../components/content/sections";
 import { contentFooterCta } from "../../../components/content/public-content";
 import styles from "../../../components/content/content.module.css";
 import { PublicShell } from "../../../components/layout/public-shell";
@@ -12,7 +13,7 @@ import {
   demoWork,
 } from "../../../lib/demo/content";
 import { canonicalURL, contentMetadata, jsonLd } from "../../../lib/seo";
-import { publicImages } from "../../../lib/media";
+import { coverURLs, publicImages } from "../../../lib/media";
 import { getPublicSettings } from "../../../lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,12 @@ export default async function WorkDetailPage({ params }: Props) {
   const usingDemo = Boolean(demoItem);
   const gallery = await publicImages(item.gallery_asset_ids ?? []);
   const cover = gallery[0]?.url ?? (demoItem ? demoCovers[slug] : undefined);
+  const hasSections = Boolean(item.sections?.length);
+  const sectionImages = await coverURLs(
+    (item.sections ?? []).flatMap((section) =>
+      (section.asset_ids ?? []).map((assetID) => ({ key: assetID, assetID })),
+    ),
+  );
   const url = canonicalURL(
     item.seo.canonical_url || `/work/${slug}`,
     settings?.seo.canonical_base,
@@ -109,7 +116,7 @@ export default async function WorkDetailPage({ params }: Props) {
             </figcaption>
           </figure>
         ) : null}
-        {gallery.length > 1 ? (
+        {!hasSections && gallery.length > 1 ? (
           <section
             className={`${styles.detailGallery} shell-container`}
             aria-labelledby="project-gallery"
@@ -136,13 +143,24 @@ export default async function WorkDetailPage({ params }: Props) {
             </div>
           </section>
         ) : null}
-        <section className={`${styles.detailNarrative} shell-container`}>
-          <div>
-            <span>01</span>
-            <h2>The work</h2>
-          </div>
-          <Markdown className={styles.detailBody}>{item.body}</Markdown>
-        </section>
+        {hasSections ? (
+          <section className={`${styles.detailSections} shell-container`}>
+            <ContentSections
+              sections={item.sections}
+              body={item.body}
+              resolveImage={(assetID) => sectionImages[assetID]}
+              variant="about"
+            />
+          </section>
+        ) : (
+          <section className={`${styles.detailNarrative} shell-container`}>
+            <div>
+              <span>01</span>
+              <h2>The work</h2>
+            </div>
+            <Markdown className={styles.detailBody}>{item.body}</Markdown>
+          </section>
+        )}
         {item.results.length ? (
           <section
             className={`${styles.detailResults} shell-container`}

@@ -239,6 +239,11 @@
   padding-block: clamp(5rem, 12vw, 11rem);
   border-bottom: 1px solid var(--line);
 }
+.detailSections {
+  max-width: 78rem;
+  padding-block: clamp(5rem, 12vw, 11rem);
+  border-bottom: 1px solid var(--line);
+}
 .detailNarrative > div:first-child,
 .detailResults > div:first-child {
   display: flex;
